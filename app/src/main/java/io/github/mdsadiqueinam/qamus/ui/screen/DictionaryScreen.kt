@@ -10,15 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
-import androidx.paging.LoadState
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -32,7 +27,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -47,28 +41,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import io.github.mdsadiqueinam.qamus.data.model.DictionaryEntry
+import androidx.paging.LoadState
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
 import io.github.mdsadiqueinam.qamus.data.model.WordType
-import io.github.mdsadiqueinam.qamus.ui.viewmodel.DictionaryViewModel
+import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaatViewModel
+import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DictionaryScreen(
-    viewModel: DictionaryViewModel,
+    viewModel: KalimaatViewModel,
     onAddEntry: () -> Unit
 ) {
-    val entries by viewModel.entries.collectAsState()
-    val entriesPaged = viewModel.getEntriesPaged().collectAsLazyPagingItems()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedType by viewModel.selectedType.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
-    val usePagination by viewModel.usePagination.collectAsState()
+
+    // State for paginated entries flow
+    val entriesFlow by remember { mutableStateOf<Flow<PagingData<Kalimaat>>>(viewModel.getEntriesPaged()) }
+    // Collect as LazyPagingItems (this is a Composable operation)
+    val entriesPaged = entriesFlow.collectAsLazyPagingItems()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -107,12 +106,8 @@ fun DictionaryScreen(
             // Search bar
             SearchBar(
                 query = searchQuery,
-                onQueryChange = { 
-                    if (usePagination) {
-                        entriesPaged = viewModel.searchEntriesPaged(it).collectAsLazyPagingItems()
-                    } else {
-                        viewModel.searchEntries(it)
-                    }
+                onQueryChange = { query -> 
+                    viewModel.searchEntriesPaged(query)
                 },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -122,101 +117,58 @@ fun DictionaryScreen(
             // Filter by type
             FilterByType(
                 selectedType = selectedType,
-                onTypeSelected = { 
-                    if (usePagination) {
-                        entriesPaged = viewModel.filterByTypePaged(it).collectAsLazyPagingItems()
-                    } else {
-                        viewModel.filterByType(it)
-                    }
+                onTypeSelected = { type -> 
+                    viewModel.filterByTypePaged(type)
                 },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Pagination toggle
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            // Dictionary entries list - only paginated
+            PaginatedEntriesList(
+                entriesPaged = entriesPaged,
+                onDelete = { entry -> viewModel.deleteEntry(entry) }
+            )
+        }
+    }
+}
+
+@Composable
+fun PaginatedEntriesList(
+    entriesPaged: LazyPagingItems<Kalimaat>,
+    onDelete: (Kalimaat) -> Unit
+) {
+    when {
+        entriesPaged.loadState.refresh is LoadState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Use Pagination")
-                Switch(
-                    checked = usePagination,
-                    onCheckedChange = { 
-                        viewModel.togglePagination()
-                        if (it) {
-                            entriesPaged = viewModel.getEntriesPaged().collectAsLazyPagingItems()
-                        } else {
-                            viewModel.loadEntries()
-                        }
-                    }
-                )
+                CircularProgressIndicator()
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Dictionary entries list
-            if (usePagination) {
-                // Paginated entries
-                if (entriesPaged.loadState.refresh is LoadState.Loading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else if (entriesPaged.itemCount == 0) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("No entries found")
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(entriesPaged) { entry ->
-                            entry?.let {
-                                DictionaryEntryItem(
-                                    entry = it,
-                                    onDelete = { viewModel.deleteEntry(it) },
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
-                    }
-                }
-            } else {
-                // Non-paginated entries
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else if (entries.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("No entries found")
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(entries) { entry ->
-                            DictionaryEntryItem(
-                                entry = entry,
-                                onDelete = { viewModel.deleteEntry(entry) },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+        }
+        entriesPaged.itemCount == 0 -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("No entries found")
+            }
+        }
+        else -> {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(entriesPaged.itemCount) { index ->
+                    val entry = entriesPaged[index]
+                    if (entry != null) {
+                        DictionaryEntryItem(
+                            entry = entry,
+                            onDelete = { onDelete(entry) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
@@ -253,7 +205,7 @@ fun FilterByType(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Absolute.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
             text = "Filter by type:",
@@ -304,7 +256,7 @@ fun FilterByType(
 
 @Composable
 fun DictionaryEntryItem(
-    entry: DictionaryEntry,
+    entry: Kalimaat,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -322,7 +274,7 @@ fun DictionaryEntryItem(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = entry.kalima,
+                        text = entry.huroof,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth()

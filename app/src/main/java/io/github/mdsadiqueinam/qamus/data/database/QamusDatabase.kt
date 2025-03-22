@@ -5,14 +5,14 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import io.github.mdsadiqueinam.qamus.data.dao.DictionaryDao
-import io.github.mdsadiqueinam.qamus.data.model.DictionaryEntry
+import io.github.mdsadiqueinam.qamus.data.dao.KalimaatDao
+import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
 
 /**
  * Room database for the Qamus application.
  */
 @Database(
-    entities = [DictionaryEntry::class],
+    entities = [Kalimaat::class],
     version = 1,
     exportSchema = false
 )
@@ -22,7 +22,7 @@ abstract class QamusDatabase : RoomDatabase() {
     /**
      * Get the DictionaryDao.
      */
-    abstract fun dictionaryDao(): DictionaryDao
+    abstract fun dictionaryDao(): KalimaatDao
 
     companion object {
         @Volatile

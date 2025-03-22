@@ -5,30 +5,30 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
 /**
- * Entity class representing a dictionary entry in the Arabic dictionary.
+ * Entity class representing a kalimaat (كَلِمَات) entry in the Arabic dictionary.
  *
  * @property id The unique identifier for the entry
- * @property kalima The Arabic word
+ * @property huroof The Arabic word
  * @property meaning The meaning/translation of the word
  * @property desc Additional description or information about the word
  * @property type The type of the word (noun, verb, particle)
  * @property rootId Optional reference to the root word's id (self-referential)
  */
 @Entity(
-    tableName = "dictionary_entries",
+    tableName = "kalimaat",
     foreignKeys = [
         ForeignKey(
-            entity = DictionaryEntry::class,
+            entity = Kalimaat::class,
             parentColumns = ["id"],
             childColumns = ["rootId"],
             onDelete = ForeignKey.SET_NULL
         )
     ]
 )
-data class DictionaryEntry(
+data class Kalimaat(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val kalima: String,
+    val huroof: String,
     val meaning: String,
     val desc: String,
     val type: WordType,
