@@ -176,18 +176,17 @@ fun FilterByType(
 
     Row(
         modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Absolute.SpaceBetween
     ) {
         Text(
             text = "Filter by type:",
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
-        Spacer(modifier = Modifier.weight(1f))
         Box {
             TextButton(onClick = { expanded = true }) {
                 Text(
                     text = selectedType?.let { WordType.toArabic(it) } ?: "All",
-                    modifier = Modifier.fillMaxWidth()
                 )
             }
             DropdownMenu(
@@ -198,7 +197,8 @@ fun FilterByType(
                     text = { 
                         Text(
                             text = "All",
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Right
                         )
                     },
                     onClick = {
@@ -208,10 +208,11 @@ fun FilterByType(
                 )
                 WordType.entries.forEach { type ->
                     DropdownMenuItem(
-                        text = { 
+                        text = {
                             Text(
                                 text = WordType.toArabic(type),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Right
                             )
                         },
                         onClick = {
