@@ -15,6 +15,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -28,6 +32,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -58,10 +63,12 @@ fun DictionaryScreen(
     onAddEntry: () -> Unit
 ) {
     val entries by viewModel.entries.collectAsState()
+    val entriesPaged = viewModel.getEntriesPaged().collectAsLazyPagingItems()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedType by viewModel.selectedType.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val usePagination by viewModel.usePagination.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -100,7 +107,13 @@ fun DictionaryScreen(
             // Search bar
             SearchBar(
                 query = searchQuery,
-                onQueryChange = { viewModel.searchEntries(it) },
+                onQueryChange = { 
+                    if (usePagination) {
+                        entriesPaged = viewModel.searchEntriesPaged(it).collectAsLazyPagingItems()
+                    } else {
+                        viewModel.searchEntries(it)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -109,38 +122,101 @@ fun DictionaryScreen(
             // Filter by type
             FilterByType(
                 selectedType = selectedType,
-                onTypeSelected = { viewModel.filterByType(it) },
+                onTypeSelected = { 
+                    if (usePagination) {
+                        entriesPaged = viewModel.filterByTypePaged(it).collectAsLazyPagingItems()
+                    } else {
+                        viewModel.filterByType(it)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Pagination toggle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Use Pagination")
+                Switch(
+                    checked = usePagination,
+                    onCheckedChange = { 
+                        viewModel.togglePagination()
+                        if (it) {
+                            entriesPaged = viewModel.getEntriesPaged().collectAsLazyPagingItems()
+                        } else {
+                            viewModel.loadEntries()
+                        }
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Dictionary entries list
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (entries.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No entries found")
+            if (usePagination) {
+                // Paginated entries
+                if (entriesPaged.loadState.refresh is LoadState.Loading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (entriesPaged.itemCount == 0) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No entries found")
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(entriesPaged) { entry ->
+                            entry?.let {
+                                DictionaryEntryItem(
+                                    entry = it,
+                                    onDelete = { viewModel.deleteEntry(it) },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(entries) { entry ->
-                        DictionaryEntryItem(
-                            entry = entry,
-                            onDelete = { viewModel.deleteEntry(entry) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                // Non-paginated entries
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (entries.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No entries found")
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(entries) { entry ->
+                            DictionaryEntryItem(
+                                entry = entry,
+                                onDelete = { viewModel.deleteEntry(entry) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }

@@ -3,9 +3,12 @@ package io.github.mdsadiqueinam.qamus.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import io.github.mdsadiqueinam.qamus.data.model.DictionaryEntry
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.data.repository.DictionaryRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +23,9 @@ class DictionaryViewModel(private val repository: DictionaryRepository) : ViewMo
     // State for all dictionary entries
     private val _entries = MutableStateFlow<List<DictionaryEntry>>(emptyList())
     val entries: StateFlow<List<DictionaryEntry>> = _entries.asStateFlow()
+
+    // State for paginated entries
+    private var _entriesPaged: Flow<PagingData<DictionaryEntry>>? = null
 
     // State for search query
     private val _searchQuery = MutableStateFlow("")
@@ -37,8 +43,23 @@ class DictionaryViewModel(private val repository: DictionaryRepository) : ViewMo
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    // State for using pagination
+    private val _usePagination = MutableStateFlow(true)
+    val usePagination: StateFlow<Boolean> = _usePagination.asStateFlow()
+
+    /**
+     * Toggle pagination on/off
+     */
+    fun togglePagination() {
+        _usePagination.value = !_usePagination.value
+    }
+
     init {
-        loadEntries()
+        if (_usePagination.value) {
+            getEntriesPaged()
+        } else {
+            loadEntries()
+        }
     }
 
     /**
@@ -57,6 +78,21 @@ class DictionaryViewModel(private val repository: DictionaryRepository) : ViewMo
                     _isLoading.value = false
                 }
         }
+    }
+
+    /**
+     * Get all dictionary entries with pagination.
+     */
+    fun getEntriesPaged(): Flow<PagingData<DictionaryEntry>> {
+        val lastResult = _entriesPaged
+        if (lastResult != null) {
+            return lastResult
+        }
+
+        val newResult = repository.getEntriesPaged()
+            .cachedIn(viewModelScope)
+        _entriesPaged = newResult
+        return newResult
     }
 
     /**
@@ -84,6 +120,21 @@ class DictionaryViewModel(private val repository: DictionaryRepository) : ViewMo
     }
 
     /**
+     * Search for dictionary entries with pagination.
+     */
+    fun searchEntriesPaged(query: String): Flow<PagingData<DictionaryEntry>> {
+        _searchQuery.value = query
+        if (query.isBlank()) {
+            return getEntriesPaged()
+        }
+
+        val newResult = repository.searchEntriesPaged(query)
+            .cachedIn(viewModelScope)
+        _entriesPaged = newResult
+        return newResult
+    }
+
+    /**
      * Filter entries by word type.
      */
     fun filterByType(type: WordType?) {
@@ -105,6 +156,21 @@ class DictionaryViewModel(private val repository: DictionaryRepository) : ViewMo
                     _isLoading.value = false
                 }
         }
+    }
+
+    /**
+     * Filter entries by word type with pagination.
+     */
+    fun filterByTypePaged(type: WordType?): Flow<PagingData<DictionaryEntry>> {
+        _selectedType.value = type
+        if (type == null) {
+            return getEntriesPaged()
+        }
+
+        val newResult = repository.getEntriesByTypePaged(type)
+            .cachedIn(viewModelScope)
+        _entriesPaged = newResult
+        return newResult
     }
 
     /**

@@ -1,5 +1,8 @@
 package io.github.mdsadiqueinam.qamus.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import io.github.mdsadiqueinam.qamus.data.dao.DictionaryDao
 import io.github.mdsadiqueinam.qamus.data.model.DictionaryEntry
 import io.github.mdsadiqueinam.qamus.data.model.WordType
@@ -10,11 +13,27 @@ import kotlinx.coroutines.flow.Flow
  */
 class DictionaryRepository(private val dictionaryDao: DictionaryDao) {
 
+    // Default page size for pagination
+    private val defaultPageSize = 20
+
     /**
      * Get all dictionary entries.
      */
     fun getAllEntries(): Flow<List<DictionaryEntry>> {
         return dictionaryDao.getAllEntries()
+    }
+
+    /**
+     * Get all dictionary entries with pagination.
+     */
+    fun getEntriesPaged(): Flow<PagingData<DictionaryEntry>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = defaultPageSize,
+                enablePlaceholders = true
+            ),
+            pagingSourceFactory = { dictionaryDao.getEntriesPaged() }
+        ).flow
     }
 
     /**
@@ -32,10 +51,36 @@ class DictionaryRepository(private val dictionaryDao: DictionaryDao) {
     }
 
     /**
+     * Search for dictionary entries by kalima (word) with pagination.
+     */
+    fun searchEntriesPaged(searchQuery: String): Flow<PagingData<DictionaryEntry>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = defaultPageSize,
+                enablePlaceholders = true
+            ),
+            pagingSourceFactory = { dictionaryDao.searchEntriesPaged(searchQuery) }
+        ).flow
+    }
+
+    /**
      * Get all entries of a specific type.
      */
     fun getEntriesByType(type: WordType): Flow<List<DictionaryEntry>> {
         return dictionaryDao.getEntriesByType(type)
+    }
+
+    /**
+     * Get all entries of a specific type with pagination.
+     */
+    fun getEntriesByTypePaged(type: WordType): Flow<PagingData<DictionaryEntry>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = defaultPageSize,
+                enablePlaceholders = true
+            ),
+            pagingSourceFactory = { dictionaryDao.getEntriesByTypePaged(type) }
+        ).flow
     }
 
     /**

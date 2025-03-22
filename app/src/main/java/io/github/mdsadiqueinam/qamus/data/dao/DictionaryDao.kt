@@ -1,5 +1,6 @@
 package io.github.mdsadiqueinam.qamus.data.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -22,6 +23,12 @@ interface DictionaryDao {
     fun getAllEntries(): Flow<List<DictionaryEntry>>
 
     /**
+     * Get all dictionary entries as a PagingSource for pagination.
+     */
+    @Query("SELECT * FROM dictionary_entries ORDER BY kalima ASC")
+    fun getEntriesPaged(): PagingSource<Int, DictionaryEntry>
+
+    /**
      * Get a specific dictionary entry by ID.
      */
     @Query("SELECT * FROM dictionary_entries WHERE id = :id")
@@ -34,10 +41,22 @@ interface DictionaryDao {
     fun searchEntries(searchQuery: String): Flow<List<DictionaryEntry>>
 
     /**
+     * Search for dictionary entries by kalima (word) as a PagingSource for pagination.
+     */
+    @Query("SELECT * FROM dictionary_entries WHERE kalima LIKE '%' || :searchQuery || '%' ORDER BY kalima ASC")
+    fun searchEntriesPaged(searchQuery: String): PagingSource<Int, DictionaryEntry>
+
+    /**
      * Get all entries of a specific type.
      */
     @Query("SELECT * FROM dictionary_entries WHERE type = :type ORDER BY kalima ASC")
     fun getEntriesByType(type: WordType): Flow<List<DictionaryEntry>>
+
+    /**
+     * Get all entries of a specific type as a PagingSource for pagination.
+     */
+    @Query("SELECT * FROM dictionary_entries WHERE type = :type ORDER BY kalima ASC")
+    fun getEntriesByTypePaged(type: WordType): PagingSource<Int, DictionaryEntry>
 
     /**
      * Get all entries derived from a specific root word.
