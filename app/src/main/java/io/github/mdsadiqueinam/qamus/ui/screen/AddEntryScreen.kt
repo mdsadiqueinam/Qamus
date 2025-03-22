@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -25,6 +26,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,8 +34,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.mdsadiqueinam.qamus.data.model.DictionaryEntry
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.DictionaryViewModel
 
@@ -47,7 +53,7 @@ fun AddEntryScreen(
     var meaning by remember { mutableStateOf("") }
     var desc by remember { mutableStateOf("") }
     var type by remember { mutableStateOf(WordType.ISM) }
-    var rootId by remember { mutableStateOf<String>("") }
+    var selectedRootEntry by remember { mutableStateOf<DictionaryEntry?>(null) }
 
     val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -71,88 +77,145 @@ fun AddEntryScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Arabic Word
-            OutlinedTextField(
-                value = kalima,
-                onValueChange = { kalima = it },
-                label = { Text("Arabic Word (kalima)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Meaning
-            OutlinedTextField(
-                value = meaning,
-                onValueChange = { meaning = it },
-                label = { Text("Meaning") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Description
-            OutlinedTextField(
-                value = desc,
-                onValueChange = { desc = it },
-                label = { Text("Description") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Word Type
-            WordTypeDropdown(
-                selectedType = type,
-                onTypeSelected = { type = it },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Root ID
-            OutlinedTextField(
-                value = rootId,
-                onValueChange = { rootId = it },
-                label = { Text("Root ID (optional)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Save Button
-            Button(
-                onClick = {
-                    val rootIdLong = if (rootId.isNotBlank()) rootId.toLongOrNull() else null
-                    viewModel.addEntry(kalima, meaning, desc, type, rootIdLong)
-                    if (errorMessage == null) {
-                        onNavigateBack()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
+        // Set layout direction to RTL for Arabic text
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                Text(
-                    text = "Save Entry",
+                // Arabic Word
+                OutlinedTextField(
+                    value = kalima,
+                    onValueChange = { kalima = it },
+                    label = { Text("Arabic Word (kalima)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Meaning
+                OutlinedTextField(
+                    value = meaning,
+                    onValueChange = { meaning = it },
+                    label = { Text("Meaning") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Description
+                OutlinedTextField(
+                    value = desc,
+                    onValueChange = { desc = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Word Type
+                WordTypeDropdown(
+                    selectedType = type,
+                    onTypeSelected = { type = it },
                     modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Root ID Dropdown
+                RootIdDropdown(
+                    entries = viewModel.entries.collectAsState().value,
+                    selectedEntry = selectedRootEntry,
+                    onEntrySelected = { selectedRootEntry = it },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Save Button
+                Button(
+                    onClick = {
+                        viewModel.addEntry(kalima, meaning, desc, type, selectedRootEntry?.id)
+                        if (errorMessage == null) {
+                            onNavigateBack()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Save Entry",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RootIdDropdown(
+    entries: List<DictionaryEntry>,
+    selectedEntry: DictionaryEntry?,
+    onEntrySelected: (DictionaryEntry?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedEntry?.kalima ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Root Word (optional)") },
+            placeholder = { Text("Select a root word") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            // Option to clear selection
+            DropdownMenuItem(
+                text = { Text("None") },
+                onClick = {
+                    onEntrySelected(null)
+                    expanded = false
+                }
+            )
+
+            // List all entries
+            entries.forEach { entry ->
+                DropdownMenuItem(
+                    text = { 
+                        Text("${entry.kalima} (${entry.meaning})") 
+                    },
+                    onClick = {
+                        onEntrySelected(entry)
+                        expanded = false
+                    }
                 )
             }
         }
