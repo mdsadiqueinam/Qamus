@@ -60,7 +60,8 @@ import kotlinx.coroutines.flow.Flow
 fun DictionaryScreen(
     viewModel: KalimaatViewModel,
     onAddEntry: () -> Unit,
-    onEditEntry: (Long) -> Unit
+    onEditEntry: (Long) -> Unit,
+    onViewDetails: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery = uiState.searchQuery
@@ -130,7 +131,8 @@ fun DictionaryScreen(
             EntriesList(
                 entries = entries,
                 onDelete = { entry -> viewModel.deleteEntry(entry) },
-                onEdit = { entry -> onEditEntry(entry.id) }
+                onEdit = { entry -> onEditEntry(entry.id) },
+                onViewDetails = { entry -> onViewDetails(entry.id) }
             )
         }
     }
@@ -140,7 +142,8 @@ fun DictionaryScreen(
 fun EntriesList(
     entries: LazyPagingItems<Kalimaat>,
     onDelete: (Kalimaat) -> Unit,
-    onEdit: (Kalimaat) -> Unit
+    onEdit: (Kalimaat) -> Unit,
+    onViewDetails: (Kalimaat) -> Unit
 ) {
     when {
         entries.loadState.refresh is LoadState.Loading -> {
@@ -171,6 +174,7 @@ fun EntriesList(
                             entry = entry,
                             onDelete = { onDelete(entry) },
                             onEdit = { onEdit(entry) },
+                            onViewDetails = { onViewDetails(entry) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -303,10 +307,12 @@ fun DictionaryEntryItem(
     entry: Kalimaat,
     onDelete: () -> Unit,
     onEdit: () -> Unit,
+    onViewDetails: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
+        modifier = modifier,
+        onClick = onViewDetails
     ) {
         Column(
             modifier = Modifier

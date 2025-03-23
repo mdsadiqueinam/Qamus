@@ -19,6 +19,7 @@ import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.mdsadiqueinam.qamus.ui.screen.AddEntryScreen
 import io.github.mdsadiqueinam.qamus.ui.screen.DictionaryScreen
+import io.github.mdsadiqueinam.qamus.ui.screen.KalimaDetailsScreen
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
 
 @AndroidEntryPoint
@@ -63,7 +64,8 @@ fun QamusNavHost(
             DictionaryScreen(
                 viewModel = kalimaatViewModel,
                 onAddEntry = { navController.navigate("add_entry/-1") },
-                onEditEntry = { entryId -> navController.navigate("add_entry/$entryId") }
+                onEditEntry = { entryId -> navController.navigate("add_entry/$entryId") },
+                onViewDetails = { entryId -> navController.navigate("kalima_details/$entryId") }
             )
         }
 
@@ -81,6 +83,23 @@ fun QamusNavHost(
             AddEntryScreen(
                 viewModel = addEntryViewModel,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "kalima_details/{entryId}",
+            arguments = listOf(
+                navArgument("entryId") {
+                    type = NavType.LongType
+                }
+            )
+        ) {
+            val kalimaDetailsViewModel = hiltViewModel<io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaDetailsViewModel>()
+
+            KalimaDetailsScreen(
+                viewModel = kalimaDetailsViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onEditEntry = { entryId -> navController.navigate("add_entry/$entryId") }
             )
         }
     }
