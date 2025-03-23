@@ -97,4 +97,11 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     fun getAllEntriesAsList(): Flow<List<Kalimaat>> {
         return kalimaatDao.getAllEntriesAsList()
     }
+
+    /**
+     * Get entries by rootId.
+     */
+    suspend fun getEntriesByRootId(rootId: Long): List<Kalimaat> {
+        return kalimaatDao.getEntriesByRootId(rootId)
+    }
 }

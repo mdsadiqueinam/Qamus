@@ -18,7 +18,8 @@ import javax.inject.Inject
 data class KalimaDetailsUIState(
     val entry: Kalimaat? = null,
     val isLoading: Boolean = false,
-    val rootEntry: Kalimaat? = null
+    val rootEntry: Kalimaat? = null,
+    val relatedEntries: List<Kalimaat> = emptyList()
 )
 
 /**
@@ -66,11 +67,24 @@ class KalimaDetailsViewModel @Inject constructor(
                     val rootEntry = entry.rootId?.let { rootId ->
                         repository.getEntryById(rootId)
                     }
-                    
+
+                    // Load related entries (entries with the same rootId)
+                    val relatedEntries = if (entry.rootId != null) {
+                        // Get entries with the same rootId as the current entry
+                        repository.getEntriesByRootId(entry.rootId)
+                            .filter { it.id != entry.id } // Exclude the current entry
+                    } else if (entry.id > 0) {
+                        // If this is a root entry, get entries that have this entry as their root
+                        repository.getEntriesByRootId(entry.id)
+                    } else {
+                        emptyList()
+                    }
+
                     _uiState.value = KalimaDetailsUIState(
                         entry = entry,
                         isLoading = false,
-                        rootEntry = rootEntry
+                        rootEntry = rootEntry,
+                        relatedEntries = relatedEntries
                     )
                 } else {
                     _errorMessage.value = "Entry not found"
@@ -88,5 +102,21 @@ class KalimaDetailsViewModel @Inject constructor(
      */
     fun clearError() {
         _errorMessage.value = null
+    }
+
+    /**
+     * Delete the current entry.
+     */
+    fun deleteEntry() {
+        val entry = _uiState.value.entry ?: return
+
+        viewModelScope.launch {
+            try {
+                repository.deleteEntry(entry)
+                // Navigate back will be handled by the UI
+            } catch (e: Exception) {
+                _errorMessage.value = "Error deleting entry: ${e.message}"
+            }
+        }
     }
 }

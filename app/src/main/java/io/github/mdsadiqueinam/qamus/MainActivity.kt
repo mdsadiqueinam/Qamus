@@ -99,7 +99,8 @@ fun QamusNavHost(
             KalimaDetailsScreen(
                 viewModel = kalimaDetailsViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onEditEntry = { entryId -> navController.navigate("add_entry/$entryId") }
+                onEditEntry = { entryId -> navController.navigate("add_entry/$entryId") },
+                onViewDetails = { entryId -> navController.navigate("kalima_details/$entryId") }
             )
         }
     }

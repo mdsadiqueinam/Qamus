@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,7 +49,8 @@ import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaDetailsViewModel
 fun KalimaDetailsScreen(
     viewModel: KalimaDetailsViewModel,
     onNavigateBack: () -> Unit,
-    onEditEntry: (Long) -> Unit
+    onEditEntry: (Long) -> Unit,
+    onViewDetails: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
@@ -74,6 +76,18 @@ fun KalimaDetailsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    uiState.entry?.let { entry ->
+                        IconButton(
+                            onClick = { 
+                                viewModel.deleteEntry()
+                                onNavigateBack()
+                            }
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Entry")
+                        }
                     }
                 }
             )
@@ -110,6 +124,8 @@ fun KalimaDetailsScreen(
                     EntryDetails(
                         entry = uiState.entry!!,
                         rootEntry = uiState.rootEntry,
+                        relatedEntries = uiState.relatedEntries,
+                        onViewDetails = onViewDetails,
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(16.dp)
@@ -124,6 +140,8 @@ fun KalimaDetailsScreen(
 fun EntryDetails(
     entry: Kalimaat,
     rootEntry: Kalimaat?,
+    relatedEntries: List<Kalimaat>,
+    onViewDetails: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Set layout direction to RTL for Arabic text
@@ -180,9 +198,10 @@ fun EntryDetails(
             // Root entry details (if available)
             if (rootEntry != null) {
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Card(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { rootEntry?.id?.let { onViewDetails(it) } }
                 ) {
                     Column(
                         modifier = Modifier
@@ -195,7 +214,7 @@ fun EntryDetails(
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
                         Divider()
                         Spacer(modifier = Modifier.height(8.dp))
@@ -236,6 +255,28 @@ fun EntryDetails(
                 }
             }
 
+            // Related entries (if available)
+            if (relatedEntries.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "الكلمات المتعلقة (Related Words)",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                relatedEntries.forEach { relatedEntry ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    RelatedEntryItem(
+                        entry = relatedEntry,
+                        onClick = { onViewDetails(relatedEntry.id) }
+                    )
+                }
+            }
+
             // Entry ID (for debugging/reference)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -264,5 +305,42 @@ fun DetailItem(
             text = value,
             style = MaterialTheme.typography.bodyLarge
         )
+    }
+}
+
+@Composable
+fun RelatedEntryItem(
+    entry: Kalimaat,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Text(
+                text = entry.huroof,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = entry.meaning,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = "نوع: ${WordType.toArabic(entry.type)}",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }

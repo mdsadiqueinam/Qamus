@@ -81,4 +81,10 @@ interface KalimaatDao {
      */
     @Query("SELECT * FROM kalimaat ORDER BY huroof ASC")
     fun getAllEntriesAsList(): Flow<List<Kalimaat>>
+
+    /**
+     * Get entries by rootId.
+     */
+    @Query("SELECT * FROM kalimaat WHERE rootId = :rootId ORDER BY huroof ASC")
+    suspend fun getEntriesByRootId(rootId: Long): List<Kalimaat>
 }
