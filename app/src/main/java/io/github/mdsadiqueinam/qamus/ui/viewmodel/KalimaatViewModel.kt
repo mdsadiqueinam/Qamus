@@ -15,6 +15,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
+ * Data class representing the UI state for the dictionary screen.
+ */
+data class KalimaatUIState(
+    val searchQuery: String = "",
+    val selectedType: WordType? = null
+)
+
+/**
  * ViewModel for the dictionary screen.
  */
 class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel() {
@@ -22,13 +30,9 @@ class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel(
     // State for entries
     private var _entries: Flow<PagingData<Kalimaat>>? = null
 
-    // State for search query
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-
-    // State for selected word type filter
-    private val _selectedType = MutableStateFlow<WordType?>(null)
-    val selectedType: StateFlow<WordType?> = _selectedType.asStateFlow()
+    // Combined UI state for search and filter
+    private val _uiState = MutableStateFlow(KalimaatUIState())
+    val uiState: StateFlow<KalimaatUIState> = _uiState.asStateFlow()
 
     // State for error messages
     private val _errorMessage = MutableStateFlow<String?>(null)
@@ -57,7 +61,7 @@ class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel(
      * Search for dictionary entries with pagination.
      */
     fun searchEntries(query: String) {
-        _searchQuery.value = query
+        _uiState.value = _uiState.value.copy(searchQuery = query)
         if (query.isBlank()) {
             return
         }
@@ -71,7 +75,7 @@ class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel(
      * Filter entries by word type with pagination.
      */
     fun filterByType(type: WordType?): Flow<PagingData<Kalimaat>> {
-        _selectedType.value = type
+        _uiState.value = _uiState.value.copy(selectedType = type)
         if (type == null) {
             return getEntries()
         }

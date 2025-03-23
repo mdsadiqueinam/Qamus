@@ -60,8 +60,9 @@ fun DictionaryScreen(
     viewModel: KalimaatViewModel,
     onAddEntry: () -> Unit
 ) {
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val selectedType by viewModel.selectedType.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val searchQuery = uiState.searchQuery
+    val selectedType = uiState.selectedType
     val errorMessage by viewModel.errorMessage.collectAsState()
 
     // State for entries flow
