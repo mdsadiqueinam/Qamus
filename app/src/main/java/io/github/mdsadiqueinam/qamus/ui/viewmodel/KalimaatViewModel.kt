@@ -63,33 +63,6 @@ class KalimaatViewModel @Inject constructor(private val repository: KalimaatRepo
     }
 
     /**
-     * Add a new dictionary entry.
-     */
-    fun addEntry(huroof: String, meaning: String, desc: String, type: WordType, rootId: Long? = null) {
-        if (huroof.isBlank() || meaning.isBlank()) {
-            _errorMessage.value = "Word and meaning cannot be empty"
-            return
-        }
-
-        val entry = Kalimaat(
-            huroof = huroof,
-            meaning = meaning,
-            desc = desc,
-            type = type,
-            rootId = rootId
-        )
-
-        viewModelScope.launch {
-            try {
-                repository.insertEntry(entry)
-                // No need to call loadEntries() as the paging library will handle updates
-            } catch (e: Exception) {
-                _errorMessage.value = "Error adding entry: ${e.message}"
-            }
-        }
-    }
-
-    /**
      * Delete a dictionary entry.
      */
     fun deleteEntry(entry: Kalimaat) {

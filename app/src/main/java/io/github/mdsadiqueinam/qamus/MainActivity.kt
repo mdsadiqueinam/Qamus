@@ -62,7 +62,7 @@ fun QamusNavHost(
 
             DictionaryScreen(
                 viewModel = kalimaatViewModel,
-                onAddEntry = { navController.navigate("add_entry") },
+                onAddEntry = { navController.navigate("add_entry/-1") },
                 onEditEntry = { entryId -> navController.navigate("add_entry/$entryId") }
             )
         }
@@ -82,13 +82,6 @@ fun QamusNavHost(
                 viewModel = addEntryViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
-        }
-
-        // Redirect old route to new route with default ID
-        composable("add_entry") {
-            navController.navigate("add_entry/-1") {
-                popUpTo("add_entry") { inclusive = true }
-            }
         }
     }
 }

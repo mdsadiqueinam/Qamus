@@ -260,7 +260,7 @@ fun WordTypeDropdown(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            WordType.values().forEach { type ->
+            WordType.entries.forEach { type ->
                 DropdownMenuItem(
                     text = { Text(WordType.toArabic(type)) },
                     onClick = {
