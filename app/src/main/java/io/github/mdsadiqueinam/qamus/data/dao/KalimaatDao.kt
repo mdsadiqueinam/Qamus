@@ -23,10 +23,16 @@ interface KalimaatDao {
     fun getEntries(): PagingSource<Int, Kalimaat>
 
     /**
-     * Get a specific dictionary entry by ID.
+     * Get a specific dictionary kalima by ID.
      */
     @Query("SELECT * FROM kalimaat WHERE id = :id")
     suspend fun getEntryById(id: Long): Kalimaat?
+
+    /**
+     * Get multiple kalima by ids.
+     */
+    @Query("SELECT * FROM kalimaat WHERE id IN (:ids)")
+    suspend fun getEntriesByIds(ids: List<Long>): List<Kalimaat>
 
     /**
      * Search for dictionary entries by huroof (word) as a PagingSource for pagination.

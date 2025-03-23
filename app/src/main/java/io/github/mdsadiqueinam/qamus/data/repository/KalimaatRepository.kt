@@ -37,6 +37,13 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     }
 
     /**
+     * Get multiple dictionary entries by IDs.
+     */
+    suspend fun getEntriesByIds(ids: List<Long>): List<Kalimaat> {
+        return kalimaatDao.getEntriesByIds(ids)
+    }
+
+    /**
      * Search for dictionary entries by huroof or type
      */
     fun searchEntries(searchQuery: String, type: WordType?): Flow<PagingData<Kalimaat>> {
