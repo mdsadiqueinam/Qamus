@@ -64,10 +64,10 @@ fun DictionaryScreen(
     val selectedType by viewModel.selectedType.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    // State for paginated entries flow
-    val entriesFlow by remember { mutableStateOf<Flow<PagingData<Kalimaat>>>(viewModel.getEntriesPaged()) }
+    // State for entries flow
+    val entriesFlow by remember { mutableStateOf<Flow<PagingData<Kalimaat>>>(viewModel.getEntries()) }
     // Collect as LazyPagingItems (this is a Composable operation)
-    val entriesPaged = entriesFlow.collectAsLazyPagingItems()
+    val entries = entriesFlow.collectAsLazyPagingItems()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -107,7 +107,7 @@ fun DictionaryScreen(
             SearchBar(
                 query = searchQuery,
                 onQueryChange = { query -> 
-                    viewModel.searchEntriesPaged(query)
+                    viewModel.searchEntries(query)
                 },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -118,16 +118,16 @@ fun DictionaryScreen(
             FilterByType(
                 selectedType = selectedType,
                 onTypeSelected = { type -> 
-                    viewModel.filterByTypePaged(type)
+                    viewModel.filterByType(type)
                 },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Dictionary entries list - only paginated
-            PaginatedEntriesList(
-                entriesPaged = entriesPaged,
+            // Dictionary entries list
+            EntriesList(
+                entries = entries,
                 onDelete = { entry -> viewModel.deleteEntry(entry) }
             )
         }
@@ -135,12 +135,12 @@ fun DictionaryScreen(
 }
 
 @Composable
-fun PaginatedEntriesList(
-    entriesPaged: LazyPagingItems<Kalimaat>,
+fun EntriesList(
+    entries: LazyPagingItems<Kalimaat>,
     onDelete: (Kalimaat) -> Unit
 ) {
     when {
-        entriesPaged.loadState.refresh is LoadState.Loading -> {
+        entries.loadState.refresh is LoadState.Loading -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -148,7 +148,7 @@ fun PaginatedEntriesList(
                 CircularProgressIndicator()
             }
         }
-        entriesPaged.itemCount == 0 -> {
+        entries.itemCount == 0 -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -161,14 +161,54 @@ fun PaginatedEntriesList(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(entriesPaged.itemCount) { index ->
-                    val entry = entriesPaged[index]
+                items(entries.itemCount) { index ->
+                    val entry = entries[index]
                     if (entry != null) {
                         DictionaryEntryItem(
                             entry = entry,
                             onDelete = { onDelete(entry) },
                             modifier = Modifier.fillMaxWidth()
                         )
+                    }
+
+                    // Implement infinite scroll by loading more items when reaching the end
+                    if (index >= entries.itemCount - 1 && entries.loadState.append !is LoadState.Loading) {
+                        entries.retry()
+                    }
+                }
+
+                // Show loading indicator at the bottom when loading more items
+                item {
+                    if (entries.loadState.append is LoadState.Loading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+
+                // Show error state if loading fails
+                item {
+                    if (entries.loadState.append is LoadState.Error) {
+                        val error = (entries.loadState.append as LoadState.Error).error
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Error loading more items: ${error.message}")
+                                Spacer(modifier = Modifier.height(4.dp))
+                                TextButton(onClick = { entries.retry() }) {
+                                    Text("Retry")
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -17,22 +17,15 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     private val defaultPageSize = 20
 
     /**
-     * Get all dictionary entries.
-     */
-    fun getAllEntries(): Flow<List<Kalimaat>> {
-        return kalimaatDao.getAllEntries()
-    }
-
-    /**
      * Get all dictionary entries with pagination.
      */
-    fun getEntriesPaged(): Flow<PagingData<Kalimaat>> {
+    fun getEntries(): Flow<PagingData<Kalimaat>> {
         return Pager(
             config = PagingConfig(
                 pageSize = defaultPageSize,
                 enablePlaceholders = true
             ),
-            pagingSourceFactory = { kalimaatDao.getEntriesPaged() }
+            pagingSourceFactory = { kalimaatDao.getEntries() }
         ).flow
     }
 
@@ -44,50 +37,29 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     }
 
     /**
-     * Search for dictionary entries by kalima (word).
-     */
-    fun searchEntries(searchQuery: String): Flow<List<Kalimaat>> {
-        return kalimaatDao.searchEntries(searchQuery)
-    }
-
-    /**
      * Search for dictionary entries by kalima (word) with pagination.
      */
-    fun searchEntriesPaged(searchQuery: String): Flow<PagingData<Kalimaat>> {
+    fun searchEntries(searchQuery: String): Flow<PagingData<Kalimaat>> {
         return Pager(
             config = PagingConfig(
                 pageSize = defaultPageSize,
                 enablePlaceholders = true
             ),
-            pagingSourceFactory = { kalimaatDao.searchEntriesPaged(searchQuery) }
+            pagingSourceFactory = { kalimaatDao.searchEntries(searchQuery) }
         ).flow
-    }
-
-    /**
-     * Get all entries of a specific type.
-     */
-    fun getEntriesByType(type: WordType): Flow<List<Kalimaat>> {
-        return kalimaatDao.getEntriesByType(type)
     }
 
     /**
      * Get all entries of a specific type with pagination.
      */
-    fun getEntriesByTypePaged(type: WordType): Flow<PagingData<Kalimaat>> {
+    fun getEntriesByType(type: WordType): Flow<PagingData<Kalimaat>> {
         return Pager(
             config = PagingConfig(
                 pageSize = defaultPageSize,
                 enablePlaceholders = true
             ),
-            pagingSourceFactory = { kalimaatDao.getEntriesByTypePaged(type) }
+            pagingSourceFactory = { kalimaatDao.getEntriesByType(type) }
         ).flow
-    }
-
-    /**
-     * Get all entries derived from a specific root word.
-     */
-    fun getEntriesByRootId(rootId: Long): Flow<List<Kalimaat>> {
-        return kalimaatDao.getEntriesByRootId(rootId)
     }
 
     /**

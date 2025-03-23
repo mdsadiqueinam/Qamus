@@ -47,7 +47,7 @@ class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel(
             return lastResult
         }
 
-        val newResult = repository.getEntriesPaged()
+        val newResult = repository.getEntries()
             .cachedIn(viewModelScope)
         _entries = newResult
         return newResult
@@ -62,7 +62,7 @@ class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel(
             return
         }
 
-        val newResult = repository.searchEntriesPaged(query)
+        val newResult = repository.searchEntries(query)
             .cachedIn(viewModelScope)
         _entries = newResult
     }
@@ -76,7 +76,7 @@ class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel(
             return getEntries()
         }
 
-        val newResult = repository.getEntriesByTypePaged(type)
+        val newResult = repository.getEntriesByType(type)
             .cachedIn(viewModelScope)
         _entries = newResult
         return newResult

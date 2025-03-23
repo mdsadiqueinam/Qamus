@@ -17,16 +17,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface KalimaatDao {
     /**
-     * Get all dictionary entries as a Flow.
-     */
-    @Query("SELECT * FROM kalimaat ORDER BY huroof ASC")
-    fun getAllEntries(): Flow<List<Kalimaat>>
-
-    /**
      * Get all dictionary entries as a PagingSource for pagination.
      */
     @Query("SELECT * FROM kalimaat ORDER BY huroof ASC")
-    fun getEntriesPaged(): PagingSource<Int, Kalimaat>
+    fun getEntries(): PagingSource<Int, Kalimaat>
 
     /**
      * Get a specific dictionary entry by ID.
@@ -35,34 +29,16 @@ interface KalimaatDao {
     suspend fun getEntryById(id: Long): Kalimaat?
 
     /**
-     * Search for dictionary entries by huroof (word).
-     */
-    @Query("SELECT * FROM kalimaat WHERE huroof LIKE '%' || :searchQuery || '%' ORDER BY huroof ASC")
-    fun searchEntries(searchQuery: String): Flow<List<Kalimaat>>
-
-    /**
      * Search for dictionary entries by huroof (word) as a PagingSource for pagination.
      */
     @Query("SELECT * FROM kalimaat WHERE huroof LIKE '%' || :searchQuery || '%' ORDER BY huroof ASC")
-    fun searchEntriesPaged(searchQuery: String): PagingSource<Int, Kalimaat>
-
-    /**
-     * Get all entries of a specific type.
-     */
-    @Query("SELECT * FROM kalimaat WHERE type = :type ORDER BY huroof ASC")
-    fun getEntriesByType(type: WordType): Flow<List<Kalimaat>>
+    fun searchEntries(searchQuery: String): PagingSource<Int, Kalimaat>
 
     /**
      * Get all entries of a specific type as a PagingSource for pagination.
      */
     @Query("SELECT * FROM kalimaat WHERE type = :type ORDER BY huroof ASC")
-    fun getEntriesByTypePaged(type: WordType): PagingSource<Int, Kalimaat>
-
-    /**
-     * Get all entries derived from a specific root word.
-     */
-    @Query("SELECT * FROM kalimaat WHERE rootId = :rootId ORDER BY huroof ASC")
-    fun getEntriesByRootId(rootId: Long): Flow<List<Kalimaat>>
+    fun getEntriesByType(type: WordType): PagingSource<Int, Kalimaat>
 
     /**
      * Insert a new dictionary entry.
