@@ -37,28 +37,15 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     }
 
     /**
-     * Search for dictionary entries by kalima (word) with pagination.
+     * Search for dictionary entries by huroof or type
      */
-    fun searchEntries(searchQuery: String): Flow<PagingData<Kalimaat>> {
+    fun searchEntries(searchQuery: String, type: WordType?): Flow<PagingData<Kalimaat>> {
         return Pager(
             config = PagingConfig(
                 pageSize = defaultPageSize,
                 enablePlaceholders = true
             ),
-            pagingSourceFactory = { kalimaatDao.searchEntries(searchQuery) }
-        ).flow
-    }
-
-    /**
-     * Get all entries of a specific type with pagination.
-     */
-    fun getEntriesByType(type: WordType): Flow<PagingData<Kalimaat>> {
-        return Pager(
-            config = PagingConfig(
-                pageSize = defaultPageSize,
-                enablePlaceholders = true
-            ),
-            pagingSourceFactory = { kalimaatDao.getEntriesByType(type) }
+            pagingSourceFactory = { kalimaatDao.searchEntries(searchQuery, type) }
         ).flow
     }
 

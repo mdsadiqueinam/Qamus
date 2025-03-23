@@ -31,8 +31,8 @@ interface KalimaatDao {
     /**
      * Search for dictionary entries by huroof (word) as a PagingSource for pagination.
      */
-    @Query("SELECT * FROM kalimaat WHERE huroof LIKE '%' || :searchQuery || '%' ORDER BY huroof ASC")
-    fun searchEntries(searchQuery: String): PagingSource<Int, Kalimaat>
+    @Query("SELECT * FROM kalimaat WHERE (huroof LIKE '%' || :searchQuery || '%') AND (:type IS NOT NULL OR type = :type) ORDER BY huroof ASC")
+    fun searchEntries(searchQuery: String, type: WordType?): PagingSource<Int, Kalimaat>
 
     /**
      * Get all entries of a specific type as a PagingSource for pagination.

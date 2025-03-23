@@ -8,10 +8,12 @@ import androidx.paging.cachedIn
 import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
 /**
@@ -27,63 +29,32 @@ data class KalimaatUIState(
  */
 class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel() {
 
-    // State for entries
-    private var _entries: Flow<PagingData<Kalimaat>>? = null
-
     // Combined UI state for search and filter
     private val _uiState = MutableStateFlow(KalimaatUIState())
     val uiState: StateFlow<KalimaatUIState> = _uiState.asStateFlow()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val entries = _uiState.flatMapLatest { state ->
+        repository.searchEntries(state.searchQuery, state.selectedType)
+    }.cachedIn(viewModelScope)
+
+
     // State for error messages
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
-
-    init {
-        getEntries()
-    }
-
-    /**
-     * Get all dictionary entries with pagination.
-     */
-    fun getEntries(): Flow<PagingData<Kalimaat>> {
-        val lastResult = _entries
-        if (lastResult != null) {
-            return lastResult
-        }
-
-        val newResult = repository.getEntries()
-            .cachedIn(viewModelScope)
-        _entries = newResult
-        return newResult
-    }
 
     /**
      * Search for dictionary entries with pagination.
      */
     fun searchEntries(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
-        if (query.isBlank()) {
-            return
-        }
-
-        val newResult = repository.searchEntries(query)
-            .cachedIn(viewModelScope)
-        _entries = newResult
     }
 
     /**
      * Filter entries by word type with pagination.
      */
-    fun filterByType(type: WordType?): Flow<PagingData<Kalimaat>> {
+    fun filterByType(type: WordType?) {
         _uiState.value = _uiState.value.copy(selectedType = type)
-        if (type == null) {
-            return getEntries()
-        }
-
-        val newResult = repository.getEntriesByType(type)
-            .cachedIn(viewModelScope)
-        _entries = newResult
-        return newResult
     }
 
     /**
