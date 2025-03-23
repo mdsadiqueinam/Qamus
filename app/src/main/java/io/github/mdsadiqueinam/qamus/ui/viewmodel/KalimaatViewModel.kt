@@ -34,9 +34,12 @@ class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel(
     val uiState: StateFlow<KalimaatUIState> = _uiState.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val entries = _uiState.flatMapLatest { state ->
+    val entries: Flow<PagingData<Kalimaat>> = _uiState.flatMapLatest { state ->
         repository.searchEntries(state.searchQuery, state.selectedType)
     }.cachedIn(viewModelScope)
+
+    // Flow of all entries as a list for dropdowns
+    val allEntriesList: Flow<List<Kalimaat>> = repository.getAllEntriesAsList()
 
 
     // State for error messages

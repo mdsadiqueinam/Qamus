@@ -83,4 +83,11 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     suspend fun deleteEntryById(id: Long) {
         kalimaatDao.deleteEntryById(id)
     }
+
+    /**
+     * Get all dictionary entries as a Flow of List.
+     */
+    fun getAllEntriesAsList(): Flow<List<Kalimaat>> {
+        return kalimaatDao.getAllEntriesAsList()
+    }
 }

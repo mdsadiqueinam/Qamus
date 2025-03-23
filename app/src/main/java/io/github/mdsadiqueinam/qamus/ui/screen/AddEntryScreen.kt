@@ -134,7 +134,7 @@ fun AddEntryScreen(
 
                 // Root ID Dropdown
                 RootIdDropdown(
-                    entries = viewModel.entries.collectAsState().value,
+                    entries = viewModel.allEntriesList.collectAsState(initial = emptyList()).value,
                     selectedEntry = selectedRootEntry,
                     onEntrySelected = { selectedRootEntry = it },
                     modifier = Modifier.fillMaxWidth()

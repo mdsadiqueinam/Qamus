@@ -31,7 +31,7 @@ interface KalimaatDao {
     /**
      * Search for dictionary entries by huroof (word) as a PagingSource for pagination.
      */
-    @Query("SELECT * FROM kalimaat WHERE (huroof LIKE '%' || :searchQuery || '%') AND (:type IS NOT NULL OR type = :type) ORDER BY huroof ASC")
+    @Query("SELECT * FROM kalimaat WHERE (huroof LIKE '%' || :searchQuery || '%') AND (:type IS NULL OR type = :type) ORDER BY huroof ASC")
     fun searchEntries(searchQuery: String, type: WordType?): PagingSource<Int, Kalimaat>
 
     /**
@@ -69,4 +69,10 @@ interface KalimaatDao {
      */
     @Query("DELETE FROM kalimaat WHERE id = :id")
     suspend fun deleteEntryById(id: Long)
+
+    /**
+     * Get all dictionary entries as a Flow of List.
+     */
+    @Query("SELECT * FROM kalimaat ORDER BY huroof ASC")
+    fun getAllEntriesAsList(): Flow<List<Kalimaat>>
 }

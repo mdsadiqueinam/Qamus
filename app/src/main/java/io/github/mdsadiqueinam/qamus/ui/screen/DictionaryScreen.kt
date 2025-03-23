@@ -65,10 +65,8 @@ fun DictionaryScreen(
     val selectedType = uiState.selectedType
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    // State for entries flow
-    val entriesFlow by remember { mutableStateOf<Flow<PagingData<Kalimaat>>>(viewModel.getEntries()) }
-    // Collect as LazyPagingItems (this is a Composable operation)
-    val entries = entriesFlow.collectAsLazyPagingItems()
+    // Collect entries flow from ViewModel as LazyPagingItems
+    val entries = viewModel.entries.collectAsLazyPagingItems()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
