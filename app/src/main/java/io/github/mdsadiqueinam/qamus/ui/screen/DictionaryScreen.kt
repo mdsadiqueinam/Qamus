@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -58,7 +59,8 @@ import kotlinx.coroutines.flow.Flow
 @Composable
 fun DictionaryScreen(
     viewModel: KalimaatViewModel,
-    onAddEntry: () -> Unit
+    onAddEntry: () -> Unit,
+    onEditEntry: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery = uiState.searchQuery
@@ -127,7 +129,8 @@ fun DictionaryScreen(
             // Dictionary entries list
             EntriesList(
                 entries = entries,
-                onDelete = { entry -> viewModel.deleteEntry(entry) }
+                onDelete = { entry -> viewModel.deleteEntry(entry) },
+                onEdit = { entry -> onEditEntry(entry.id) }
             )
         }
     }
@@ -136,7 +139,8 @@ fun DictionaryScreen(
 @Composable
 fun EntriesList(
     entries: LazyPagingItems<Kalimaat>,
-    onDelete: (Kalimaat) -> Unit
+    onDelete: (Kalimaat) -> Unit,
+    onEdit: (Kalimaat) -> Unit
 ) {
     when {
         entries.loadState.refresh is LoadState.Loading -> {
@@ -166,6 +170,7 @@ fun EntriesList(
                         DictionaryEntryItem(
                             entry = entry,
                             onDelete = { onDelete(entry) },
+                            onEdit = { onEdit(entry) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -297,6 +302,7 @@ fun FilterByType(
 fun DictionaryEntryItem(
     entry: Kalimaat,
     onDelete: () -> Unit,
+    onEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -324,8 +330,13 @@ fun DictionaryEntryItem(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                Row {
+                    IconButton(onClick = onEdit) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    }
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    }
                 }
             }
 

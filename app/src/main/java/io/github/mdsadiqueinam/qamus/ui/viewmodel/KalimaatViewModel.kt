@@ -1,10 +1,10 @@
 package io.github.mdsadiqueinam.qamus.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * Data class representing the UI state for the dictionary screen.
@@ -27,7 +28,8 @@ data class KalimaatUIState(
 /**
  * ViewModel for the dictionary screen.
  */
-class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel() {
+@HiltViewModel
+class KalimaatViewModel @Inject constructor(private val repository: KalimaatRepository) : ViewModel() {
 
     // Combined UI state for search and filter
     private val _uiState = MutableStateFlow(KalimaatUIState())
@@ -106,18 +108,5 @@ class KalimaatViewModel(private val repository: KalimaatRepository) : ViewModel(
      */
     fun clearError() {
         _errorMessage.value = null
-    }
-
-    /**
-     * Factory for creating DictionaryViewModel instances.
-     */
-    class Factory(private val repository: KalimaatRepository) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(KalimaatViewModel::class.java)) {
-                return KalimaatViewModel(repository) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
-        }
     }
 }

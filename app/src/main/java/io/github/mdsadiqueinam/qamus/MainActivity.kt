@@ -9,44 +9,39 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import io.github.mdsadiqueinam.qamus.data.database.QamusDatabase
-import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
+import androidx.navigation.navArgument
+import dagger.hilt.android.AndroidEntryPoint
 import io.github.mdsadiqueinam.qamus.ui.screen.AddEntryScreen
 import io.github.mdsadiqueinam.qamus.ui.screen.DictionaryScreen
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
-import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaatViewModel
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Initialize the database
-        val database = QamusDatabase.getDatabase(this)
-        val repository = KalimaatRepository(database.dictionaryDao())
-        val viewModelFactory = KalimaatViewModel.Factory(repository)
-
         setContent {
             QamusTheme {
-                QamusApp(viewModelFactory)
+                QamusApp()
             }
         }
     }
 }
 
 @Composable
-fun QamusApp(viewModelFactory: KalimaatViewModel.Factory) {
+fun QamusApp() {
     val navController = rememberNavController()
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         QamusNavHost(
             navController = navController,
-            viewModelFactory = viewModelFactory,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -55,28 +50,45 @@ fun QamusApp(viewModelFactory: KalimaatViewModel.Factory) {
 @Composable
 fun QamusNavHost(
     navController: NavHostController,
-    viewModelFactory: KalimaatViewModel.Factory,
     modifier: Modifier = Modifier
 ) {
-    val kalimaatViewModel: KalimaatViewModel = viewModel(factory = viewModelFactory)
-
     NavHost(
         navController = navController,
         startDestination = "dictionary",
         modifier = modifier
     ) {
         composable("dictionary") {
+            val kalimaatViewModel = hiltViewModel<io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaatViewModel>()
+
             DictionaryScreen(
                 viewModel = kalimaatViewModel,
-                onAddEntry = { navController.navigate("add_entry") }
+                onAddEntry = { navController.navigate("add_entry") },
+                onEditEntry = { entryId -> navController.navigate("add_entry/$entryId") }
             )
         }
 
-        composable("add_entry") {
+        composable(
+            route = "add_entry/{entryId}",
+            arguments = listOf(
+                navArgument("entryId") {
+                    type = NavType.LongType
+                    defaultValue = -1L
+                }
+            )
+        ) {
+            val addEntryViewModel = hiltViewModel<io.github.mdsadiqueinam.qamus.ui.viewmodel.AddEntryViewModel>()
+
             AddEntryScreen(
-                viewModel = kalimaatViewModel,
+                viewModel = addEntryViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+
+        // Redirect old route to new route with default ID
+        composable("add_entry") {
+            navController.navigate("add_entry/-1") {
+                popUpTo("add_entry") { inclusive = true }
+            }
         }
     }
 }

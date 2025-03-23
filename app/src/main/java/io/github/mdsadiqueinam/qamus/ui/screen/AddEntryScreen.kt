@@ -38,22 +38,25 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
 import io.github.mdsadiqueinam.qamus.data.model.WordType
-import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaatViewModel
+import io.github.mdsadiqueinam.qamus.ui.viewmodel.AddEntryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEntryScreen(
-    viewModel: KalimaatViewModel,
+    viewModel: AddEntryViewModel,
     onNavigateBack: () -> Unit
 ) {
-    var kalima by remember { mutableStateOf("") }
-    var meaning by remember { mutableStateOf("") }
-    var desc by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf(WordType.ISM) }
-    var selectedRootEntry by remember { mutableStateOf<Kalimaat?>(null) }
-
+    val uiState by viewModel.uiState.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val entries by viewModel.allEntriesList.collectAsState(initial = emptyList())
+
+    // Find the selected root entry from the entries list
+    val selectedRootEntry = remember(entries, uiState.rootId) {
+        uiState.rootId?.let { rootId ->
+            entries.find { it.id == rootId }
+        }
+    }
 
     // Show error message in snackbar
     LaunchedEffect(errorMessage) {
@@ -68,7 +71,7 @@ fun AddEntryScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = "Add New Entry",
+                        text = if (uiState.isEditMode) "Edit Entry" else "Add New Entry",
                         modifier = Modifier.fillMaxWidth()
                     )
                 },
@@ -90,73 +93,82 @@ fun AddEntryScreen(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Arabic Word
-                OutlinedTextField(
-                    value = kalima,
-                    onValueChange = { kalima = it },
-                    label = { Text("Arabic Word (kalima)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Meaning
-                OutlinedTextField(
-                    value = meaning,
-                    onValueChange = { meaning = it },
-                    label = { Text("Meaning") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Description
-                OutlinedTextField(
-                    value = desc,
-                    onValueChange = { desc = it },
-                    label = { Text("Description") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Word Type
-                WordTypeDropdown(
-                    selectedType = type,
-                    onTypeSelected = { type = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Root ID Dropdown
-                RootIdDropdown(
-                    entries = viewModel.allEntriesList.collectAsState(initial = emptyList()).value,
-                    selectedEntry = selectedRootEntry,
-                    onEntrySelected = { selectedRootEntry = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Save Button
-                Button(
-                    onClick = {
-                        viewModel.addEntry(kalima, meaning, desc, type, selectedRootEntry?.id)
-                        if (errorMessage == null) {
-                            onNavigateBack()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                // Show loading indicator if loading
+                if (uiState.isLoading) {
                     Text(
-                        text = "Save Entry",
-                        textAlign = TextAlign.Center,
+                        text = "Loading...",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    // Arabic Word
+                    OutlinedTextField(
+                        value = uiState.huroof,
+                        onValueChange = { viewModel.updateHuroof(it) },
+                        label = { Text("Arabic Word (kalima)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Meaning
+                    OutlinedTextField(
+                        value = uiState.meaning,
+                        onValueChange = { viewModel.updateMeaning(it) },
+                        label = { Text("Meaning") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Description
+                    OutlinedTextField(
+                        value = uiState.desc,
+                        onValueChange = { viewModel.updateDesc(it) },
+                        label = { Text("Description") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Word Type
+                    WordTypeDropdown(
+                        selectedType = uiState.type,
+                        onTypeSelected = { viewModel.updateType(it) },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Root ID Dropdown
+                    RootIdDropdown(
+                        entries = entries,
+                        selectedEntry = selectedRootEntry,
+                        onEntrySelected = { entry -> viewModel.updateRootId(entry?.id) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Save Button
+                    Button(
+                        onClick = {
+                            viewModel.saveEntry()
+                            if (errorMessage == null) {
+                                onNavigateBack()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = if (uiState.isEditMode) "Update Entry" else "Save Entry",
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
