@@ -4,10 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
+import io.github.mdsadiqueinam.qamus.ui.navigation.QamusDestinations
 import io.github.mdsadiqueinam.qamus.ui.screen.AddEntryScreen
 import io.github.mdsadiqueinam.qamus.ui.screen.DictionaryScreen
 import io.github.mdsadiqueinam.qamus.ui.screen.KalimaDetailsScreen
@@ -22,28 +21,23 @@ fun QamusNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "dictionary",
+        startDestination = QamusDestinations.Dictionary.route,
         modifier = modifier
     ) {
-        composable("dictionary") {
+        composable(QamusDestinations.Dictionary.route) {
             val kalimaatViewModel = hiltViewModel<KalimaatViewModel>()
 
             DictionaryScreen(
                 viewModel = kalimaatViewModel,
-                onAddEntry = { navController.navigate("add_entry/-1") },
-                onEditEntry = { entryId -> navController.navigate("add_entry/$entryId") },
-                onViewDetails = { entryId -> navController.navigate("kalima_details/$entryId") }
+                onAddEntry = { navController.navigate(QamusDestinations.AddEntry.createRoute()) },
+                onEditEntry = { entryId -> navController.navigate(QamusDestinations.AddEntry.createRoute(entryId)) },
+                onViewDetails = { entryId -> navController.navigate(QamusDestinations.KalimaDetails.createRoute(entryId)) }
             )
         }
 
         composable(
-            route = "add_entry/{entryId}",
-            arguments = listOf(
-                navArgument("entryId") {
-                    type = NavType.LongType
-                    defaultValue = -1L
-                }
-            )
+            route = QamusDestinations.AddEntry.routeWithArgs,
+            arguments = QamusDestinations.AddEntry.arguments
         ) {
             val addEntryViewModel = hiltViewModel<AddEntryViewModel>()
 
@@ -54,20 +48,16 @@ fun QamusNavHost(
         }
 
         composable(
-            route = "kalima_details/{entryId}",
-            arguments = listOf(
-                navArgument("entryId") {
-                    type = NavType.LongType
-                }
-            )
+            route = QamusDestinations.KalimaDetails.routeWithArgs,
+            arguments = QamusDestinations.KalimaDetails.arguments
         ) {
             val kalimaDetailsViewModel = hiltViewModel<KalimaDetailsViewModel>()
 
             KalimaDetailsScreen(
                 viewModel = kalimaDetailsViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onEditEntry = { entryId -> navController.navigate("add_entry/$entryId") },
-                onViewDetails = { entryId -> navController.navigate("kalima_details/$entryId") }
+                onEditEntry = { entryId -> navController.navigate(QamusDestinations.AddEntry.createRoute(entryId)) },
+                onViewDetails = { entryId -> navController.navigate(QamusDestinations.KalimaDetails.createRoute(entryId)) }
             )
         }
     }
