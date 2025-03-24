@@ -7,11 +7,14 @@ import io.github.mdsadiqueinam.qamus.data.dao.KalimaatDao
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Repository for accessing dictionary data.
  */
-class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
+@Singleton
+class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDao) {
 
     // Default page size for pagination
     private val defaultPageSize = 20

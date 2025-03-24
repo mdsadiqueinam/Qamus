@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import io.github.mdsadiqueinam.qamus.data.dao.KalimaatDao
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
+import io.github.mdsadiqueinam.qamus.service.KalimaReminderScheduler
 import javax.inject.Singleton
 
 /**
@@ -32,7 +33,7 @@ object RepositoryModule {
      */
     @Provides
     @Singleton
-    fun provideSettingsRepository(@ApplicationContext context: Context): SettingsRepository {
-        return SettingsRepository(context)
+    fun provideSettingsRepository(@ApplicationContext context: Context, scheduler: KalimaReminderScheduler): SettingsRepository {
+        return SettingsRepository(context, scheduler)
     }
 }
