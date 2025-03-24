@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -22,7 +21,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
@@ -47,6 +45,7 @@ import io.github.mdsadiqueinam.qamus.ui.viewmodel.SettingsViewModel
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,37 +79,26 @@ fun SettingsScreen(
                 TextButton(onClick = { viewModel.hideResetConfirmation() }) {
                     Text("Cancel")
                 }
-            }
-        )
+            })
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        text = "Settings",
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { viewModel.navigateBack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.showResetConfirmation() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Reset Settings")
-                    }
-                }
+    Scaffold(topBar = {
+        TopAppBar(title = {
+            Text(
+                text = "Settings", modifier = Modifier.fillMaxWidth()
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
+        }, navigationIcon = {
+            IconButton(onClick = { viewModel.navigateBack() }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+        }, actions = {
+            IconButton(onClick = { viewModel.showResetConfirmation() }) {
+                Icon(Icons.Default.Refresh, contentDescription = "Reset Settings")
+            }
+        })
+    }, snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(
@@ -121,9 +109,7 @@ fun SettingsScreen(
                     settings = uiState.settings,
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
                     onBackupClicked = { viewModel.performBackup() },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
+                    modifier = Modifier.fillMaxSize().padding(16.dp)
                 )
             }
         }
@@ -146,59 +132,46 @@ fun SettingsContent(
             description = "Set how often you want to be reminded to backup your dictionary",
             content = {
                 ReminderIntervalSetting(
-                    currentInterval = settings.reminderInterval,
-                    onIntervalChanged = onReminderIntervalChanged
+                    currentInterval = settings.reminderInterval, onIntervalChanged = onReminderIntervalChanged
                 )
-            }
-        )
+            })
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Backup Setting
         SettingCard(
-            title = "Backup",
-            description = "Backup your dictionary to prevent data loss",
-            content = {
+            title = "Backup", description = "Backup your dictionary to prevent data loss", content = {
                 BackupSetting(
                     lastBackupAt = settings.lastBackupAt,
                     lastBackupVersion = settings.lastBackupVersion,
                     onBackupClicked = onBackupClicked
                 )
-            }
-        )
+            })
     }
 }
 
 @Composable
 fun SettingCard(
-    title: String,
-    description: String,
-    content: @Composable () -> Unit,
-    modifier: Modifier = Modifier
+    title: String, description: String, content: @Composable () -> Unit, modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                text = title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(4.dp))
-            
+
             Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium
+                text = description, style = MaterialTheme.typography.bodyMedium
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             content()
         }
     }
@@ -206,55 +179,51 @@ fun SettingCard(
 
 @Composable
 fun ReminderIntervalSetting(
-    currentInterval: Long,
-    onIntervalChanged: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    currentInterval: Long, onIntervalChanged: (Long) -> Unit, modifier: Modifier = Modifier
 ) {
-    // Convert milliseconds to hours for the slider
-    val currentHours = currentInterval / (1000 * 60 * 60)
-    
-    // Slider state (in hours)
-    var sliderPosition by remember(currentHours) { 
-        mutableFloatStateOf(currentHours.toFloat()) 
+    // Convert milliseconds to minutes for the slider
+    val currentMinutes = currentInterval / (1000 * 60)
+    val valueRange = 10f..180f
+    val step = 10
+    val steps = ((valueRange.endInclusive - valueRange.start) / step).toInt()
+
+    // Slider state (in minutes)
+    var sliderPosition by remember(currentMinutes) {
+        mutableFloatStateOf(currentMinutes.toFloat())
     }
-    
+
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "Remind every ${sliderPosition.toInt()} hours",
+            text = "Remind every ${formatTime(sliderPosition)} minutes",
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Slider(
-            value = sliderPosition,
-            onValueChange = { sliderPosition = it },
-            onValueChangeFinished = {
-                // Convert hours back to milliseconds
-                val intervalMs = (sliderPosition.toLong() * 60 * 60 * 1000)
-                onIntervalChanged(intervalMs)
-            },
-            valueRange = 1f..72f,
-            steps = 71,
-            modifier = Modifier.fillMaxWidth()
+            value = sliderPosition, onValueChange = {
+            val snappedValue = ((it / step).roundToInt() * step).toFloat()
+            sliderPosition = snappedValue.coerceIn(valueRange)
+        }, onValueChangeFinished = {
+            // Convert minutes back to milliseconds
+            val intervalMs = (sliderPosition.toLong() * 60 * 1000)
+            onIntervalChanged(intervalMs)
+        }, valueRange = valueRange, steps = steps - 1, modifier = Modifier.fillMaxWidth()
         )
-        
+
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "1h",
-                style = MaterialTheme.typography.bodySmall
+                text = "10m", style = MaterialTheme.typography.bodySmall
             )
-            
+
             Spacer(modifier = Modifier.weight(1f))
-            
+
             Text(
-                text = "72h",
-                style = MaterialTheme.typography.bodySmall
+                text = "3h", style = MaterialTheme.typography.bodySmall
             )
         }
     }
@@ -262,31 +231,37 @@ fun ReminderIntervalSetting(
 
 @Composable
 fun BackupSetting(
-    lastBackupAt: Instant?,
-    lastBackupVersion: Long,
-    onBackupClicked: () -> Unit,
-    modifier: Modifier = Modifier
+    lastBackupAt: Instant?, lastBackupVersion: Long, onBackupClicked: () -> Unit, modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         // Last backup info
         if (lastBackupAt != null) {
             val localDateTime = lastBackupAt.toLocalDateTime(TimeZone.currentSystemDefault())
             val formattedDate = "${localDateTime.date} ${localDateTime.time}"
-            
+
             Text(
-                text = "Last backup: $formattedDate (v$lastBackupVersion)",
-                style = MaterialTheme.typography.bodyMedium
+                text = "Last backup: $formattedDate (v$lastBackupVersion)", style = MaterialTheme.typography.bodyMedium
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
         }
-        
+
         // Backup button
         Button(
-            onClick = onBackupClicked,
-            modifier = Modifier.align(Alignment.End)
+            onClick = onBackupClicked, modifier = Modifier.align(Alignment.End)
         ) {
             Text("Backup Now")
         }
+    }
+}
+
+fun formatTime(minutes: Float): String {
+    val hours = (minutes / 60).toInt()
+    val mins = (minutes % 60).toInt()
+
+    return if (hours > 0) {
+        "$hours hours $mins minutes"
+    } else {
+        "$mins minutes"
     }
 }
