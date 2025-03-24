@@ -104,4 +104,11 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     suspend fun getEntriesByRootId(rootId: Long): List<Kalima> {
         return kalimaatDao.getEntriesByRootId(rootId)
     }
+
+    /**
+     * Get a random entry from the kalimaat table.
+     */
+    suspend fun getRandomEntry(): Kalima? {
+        return kalimaatDao.getRandomEntry()
+    }
 }

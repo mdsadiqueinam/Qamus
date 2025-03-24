@@ -10,12 +10,13 @@ import kotlinx.datetime.Instant
  * @property lastBackupVersion The version of the last backup
  */
 data class Settings(
-    val reminderInterval: Long = DEFAULT_REMINDER_INTERVAL,
+    val reminderInterval: Int = DEFAULT_REMINDER_INTERVAL,
     val lastBackupAt: Instant? = null,
-    val lastBackupVersion: Long = 0
+    val lastBackupVersion: Long = 0,
+    val isReminderEnabled: Boolean = true
 ) {
     companion object {
-        // Default reminder interval: 24 hours in milliseconds
-        const val DEFAULT_REMINDER_INTERVAL: Long = 24 * 60 * 60 * 1000
+        // Default reminder interval: 60m minutes
+        const val DEFAULT_REMINDER_INTERVAL: Int = 60
     }
 }

@@ -1,5 +1,6 @@
 package io.github.mdsadiqueinam.qamus.ui.screen
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -109,6 +111,7 @@ fun SettingsScreen(
                     settings = uiState.settings,
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
                     onBackupClicked = { viewModel.performBackup() },
+                    onReminderStateChanged = { viewModel.updateReminderState(it) },
                     modifier = Modifier.fillMaxSize().padding(16.dp)
                 )
             }
@@ -119,24 +122,28 @@ fun SettingsScreen(
 @Composable
 fun SettingsContent(
     settings: Settings,
-    onReminderIntervalChanged: (Long) -> Unit,
+    onReminderIntervalChanged: (Int) -> Unit,
     onBackupClicked: () -> Unit,
+    onReminderStateChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState())
+        modifier = modifier.verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Reminder Interval Setting
         SettingCard(
             title = "Reminder Interval",
             description = "Set how often you want to be reminded to backup your dictionary",
             content = {
-                ReminderIntervalSetting(
-                    currentInterval = settings.reminderInterval, onIntervalChanged = onReminderIntervalChanged
+                ReminderSetting(
+                    currentInterval = settings.reminderInterval,
+                    onIntervalChanged = onReminderIntervalChanged,
+                    isEnabledReminder = settings.isReminderEnabled,
+                    onReminderStateChanged = onReminderStateChanged
                 )
-            })
-
-        Spacer(modifier = Modifier.height(16.dp))
+            }
+        )
 
         // Backup Setting
         SettingCard(
@@ -146,7 +153,10 @@ fun SettingsContent(
                     lastBackupVersion = settings.lastBackupVersion,
                     onBackupClicked = onBackupClicked
                 )
-            })
+            }
+        )
+
+        // Reminder enable or disable settings
     }
 }
 
@@ -178,18 +188,20 @@ fun SettingCard(
 }
 
 @Composable
-fun ReminderIntervalSetting(
-    currentInterval: Long, onIntervalChanged: (Long) -> Unit, modifier: Modifier = Modifier
+fun ReminderSetting(
+    currentInterval: Int,
+    onIntervalChanged: (Int) -> Unit,
+    isEnabledReminder: Boolean,
+    onReminderStateChanged: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    // Convert milliseconds to minutes for the slider
-    val currentMinutes = currentInterval / (1000 * 60)
     val valueRange = 10f..180f
     val step = 10
     val steps = ((valueRange.endInclusive - valueRange.start) / step).toInt()
 
     // Slider state (in minutes)
-    var sliderPosition by remember(currentMinutes) {
-        mutableFloatStateOf(currentMinutes.toFloat())
+    var sliderPosition by remember(currentInterval) {
+        mutableFloatStateOf(currentInterval.toFloat())
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -204,13 +216,12 @@ fun ReminderIntervalSetting(
 
         Slider(
             value = sliderPosition, onValueChange = {
-            val snappedValue = ((it / step).roundToInt() * step).toFloat()
-            sliderPosition = snappedValue.coerceIn(valueRange)
-        }, onValueChangeFinished = {
-            // Convert minutes back to milliseconds
-            val intervalMs = (sliderPosition.toLong() * 60 * 1000)
-            onIntervalChanged(intervalMs)
-        }, valueRange = valueRange, steps = steps - 1, modifier = Modifier.fillMaxWidth()
+                val snappedValue = ((it / step).roundToInt() * step).toFloat()
+                sliderPosition = snappedValue.coerceIn(valueRange)
+            }, onValueChangeFinished = {
+                // Convert minutes back to milliseconds
+                onIntervalChanged(sliderPosition.toInt())
+            }, valueRange = valueRange, steps = steps - 1, modifier = Modifier.fillMaxWidth()
         )
 
         Row(
@@ -224,6 +235,24 @@ fun ReminderIntervalSetting(
 
             Text(
                 text = "3h", style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Reminder enable or disable settings
+        Row(
+            modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Enable Reminder", style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Switch(
+                checked = isEnabledReminder,
+                onCheckedChange = onReminderStateChanged
             )
         }
     }

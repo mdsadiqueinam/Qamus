@@ -64,12 +64,26 @@ class SettingsViewModel @Inject constructor(
     /**
      * Update the reminder interval.
      */
-    fun updateReminderInterval(interval: Long) {
+    fun updateReminderInterval(interval: Int) {
         viewModelScope.launch {
             try {
                 repository.updateReminderInterval(interval)
             } catch (e: Exception) {
                 _errorMessage.value = "Error updating reminder interval: ${e.message}"
+            }
+        }
+    }
+
+    /**
+     * Update the reminder state.
+     * disable or enable the reminder.
+     */
+    fun updateReminderState(isEnabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                repository.setReminderEnabled(isEnabled)
+            } catch (e: Exception) {
+                _errorMessage.value = "Error updating reminder state: ${e.message}"
             }
         }
     }

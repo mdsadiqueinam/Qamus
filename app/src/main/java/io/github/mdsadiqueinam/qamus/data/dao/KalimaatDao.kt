@@ -87,4 +87,10 @@ interface KalimaatDao {
      */
     @Query("SELECT * FROM kalimaat WHERE rootId = :rootId ORDER BY huroof ASC")
     suspend fun getEntriesByRootId(rootId: Long): List<Kalima>
-}
+
+    /**
+     * Get a random entry from the kalimaat table.
+     */
+    @Query("SELECT * FROM kalimaat ORDER BY RANDOM() LIMIT 1")
+    suspend fun getRandomEntry(): Kalima?
+    }
