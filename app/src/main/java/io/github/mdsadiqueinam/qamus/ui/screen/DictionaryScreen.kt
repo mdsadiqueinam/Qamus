@@ -127,8 +127,6 @@ fun DictionaryScreen(
             // Dictionary entries list
             EntriesList(
                 entries = entries,
-                onDelete = { entry -> viewModel.deleteEntry(entry) },
-                onEdit = { entry -> viewModel.navigateToEditEntry(entry.id) },
                 onViewDetails = { entry -> viewModel.navigateToKalimaDetails(entry.id) }
             )
         }
@@ -138,8 +136,6 @@ fun DictionaryScreen(
 @Composable
 fun EntriesList(
     entries: LazyPagingItems<Kalimaat>,
-    onDelete: (Kalimaat) -> Unit,
-    onEdit: (Kalimaat) -> Unit,
     onViewDetails: (Kalimaat) -> Unit
 ) {
     when {
@@ -169,8 +165,6 @@ fun EntriesList(
                     if (entry != null) {
                         DictionaryEntryItem(
                             entry = entry,
-                            onDelete = { onDelete(entry) },
-                            onEdit = { onEdit(entry) },
                             onViewDetails = { onViewDetails(entry) },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -302,8 +296,6 @@ fun FilterByType(
 @Composable
 fun DictionaryEntryItem(
     entry: Kalimaat,
-    onDelete: () -> Unit,
-    onEdit: () -> Unit,
     onViewDetails: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -316,33 +308,18 @@ fun DictionaryEntryItem(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = entry.huroof,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text(
-                        text = entry.meaning,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Row {
-                    IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit Entry")
-                    }
-                    IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete Entry")
-                    }
-                }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = entry.huroof,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = entry.meaning,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))

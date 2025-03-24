@@ -66,20 +66,6 @@ class KalimaatViewModel @Inject constructor(
     }
 
     /**
-     * Delete a dictionary entry.
-     */
-    fun deleteEntry(entry: Kalimaat) {
-        viewModelScope.launch {
-            try {
-                repository.deleteEntry(entry)
-                // No need to call loadEntries() as the paging library will handle updates
-            } catch (e: Exception) {
-                _errorMessage.value = "Error deleting entry: ${e.message}"
-            }
-        }
-    }
-
-    /**
      * Clear error message.
      */
     fun clearError() {
@@ -92,16 +78,6 @@ class KalimaatViewModel @Inject constructor(
     fun navigateToAddEntry() {
         viewModelScope.launch {
             navigator.navigateToAddEntry()
-        }
-    }
-
-    /**
-     * Navigate to edit entry screen
-     * @param entryId The ID of the entry to edit
-     */
-    fun navigateToEditEntry(entryId: Long) {
-        viewModelScope.launch {
-            navigator.navigateToAddEntry(entryId)
         }
     }
 
