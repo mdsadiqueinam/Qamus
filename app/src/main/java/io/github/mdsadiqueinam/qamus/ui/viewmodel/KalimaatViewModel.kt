@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
+import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,10 @@ data class KalimaatUIState(
  * ViewModel for the dictionary screen.
  */
 @HiltViewModel
-class KalimaatViewModel @Inject constructor(private val repository: KalimaatRepository) : ViewModel() {
+class KalimaatViewModel @Inject constructor(
+    private val repository: KalimaatRepository,
+    private val navigator: QamusNavigator
+) : ViewModel() {
 
     // Combined UI state for search and filter
     private val _uiState = MutableStateFlow(KalimaatUIState())
@@ -42,7 +46,6 @@ class KalimaatViewModel @Inject constructor(private val repository: KalimaatRepo
 
     // Flow of all entries as a list for dropdowns
     val allEntriesList: Flow<List<Kalimaat>> = repository.getAllEntriesAsList()
-
 
     // State for error messages
     private val _errorMessage = MutableStateFlow<String?>(null)
@@ -81,5 +84,34 @@ class KalimaatViewModel @Inject constructor(private val repository: KalimaatRepo
      */
     fun clearError() {
         _errorMessage.value = null
+    }
+
+    /**
+     * Navigate to add entry screen
+     */
+    fun navigateToAddEntry() {
+        viewModelScope.launch {
+            navigator.navigateToAddEntry()
+        }
+    }
+
+    /**
+     * Navigate to edit entry screen
+     * @param entryId The ID of the entry to edit
+     */
+    fun navigateToEditEntry(entryId: Long) {
+        viewModelScope.launch {
+            navigator.navigateToAddEntry(entryId)
+        }
+    }
+
+    /**
+     * Navigate to kalima details screen
+     * @param entryId The ID of the entry to view
+     */
+    fun navigateToKalimaDetails(entryId: Long) {
+        viewModelScope.launch {
+            navigator.navigateToKalimaDetails(entryId)
+        }
     }
 }

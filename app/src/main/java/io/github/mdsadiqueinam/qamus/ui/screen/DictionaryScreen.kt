@@ -58,10 +58,7 @@ import kotlinx.coroutines.flow.Flow
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DictionaryScreen(
-    viewModel: KalimaatViewModel,
-    onAddEntry: () -> Unit,
-    onEditEntry: (Long) -> Unit,
-    onViewDetails: (Long) -> Unit
+    viewModel: KalimaatViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery = uiState.searchQuery
@@ -94,7 +91,7 @@ fun DictionaryScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddEntry) {
+            FloatingActionButton(onClick = { viewModel.navigateToAddEntry() }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Entry")
             }
         }
@@ -131,8 +128,8 @@ fun DictionaryScreen(
             EntriesList(
                 entries = entries,
                 onDelete = { entry -> viewModel.deleteEntry(entry) },
-                onEdit = { entry -> onEditEntry(entry.id) },
-                onViewDetails = { entry -> onViewDetails(entry.id) }
+                onEdit = { entry -> viewModel.navigateToEditEntry(entry.id) },
+                onViewDetails = { entry -> viewModel.navigateToKalimaDetails(entry.id) }
             )
         }
     }
@@ -319,18 +316,33 @@ fun DictionaryEntryItem(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = entry.huroof,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    text = entry.meaning,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = entry.huroof,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text = entry.meaning,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Row {
+                    IconButton(onClick = onEdit) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Entry")
+                    }
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete Entry")
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))

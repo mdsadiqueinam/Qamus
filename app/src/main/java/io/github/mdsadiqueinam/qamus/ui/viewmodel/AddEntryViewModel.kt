@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
+import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +35,8 @@ data class AddEntryUIState(
 @HiltViewModel
 class AddEntryViewModel @Inject constructor(
     private val repository: KalimaatRepository,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val navigator: QamusNavigator
 ) : ViewModel() {
 
     // UI state for the form
@@ -159,5 +161,24 @@ class AddEntryViewModel @Inject constructor(
      */
     fun clearError() {
         _errorMessage.value = null
+    }
+
+    /**
+     * Navigate back to the previous screen
+     */
+    fun navigateBack() {
+        viewModelScope.launch {
+            navigator.navigateBack()
+        }
+    }
+
+    /**
+     * Save the entry and navigate back if successful
+     */
+    fun saveEntryAndNavigateBack() {
+        saveEntry()
+        if (_errorMessage.value == null) {
+            navigateBack()
+        }
     }
 }

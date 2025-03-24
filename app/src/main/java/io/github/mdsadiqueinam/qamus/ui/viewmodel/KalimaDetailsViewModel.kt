@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
+import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,7 +29,8 @@ data class KalimaDetailsUIState(
 @HiltViewModel
 class KalimaDetailsViewModel @Inject constructor(
     private val repository: KalimaatRepository,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val navigator: QamusNavigator
 ) : ViewModel() {
 
     // UI state for the details screen
@@ -105,7 +107,7 @@ class KalimaDetailsViewModel @Inject constructor(
     }
 
     /**
-     * Delete the current entry.
+     * Delete the current entry and navigate back.
      */
     fun deleteEntry() {
         val entry = _uiState.value.entry ?: return
@@ -113,10 +115,39 @@ class KalimaDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 repository.deleteEntry(entry)
-                // Navigate back will be handled by the UI
+                navigator.navigateBack()
             } catch (e: Exception) {
                 _errorMessage.value = "Error deleting entry: ${e.message}"
             }
+        }
+    }
+
+    /**
+     * Navigate back to the previous screen
+     */
+    fun navigateBack() {
+        viewModelScope.launch {
+            navigator.navigateBack()
+        }
+    }
+
+    /**
+     * Navigate to edit entry screen
+     * @param entryId The ID of the entry to edit
+     */
+    fun navigateToEditEntry(entryId: Long) {
+        viewModelScope.launch {
+            navigator.navigateToAddEntry(entryId)
+        }
+    }
+
+    /**
+     * Navigate to kalima details screen
+     * @param entryId The ID of the entry to view
+     */
+    fun navigateToKalimaDetails(entryId: Long) {
+        viewModelScope.launch {
+            navigator.navigateToKalimaDetails(entryId)
         }
     }
 }

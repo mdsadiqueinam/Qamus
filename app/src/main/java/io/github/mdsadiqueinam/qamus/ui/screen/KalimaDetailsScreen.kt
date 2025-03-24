@@ -47,10 +47,7 @@ import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaDetailsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KalimaDetailsScreen(
-    viewModel: KalimaDetailsViewModel,
-    onNavigateBack: () -> Unit,
-    onEditEntry: (Long) -> Unit,
-    onViewDetails: (Long) -> Unit
+    viewModel: KalimaDetailsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
@@ -74,17 +71,14 @@ fun KalimaDetailsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = { viewModel.navigateBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     uiState.entry?.let { entry ->
                         IconButton(
-                            onClick = { 
-                                viewModel.deleteEntry()
-                                onNavigateBack()
-                            }
+                            onClick = { viewModel.deleteEntry() }
                         ) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete Entry")
                         }
@@ -95,7 +89,7 @@ fun KalimaDetailsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             uiState.entry?.let { entry ->
-                FloatingActionButton(onClick = { onEditEntry(entry.id) }) {
+                FloatingActionButton(onClick = { viewModel.navigateToEditEntry(entry.id) }) {
                     Icon(Icons.Default.Edit, contentDescription = "Edit Entry")
                 }
             }
@@ -125,7 +119,7 @@ fun KalimaDetailsScreen(
                         entry = uiState.entry!!,
                         rootEntry = uiState.rootEntry,
                         relatedEntries = uiState.relatedEntries,
-                        onViewDetails = onViewDetails,
+                        onViewDetails = { entryId -> viewModel.navigateToKalimaDetails(entryId) },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(16.dp)

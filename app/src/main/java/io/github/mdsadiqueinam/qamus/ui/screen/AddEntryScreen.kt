@@ -43,8 +43,7 @@ import io.github.mdsadiqueinam.qamus.ui.viewmodel.AddEntryViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEntryScreen(
-    viewModel: AddEntryViewModel,
-    onNavigateBack: () -> Unit
+    viewModel: AddEntryViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
@@ -76,7 +75,7 @@ fun AddEntryScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = { viewModel.navigateBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -155,12 +154,7 @@ fun AddEntryScreen(
 
                     // Save Button
                     Button(
-                        onClick = {
-                            viewModel.saveEntry()
-                            if (errorMessage == null) {
-                                onNavigateBack()
-                            }
-                        },
+                        onClick = { viewModel.saveEntryAndNavigateBack() },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
