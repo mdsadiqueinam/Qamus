@@ -57,4 +57,13 @@ class DashboardViewModel @Inject constructor(
             navigator.navigateToAddEntry()
         }
     }
+
+    /**
+     * Navigate to settings screen
+     */
+    fun navigateToSettings() {
+        viewModelScope.launch {
+            navigator.navigateToSettings()
+        }
+    }
 }

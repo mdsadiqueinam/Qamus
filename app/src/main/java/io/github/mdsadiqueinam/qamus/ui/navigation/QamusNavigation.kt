@@ -14,11 +14,13 @@ import io.github.mdsadiqueinam.qamus.ui.screen.AddEntryScreen
 import io.github.mdsadiqueinam.qamus.ui.screen.DashboardScreen
 import io.github.mdsadiqueinam.qamus.ui.screen.DictionaryScreen
 import io.github.mdsadiqueinam.qamus.ui.screen.KalimaDetailsScreen
+import io.github.mdsadiqueinam.qamus.ui.screen.SettingsScreen
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.AddEntryViewModel
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.DashboardViewModel
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaDetailsViewModel
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaatViewModel
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.NavHostViewModel
+import io.github.mdsadiqueinam.qamus.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -76,6 +78,14 @@ fun QamusNavHost(
 
             KalimaDetailsScreen(
                 viewModel = kalimaDetailsViewModel
+            )
+        }
+
+        composable(QamusDestinations.Settings.route) {
+            val settingsViewModel = hiltViewModel<SettingsViewModel>()
+
+            SettingsScreen(
+                viewModel = settingsViewModel
             )
         }
     }

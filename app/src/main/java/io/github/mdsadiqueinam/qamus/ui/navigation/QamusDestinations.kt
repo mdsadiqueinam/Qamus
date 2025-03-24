@@ -19,6 +19,11 @@ sealed class QamusDestinations(val route: String) {
     object Dictionary : QamusDestinations("dictionary")
 
     /**
+     * Settings screen - screen for managing app settings
+     */
+    object Settings : QamusDestinations("settings")
+
+    /**
      * Add/Edit Entry screen with entryId parameter
      */
     object AddEntry : QamusDestinations("add_entry") {

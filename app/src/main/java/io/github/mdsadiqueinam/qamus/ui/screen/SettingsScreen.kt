@@ -1,0 +1,292 @@
+package io.github.mdsadiqueinam.qamus.ui.screen
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import io.github.mdsadiqueinam.qamus.data.model.Settings
+import io.github.mdsadiqueinam.qamus.ui.viewmodel.SettingsViewModel
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(
+    viewModel: SettingsViewModel
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show error message in snackbar
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+
+    // Reset confirmation dialog
+    if (uiState.showResetConfirmation) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideResetConfirmation() },
+            title = { Text("Reset Settings") },
+            text = { Text("Are you sure you want to reset all settings to default values?") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.resetSettings() }) {
+                    Text("Reset")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hideResetConfirmation() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        text = "Settings",
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { viewModel.navigateBack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.showResetConfirmation() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Reset Settings")
+                    }
+                }
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                SettingsContent(
+                    settings = uiState.settings,
+                    onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
+                    onBackupClicked = { viewModel.performBackup() },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsContent(
+    settings: Settings,
+    onReminderIntervalChanged: (Long) -> Unit,
+    onBackupClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState())
+    ) {
+        // Reminder Interval Setting
+        SettingCard(
+            title = "Reminder Interval",
+            description = "Set how often you want to be reminded to backup your dictionary",
+            content = {
+                ReminderIntervalSetting(
+                    currentInterval = settings.reminderInterval,
+                    onIntervalChanged = onReminderIntervalChanged
+                )
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Backup Setting
+        SettingCard(
+            title = "Backup",
+            description = "Backup your dictionary to prevent data loss",
+            content = {
+                BackupSetting(
+                    lastBackupAt = settings.lastBackupAt,
+                    lastBackupVersion = settings.lastBackupVersion,
+                    onBackupClicked = onBackupClicked
+                )
+            }
+        )
+    }
+}
+
+@Composable
+fun SettingCard(
+    title: String,
+    description: String,
+    content: @Composable () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            content()
+        }
+    }
+}
+
+@Composable
+fun ReminderIntervalSetting(
+    currentInterval: Long,
+    onIntervalChanged: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Convert milliseconds to hours for the slider
+    val currentHours = currentInterval / (1000 * 60 * 60)
+    
+    // Slider state (in hours)
+    var sliderPosition by remember(currentHours) { 
+        mutableFloatStateOf(currentHours.toFloat()) 
+    }
+    
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "Remind every ${sliderPosition.toInt()} hours",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Slider(
+            value = sliderPosition,
+            onValueChange = { sliderPosition = it },
+            onValueChangeFinished = {
+                // Convert hours back to milliseconds
+                val intervalMs = (sliderPosition.toLong() * 60 * 60 * 1000)
+                onIntervalChanged(intervalMs)
+            },
+            valueRange = 1f..72f,
+            steps = 71,
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "1h",
+                style = MaterialTheme.typography.bodySmall
+            )
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            Text(
+                text = "72h",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@Composable
+fun BackupSetting(
+    lastBackupAt: Instant?,
+    lastBackupVersion: Long,
+    onBackupClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        // Last backup info
+        if (lastBackupAt != null) {
+            val localDateTime = lastBackupAt.toLocalDateTime(TimeZone.currentSystemDefault())
+            val formattedDate = "${localDateTime.date} ${localDateTime.time}"
+            
+            Text(
+                text = "Last backup: $formattedDate (v$lastBackupVersion)",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+        
+        // Backup button
+        Button(
+            onClick = onBackupClicked,
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text("Backup Now")
+        }
+    }
+}

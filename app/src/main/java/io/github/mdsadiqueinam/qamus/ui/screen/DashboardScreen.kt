@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -38,7 +39,6 @@ import io.github.mdsadiqueinam.qamus.ui.viewmodel.DashboardViewModel
 fun DashboardScreen(
     viewModel: DashboardViewModel
 ) {
-    val uiState by viewModel.uiState.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -62,6 +62,9 @@ fun DashboardScreen(
                 actions = {
                     IconButton(onClick = { viewModel.navigateToDictionary() }) {
                         Icon(Icons.Default.Search, contentDescription = "Search Dictionary")
+                    }
+                    IconButton(onClick = { viewModel.navigateToSettings() }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 }
             )
@@ -90,30 +93,38 @@ fun DashboardScreen(
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
                     text = "Your Arabic Dictionary App",
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 // Feature cards
                 FeatureCard(
                     title = "Dictionary",
                     description = "Browse and search through Arabic words",
                     onClick = { viewModel.navigateToDictionary() }
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 FeatureCard(
                     title = "Add New Words",
                     description = "Expand your dictionary with new entries",
                     onClick = { viewModel.navigateToAddEntry() }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                FeatureCard(
+                    title = "Settings",
+                    description = "Configure app settings and backup options",
+                    onClick = { viewModel.navigateToSettings() }
                 )
             }
         }
@@ -141,9 +152,9 @@ fun FeatureCard(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodyLarge

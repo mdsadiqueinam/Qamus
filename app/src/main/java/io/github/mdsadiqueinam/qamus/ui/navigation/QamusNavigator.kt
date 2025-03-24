@@ -50,6 +50,18 @@ class QamusNavigator @Inject constructor() {
     }
 
     /**
+     * Navigate to the settings screen
+     */
+    suspend fun navigateToSettings() {
+        _navigationActions.emit(
+            NavigationAction.NavigateTo(
+                QamusDestinations.Settings,
+                QamusDestinations.Settings.route
+            )
+        )
+    }
+
+    /**
      * Navigate to the add entry screen
      * @param entryId The ID of the entry to edit, or -1 to add a new entry
      */
