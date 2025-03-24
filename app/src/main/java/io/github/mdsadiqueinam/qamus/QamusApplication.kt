@@ -15,7 +15,7 @@ import javax.inject.Inject
  * serves as the application-level dependency container.
  */
 @HiltAndroidApp
-class QamusApplication : Application() {
+class QamusApplication() : Application(), Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: KalimaWorkerFactory
@@ -23,14 +23,12 @@ class QamusApplication : Application() {
     @Inject
     lateinit var kalimaReminderScheduler: KalimaReminderScheduler
 
+    override val workManagerConfiguration = Configuration.Builder()
+        .setWorkerFactory(workerFactory)
+        .build()
+
     override fun onCreate() {
         super.onCreate()
-
-        // Initialize WorkManager with our custom factory
-        val config = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
-        WorkManager.initialize(this, config)
 
         // Schedule the Kalima reminder
         kalimaReminderScheduler.startScheduling()
