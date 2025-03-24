@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
+import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
@@ -44,7 +44,7 @@ class AddEntryViewModel @Inject constructor(
     val uiState: StateFlow<AddEntryUIState> = _uiState.asStateFlow()
 
     // Flow of all entries as a list for dropdowns
-    val allEntriesList: Flow<List<Kalimaat>> = repository.getAllEntriesAsList()
+    val allEntriesList: Flow<List<Kalima>> = repository.getAllEntriesAsList()
 
     // State for error messages
     private val _errorMessage = MutableStateFlow<String?>(null)
@@ -130,7 +130,7 @@ class AddEntryViewModel @Inject constructor(
             try {
                 if (state.isEditMode) {
                     // Update existing entry
-                    val entry = Kalimaat(
+                    val entry = Kalima(
                         id = state.id,
                         huroof = state.huroof,
                         meaning = state.meaning,
@@ -141,7 +141,7 @@ class AddEntryViewModel @Inject constructor(
                     repository.updateEntry(entry)
                 } else {
                     // Add new entry
-                    val entry = Kalimaat(
+                    val entry = Kalima(
                         huroof = state.huroof,
                         meaning = state.meaning,
                         desc = state.desc,

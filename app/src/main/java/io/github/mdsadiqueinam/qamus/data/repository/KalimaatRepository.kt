@@ -4,7 +4,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import io.github.mdsadiqueinam.qamus.data.dao.KalimaatDao
-import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
+import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import kotlinx.coroutines.flow.Flow
 
@@ -19,7 +19,7 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     /**
      * Get all dictionary entries with pagination.
      */
-    fun getEntries(): Flow<PagingData<Kalimaat>> {
+    fun getEntries(): Flow<PagingData<Kalima>> {
         return Pager(
             config = PagingConfig(
                 pageSize = defaultPageSize,
@@ -32,21 +32,21 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     /**
      * Get a specific dictionary entry by ID.
      */
-    suspend fun getEntryById(id: Long): Kalimaat? {
+    suspend fun getEntryById(id: Long): Kalima? {
         return kalimaatDao.getEntryById(id)
     }
 
     /**
      * Get multiple dictionary entries by IDs.
      */
-    suspend fun getEntriesByIds(ids: List<Long>): List<Kalimaat> {
+    suspend fun getEntriesByIds(ids: List<Long>): List<Kalima> {
         return kalimaatDao.getEntriesByIds(ids)
     }
 
     /**
      * Search for dictionary entries by huroof or type
      */
-    fun searchEntries(searchQuery: String, type: WordType?): Flow<PagingData<Kalimaat>> {
+    fun searchEntries(searchQuery: String, type: WordType?): Flow<PagingData<Kalima>> {
         return Pager(
             config = PagingConfig(
                 pageSize = defaultPageSize,
@@ -59,28 +59,28 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     /**
      * Insert a new dictionary entry.
      */
-    suspend fun insertEntry(entry: Kalimaat): Long {
+    suspend fun insertEntry(entry: Kalima): Long {
         return kalimaatDao.insertEntry(entry)
     }
 
     /**
      * Insert multiple dictionary entries.
      */
-    suspend fun insertEntries(entries: List<Kalimaat>): List<Long> {
+    suspend fun insertEntries(entries: List<Kalima>): List<Long> {
         return kalimaatDao.insertEntries(entries)
     }
 
     /**
      * Update an existing dictionary entry.
      */
-    suspend fun updateEntry(entry: Kalimaat) {
+    suspend fun updateEntry(entry: Kalima) {
         kalimaatDao.updateEntry(entry)
     }
 
     /**
      * Delete a dictionary entry.
      */
-    suspend fun deleteEntry(entry: Kalimaat) {
+    suspend fun deleteEntry(entry: Kalima) {
         kalimaatDao.deleteEntry(entry)
     }
 
@@ -94,14 +94,14 @@ class KalimaatRepository(private val kalimaatDao: KalimaatDao) {
     /**
      * Get all dictionary entries as a Flow of List.
      */
-    fun getAllEntriesAsList(): Flow<List<Kalimaat>> {
+    fun getAllEntriesAsList(): Flow<List<Kalima>> {
         return kalimaatDao.getAllEntriesAsList()
     }
 
     /**
      * Get entries by rootId.
      */
-    suspend fun getEntriesByRootId(rootId: Long): List<Kalimaat> {
+    suspend fun getEntriesByRootId(rootId: Long): List<Kalima> {
         return kalimaatDao.getEntriesByRootId(rootId)
     }
 }

@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
@@ -48,13 +46,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
-import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
+import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaatViewModel
-import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -141,8 +137,8 @@ fun DictionaryScreen(
 
 @Composable
 fun EntriesList(
-    entries: LazyPagingItems<Kalimaat>,
-    onViewDetails: (Kalimaat) -> Unit
+    entries: LazyPagingItems<Kalima>,
+    onViewDetails: (Kalima) -> Unit
 ) {
     when {
         entries.loadState.refresh is LoadState.Loading -> {
@@ -301,7 +297,7 @@ fun FilterByType(
 
 @Composable
 fun DictionaryEntryItem(
-    entry: Kalimaat,
+    entry: Kalima,
     onViewDetails: () -> Unit,
     modifier: Modifier = Modifier
 ) {

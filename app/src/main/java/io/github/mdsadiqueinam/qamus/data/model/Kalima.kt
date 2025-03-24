@@ -18,14 +18,14 @@ import androidx.room.PrimaryKey
     tableName = "kalimaat",
     foreignKeys = [
         ForeignKey(
-            entity = Kalimaat::class,
+            entity = Kalima::class,
             parentColumns = ["id"],
             childColumns = ["rootId"],
             onDelete = ForeignKey.SET_NULL
         )
     ]
 )
-data class Kalimaat(
+data class Kalima(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val huroof: String,

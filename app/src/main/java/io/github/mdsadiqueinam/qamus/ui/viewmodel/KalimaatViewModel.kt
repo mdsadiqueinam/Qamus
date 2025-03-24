@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
+import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
@@ -40,12 +40,12 @@ class KalimaatViewModel @Inject constructor(
     val uiState: StateFlow<KalimaatUIState> = _uiState.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val entries: Flow<PagingData<Kalimaat>> = _uiState.flatMapLatest { state ->
+    val entries: Flow<PagingData<Kalima>> = _uiState.flatMapLatest { state ->
         repository.searchEntries(state.searchQuery, state.selectedType)
     }.cachedIn(viewModelScope)
 
     // Flow of all entries as a list for dropdowns
-    val allEntriesList: Flow<List<Kalimaat>> = repository.getAllEntriesAsList()
+    val allEntriesList: Flow<List<Kalima>> = repository.getAllEntriesAsList()
 
     // State for error messages
     private val _errorMessage = MutableStateFlow<String?>(null)

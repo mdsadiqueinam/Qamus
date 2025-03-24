@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
+import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,10 +17,10 @@ import javax.inject.Inject
  * Data class representing the UI state for the kalima details screen.
  */
 data class KalimaDetailsUIState(
-    val entry: Kalimaat? = null,
+    val entry: Kalima? = null,
     val isLoading: Boolean = false,
-    val rootEntry: Kalimaat? = null,
-    val relatedEntries: List<Kalimaat> = emptyList()
+    val rootEntry: Kalima? = null,
+    val relatedEntries: List<Kalima> = emptyList()
 )
 
 /**

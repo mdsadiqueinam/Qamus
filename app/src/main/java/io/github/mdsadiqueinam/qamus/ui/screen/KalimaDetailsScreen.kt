@@ -40,7 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
+import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaDetailsViewModel
 
@@ -132,9 +132,9 @@ fun KalimaDetailsScreen(
 
 @Composable
 fun EntryDetails(
-    entry: Kalimaat,
-    rootEntry: Kalimaat?,
-    relatedEntries: List<Kalimaat>,
+    entry: Kalima,
+    rootEntry: Kalima?,
+    relatedEntries: List<Kalima>,
     onViewDetails: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -304,7 +304,7 @@ fun DetailItem(
 
 @Composable
 fun RelatedEntryItem(
-    entry: Kalimaat,
+    entry: Kalima,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {

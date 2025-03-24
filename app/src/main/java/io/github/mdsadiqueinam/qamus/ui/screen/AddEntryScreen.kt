@@ -36,7 +36,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
+import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.AddEntryViewModel
 
@@ -172,9 +172,9 @@ fun AddEntryScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RootIdDropdown(
-    entries: List<Kalimaat>,
-    selectedEntry: Kalimaat?,
-    onEntrySelected: (Kalimaat?) -> Unit,
+    entries: List<Kalima>,
+    selectedEntry: Kalima?,
+    onEntrySelected: (Kalima?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }

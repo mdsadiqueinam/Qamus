@@ -6,13 +6,13 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import io.github.mdsadiqueinam.qamus.data.dao.KalimaatDao
-import io.github.mdsadiqueinam.qamus.data.model.Kalimaat
+import io.github.mdsadiqueinam.qamus.data.model.Kalima
 
 /**
  * Room database for the Qamus application.
  */
 @Database(
-    entities = [Kalimaat::class],
+    entities = [Kalima::class],
     version = 1,
     exportSchema = false
 )
