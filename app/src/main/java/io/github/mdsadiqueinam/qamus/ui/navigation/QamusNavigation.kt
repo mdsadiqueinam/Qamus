@@ -11,9 +11,11 @@ import androidx.navigation.compose.composable
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusDestinations
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import io.github.mdsadiqueinam.qamus.ui.screen.AddEntryScreen
+import io.github.mdsadiqueinam.qamus.ui.screen.DashboardScreen
 import io.github.mdsadiqueinam.qamus.ui.screen.DictionaryScreen
 import io.github.mdsadiqueinam.qamus.ui.screen.KalimaDetailsScreen
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.AddEntryViewModel
+import io.github.mdsadiqueinam.qamus.ui.viewmodel.DashboardViewModel
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaDetailsViewModel
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaatViewModel
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.NavHostViewModel
@@ -36,9 +38,17 @@ fun QamusNavHost(
     }
     NavHost(
         navController = navController,
-        startDestination = QamusDestinations.Dictionary.route,
+        startDestination = QamusDestinations.Dashboard.route,
         modifier = modifier
     ) {
+        composable(QamusDestinations.Dashboard.route) {
+            val dashboardViewModel = hiltViewModel<DashboardViewModel>()
+
+            DashboardScreen(
+                viewModel = dashboardViewModel
+            )
+        }
+
         composable(QamusDestinations.Dictionary.route) {
             val kalimaatViewModel = hiltViewModel<KalimaatViewModel>()
 

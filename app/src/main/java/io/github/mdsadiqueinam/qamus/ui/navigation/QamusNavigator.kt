@@ -26,6 +26,18 @@ class QamusNavigator @Inject constructor() {
     val navigationActions: SharedFlow<NavigationAction> = _navigationActions.asSharedFlow()
 
     /**
+     * Navigate to the dashboard screen
+     */
+    suspend fun navigateToDashboard() {
+        _navigationActions.emit(
+            NavigationAction.NavigateTo(
+                QamusDestinations.Dashboard,
+                QamusDestinations.Dashboard.route
+            )
+        )
+    }
+
+    /**
      * Navigate to the dictionary screen
      */
     suspend fun navigateToDictionary() {

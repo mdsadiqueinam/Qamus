@@ -32,10 +32,9 @@ class MainActivity : ComponentActivity() {
 fun QamusApp() {
     val navController = rememberNavController()
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        QamusNavHost(
-            navController = navController,
-            modifier = Modifier.padding(innerPadding)
-        )
-    }
+    QamusNavHost(
+        navController = navController,
+        modifier = Modifier
+    )
+
 }
