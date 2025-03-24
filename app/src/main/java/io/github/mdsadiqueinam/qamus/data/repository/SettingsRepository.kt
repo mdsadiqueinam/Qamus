@@ -26,7 +26,7 @@ private val Context.settingsDataStore: DataStore<Preferences> by preferencesData
  */
 @Singleton
 class SettingsRepository @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val scheduler: KalimaReminderScheduler
 ) {
     // Define keys for preferences

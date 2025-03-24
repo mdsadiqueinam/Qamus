@@ -18,22 +18,4 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
-
-    /**
-     * Provides the KalimaatRepository instance.
-     */
-    @Provides
-    @Singleton
-    fun provideKalimaatRepository(kalimaatDao: KalimaatDao): KalimaatRepository {
-        return KalimaatRepository(kalimaatDao)
-    }
-
-    /**
-     * Provides the SettingsRepository instance.
-     */
-    @Provides
-    @Singleton
-    fun provideSettingsRepository(@ApplicationContext context: Context, scheduler: KalimaReminderScheduler): SettingsRepository {
-        return SettingsRepository(context, scheduler)
-    }
 }

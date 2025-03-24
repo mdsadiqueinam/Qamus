@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 /**
@@ -22,7 +23,7 @@ import javax.inject.Singleton
 @Singleton
 class KalimaReminderScheduler @Inject constructor(
     private val workManager: WorkManager,
-    private val settingsRepository: SettingsRepository,
+    private val settingsRepositoryProvider: Provider<SettingsRepository>,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -37,7 +38,7 @@ class KalimaReminderScheduler @Inject constructor(
     fun startScheduling() {
         Log.d(TAG, "Starting Kalima reminder scheduling")
         scope.launch {
-            settingsRepository.settings.collectLatest { settings ->
+            settingsRepositoryProvider.get().settings.collectLatest { settings ->
                 Log.d(TAG, "Settings updated, reminderInterval: ${settings.reminderInterval}ms")
                 scheduleWorker(settings.reminderInterval)
             }
