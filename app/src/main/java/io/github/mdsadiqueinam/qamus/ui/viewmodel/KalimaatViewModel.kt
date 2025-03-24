@@ -90,4 +90,13 @@ class KalimaatViewModel @Inject constructor(
             navigator.navigateToKalimaDetails(entryId)
         }
     }
+
+    /**
+     * Navigate back to the previous screen
+     */
+    fun navigateBack() {
+        viewModelScope.launch {
+            navigator.navigateBack()
+        }
+    }
 }
