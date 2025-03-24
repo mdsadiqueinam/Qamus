@@ -5,7 +5,7 @@ import kotlinx.datetime.Instant
 /**
  * Data class representing the application settings.
  *
- * @property reminderInterval The interval in milliseconds between reminders
+ * @property reminderInterval The interval in minutes between reminders
  * @property lastBackupAt The timestamp of the last backup
  * @property lastBackupVersion The version of the last backup
  */
