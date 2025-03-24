@@ -20,6 +20,9 @@ class QamusApplication : Application() {
     @Inject
     lateinit var workerFactory: KalimaWorkerFactory
 
+    @Inject
+    lateinit var kalimaReminderScheduler: KalimaReminderScheduler
+
     override fun onCreate() {
         super.onCreate()
 
@@ -28,5 +31,8 @@ class QamusApplication : Application() {
             .setWorkerFactory(workerFactory)
             .build()
         WorkManager.initialize(this, config)
+
+        // Schedule the Kalima reminder
+        kalimaReminderScheduler.startScheduling()
     }
 }

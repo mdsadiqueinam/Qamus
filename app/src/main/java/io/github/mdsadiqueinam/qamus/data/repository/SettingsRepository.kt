@@ -27,7 +27,6 @@ private val Context.settingsDataStore: DataStore<Preferences> by preferencesData
 @Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val scheduler: KalimaReminderScheduler
 ) {
     // Define keys for preferences
     private object PreferencesKeys {
@@ -83,11 +82,6 @@ class SettingsRepository @Inject constructor(
     suspend fun setReminderEnabled(isEnabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_REMINDER_ENABLED] = isEnabled
-        }
-        if (isEnabled) {
-            scheduler.startScheduling()
-        } else {
-            scheduler.stopScheduling()
         }
     }
 }
