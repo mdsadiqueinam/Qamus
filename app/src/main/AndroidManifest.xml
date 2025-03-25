@@ -43,6 +43,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Service for displaying Kalima overlays -->
+        <service
+            android:name=".service.KalimaOverlayService"
+            android:exported="false" />
     </application>
 
 </manifest>
