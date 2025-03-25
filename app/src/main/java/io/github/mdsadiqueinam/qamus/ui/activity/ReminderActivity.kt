@@ -80,20 +80,8 @@ class ReminderActivity : ComponentActivity() {
                 val isLoading by viewModel.isLoading.collectAsState()
                 val error by viewModel.error.collectAsState()
 
-                kalima?.let { kalimaData ->
-                    KalimaReminderContent(
-                        kalima = kalimaData,
-                        onClose = { finish() },
-                        isLoading = isLoading,
-                        error = error
-                    )
-                } ?: KalimaReminderContent(
-                    kalima = Kalima(
-                        huroof = "",
-                        meaning = "",
-                        desc = "",
-                        type = io.github.mdsadiqueinam.qamus.data.model.WordType.ISM
-                    ), // Placeholder, won't be shown due to loading/error state
+                KalimaReminderContent(
+                    kalima = kalima,
                     onClose = { finish() },
                     isLoading = isLoading,
                     error = error

@@ -2,14 +2,18 @@ package io.github.mdsadiqueinam.qamus.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -38,49 +42,82 @@ import io.github.mdsadiqueinam.qamus.util.checkAnswer
 
 /**
  * Composable function for the Kalima reminder content.
+ * Shows a full screen reminder with the Kalima content.
  */
 @Composable
 fun KalimaReminderContent(
-    kalima: Kalima,
+    kalima: Kalima?,
     onClose: () -> Unit,
     isLoading: Boolean = false,
     error: String? = null
 ) {
-    Surface(
-        modifier = Modifier.padding(16.dp),
-        shape = RoundedCornerShape(8.dp),
-        shadowElevation = 8.dp
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
     ) {
-        Column(
+        Card(
             modifier = Modifier
-                .padding(16.dp)
-                .background(MaterialTheme.colorScheme.surface),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            when {
-                isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-                    Text(
-                        text = stringResource(R.string.loading),
-                        fontSize = 18.sp,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                error != null -> {
-                    Text(
-                        text = error,
-                        fontSize = 18.sp,
-                        color = Color.Red,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedButton(onClick = onClose) {
-                        Text(stringResource(R.string.close))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+                    .background(MaterialTheme.colorScheme.surface),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                when {
+                    isLoading -> {
+                        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                        Text(
+                            text = stringResource(R.string.loading),
+                            fontSize = 20.sp,
+                            textAlign = TextAlign.Center
+                        )
                     }
-                }
-                else -> {
-                    KalimaContent(kalima, onClose)
+                    error != null -> {
+                        Text(
+                            text = error,
+                            fontSize = 20.sp,
+                            color = Color.Red,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        OutlinedButton(onClick = onClose) {
+                            Text(stringResource(R.string.close), fontSize = 16.sp)
+                        }
+                    }
+                    kalima == null -> {
+                        Text(
+                            text = stringResource(R.string.no_kalima_available),
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.check_back_later),
+                            fontSize = 18.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        OutlinedButton(onClick = onClose) {
+                            Text(stringResource(R.string.close), fontSize = 16.sp)
+                        }
+                    }
+                    else -> {
+                        KalimaContent(kalima, onClose)
+                    }
                 }
             }
         }
@@ -95,24 +132,26 @@ private fun KalimaContent(kalima: Kalima, onClose: () -> Unit) {
     // Display the Arabic word (huroof)
     Text(
         text = kalima.huroof,
-        fontSize = 34.sp,
+        fontSize = 38.sp,
         fontWeight = FontWeight.Bold,
         textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.fillMaxWidth()
     )
 
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
     if (isAnswerCorrect != null) {
         Text(
             text = kalima.meaning,
-            fontSize = 24.sp,
+            fontSize = 28.sp,
             textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Medium,
             modifier = Modifier.fillMaxWidth()
         )
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(24.dp))
 
     if (isAnswerCorrect !== null) {
         Text(
@@ -137,7 +176,7 @@ private fun KalimaContent(kalima: Kalima, onClose: () -> Unit) {
         }
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(24.dp))
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -145,15 +184,19 @@ private fun KalimaContent(kalima: Kalima, onClose: () -> Unit) {
     ) {
         OutlinedButton(
             onClick = onClose,
+            modifier = Modifier.padding(end = 8.dp)
         ) {
-            Text(stringResource(R.string.close))
+            Text(stringResource(R.string.close), fontSize = 16.sp)
         }
 
         if (isAnswerCorrect == null) {
-            Button(onClick = {
-                isAnswerCorrect = checkAnswer(answer, kalima.meaning)
-            }) {
-                Text(stringResource(R.string.submit))
+            Button(
+                onClick = {
+                    isAnswerCorrect = checkAnswer(answer, kalima.meaning)
+                },
+                modifier = Modifier.padding(start = 8.dp)
+            ) {
+                Text(stringResource(R.string.submit), fontSize = 16.sp)
             }
         }
     }

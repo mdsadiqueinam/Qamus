@@ -63,4 +63,6 @@
     <string name="kalima_reminder_notification">Time to practice your Arabic vocabulary!</string>
     <string name="kalima_reminder_channel_name">Kalima Reminders</string>
     <string name="kalima_reminder_channel_description">Notifications for Arabic vocabulary practice reminders</string>
+    <string name="no_kalima_available">No Kalima Available</string>
+    <string name="check_back_later">Please check back later for new vocabulary to practice</string>
 </resources>
