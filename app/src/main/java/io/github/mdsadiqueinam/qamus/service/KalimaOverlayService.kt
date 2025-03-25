@@ -83,6 +83,19 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
             return START_NOT_STICKY
         }
 
+        // Create notification channel
+        createNotificationChannel()
+
+        // Create notification
+        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(getString(R.string.kalima_overlay_notification))
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .build()
+
+        // Start as foreground service
+        startForeground(NOTIFICATION_ID, notification)
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val randomKalima = kalimaatRepository.getRandomEntry()
@@ -114,6 +127,16 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
         hideOverlay()
         savedStateRegistryController.performSave(Bundle())
         super.onDestroy()
+    }
+
+    private fun createNotificationChannel() {
+        val channel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID,
+            "Kalima Overlay Channel",
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager?.createNotificationChannel(channel)
     }
 
     private fun showKalimaOverlay(kalima: Kalima) {
