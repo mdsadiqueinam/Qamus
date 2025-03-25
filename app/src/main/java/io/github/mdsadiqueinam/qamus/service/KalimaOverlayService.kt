@@ -51,11 +51,16 @@ import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
 import io.github.mdsadiqueinam.qamus.util.PermissionUtils
+import io.github.mdsadiqueinam.qamus.util.mapArabicToUrdu
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.Collator
+import java.text.Normalizer
+import java.util.Locale
 import javax.inject.Inject
+import kotlin.io.normalize
 
 /**
  * Service for displaying Kalima entries in an overlay window.
@@ -231,6 +236,17 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (isAnswerCorrect != null) {
+                    Text(
+                        text = kalima.meaning,
+                        fontSize = 24.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
 
@@ -270,8 +286,7 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
 
                     if (isAnswerCorrect == null) {
                         Button(onClick = {
-                            val meanings = kalima.meaning.split(",").map { it.trim() }
-                            isAnswerCorrect = meanings.any { it.equals(answer, ignoreCase = true) }
+                            isAnswerCorrect = checkAnswer(answer, kalima.meaning)
                         }) {
                             Text("Submit")
                         }
@@ -280,4 +295,12 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
             }
         }
     }
+}
+
+fun checkAnswer(answer: String, meaning: String): Boolean {
+    val meanings = meaning.split(Regex("[,،]")).map {
+        Normalizer.normalize(mapArabicToUrdu(it.trim()), Normalizer.Form.NFKD).lowercase(Locale.ROOT)
+    }
+    val normalizedAnswer = Normalizer.normalize(mapArabicToUrdu(answer.trim()), Normalizer.Form.NFKD).lowercase(Locale.ROOT)
+    return meanings.contains(normalizedAnswer)
 }
