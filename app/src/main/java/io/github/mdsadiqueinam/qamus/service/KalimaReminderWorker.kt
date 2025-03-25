@@ -24,7 +24,7 @@ class KalimaReminderWorker(
 
             // Start the KalimaOverlayService which will get a random Kalima
             val intent = KalimaOverlayService.createIntent(appContext)
-            appContext.startService(intent)
+            appContext.startForegroundService(intent)
 
             return Result.success()
         } catch (e: Exception) {
