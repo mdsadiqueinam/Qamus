@@ -13,7 +13,7 @@ data class Settings(
     val reminderInterval: Int = DEFAULT_REMINDER_INTERVAL,
     val lastBackupAt: Instant? = null,
     val lastBackupVersion: Long = 0,
-    val isReminderEnabled: Boolean = true
+    val isReminderEnabled: Boolean = false
 ) {
     companion object {
         // Default reminder interval: 60m minutes

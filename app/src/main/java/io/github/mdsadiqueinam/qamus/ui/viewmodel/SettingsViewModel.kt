@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
+import io.github.mdsadiqueinam.qamus.util.PermissionUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +22,8 @@ import javax.inject.Inject
 data class SettingsUIState(
     val settings: Settings = Settings(),
     val isLoading: Boolean = true,
-    val showResetConfirmation: Boolean = false
+    val showResetConfirmation: Boolean = false,
+    val showPermissionDialog: Boolean = false
 )
 
 /**

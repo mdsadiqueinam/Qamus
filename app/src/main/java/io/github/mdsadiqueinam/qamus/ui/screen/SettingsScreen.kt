@@ -30,13 +30,21 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings as AndroidSettings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import io.github.mdsadiqueinam.qamus.util.PermissionUtils
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -198,10 +206,52 @@ fun ReminderSetting(
     val valueRange = 10f..180f
     val step = 10
     val steps = ((valueRange.endInclusive - valueRange.start) / step).toInt()
+    val context = LocalContext.current
 
     // Slider state (in minutes)
     var sliderPosition by remember(currentInterval) {
         mutableFloatStateOf(currentInterval.toFloat())
+    }
+
+    // Permission dialog state
+    var showPermissionDialog by remember { mutableStateOf(false) }
+
+    // Permission request launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        // Check if permission was granted after returning from settings
+        if (PermissionUtils.canDrawOverlays(context)) {
+            // Permission granted, enable the reminder
+            onReminderStateChanged(true)
+        }
+    }
+
+    // Permission dialog
+    if (showPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDialog = false },
+            title = { Text("Permission Required") },
+            text = { Text("This app needs permission to display over other apps to show reminders. Please grant this permission to enable reminders.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPermissionDialog = false
+                    // Launch settings to enable overlay permission
+                    val intent = Intent(
+                        AndroidSettings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:${context.packageName}")
+                    )
+                    permissionLauncher.launch(intent)
+                }) {
+                    Text("Grant")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionDialog = false }) {
+                    Text("Deny")
+                }
+            }
+        )
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -252,7 +302,21 @@ fun ReminderSetting(
 
             Switch(
                 checked = isEnabledReminder,
-                onCheckedChange = onReminderStateChanged
+                onCheckedChange = { isEnabled ->
+                    if (isEnabled) {
+                        // Check if we have the permission to draw overlays
+                        if (!PermissionUtils.canDrawOverlays(context)) {
+                            // Show permission dialog
+                            showPermissionDialog = true
+                        } else {
+                            // Permission already granted, enable the reminder
+                            onReminderStateChanged(true)
+                        }
+                    } else {
+                        // Disabling reminder, no permission needed
+                        onReminderStateChanged(false)
+                    }
+                }
             )
         }
     }
