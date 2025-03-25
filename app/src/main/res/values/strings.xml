@@ -57,4 +57,5 @@
     <!-- KalimaReminderWorker -->
     <string name="log_kalima_reminder_starting">KalimaReminderWorker: Starting work</string>
     <string name="log_kalima_reminder_error">KalimaReminderWorker: Error during work</string>
+    <string name="kalima_overlay_notification">Qamus overlay notification</string>
 </resources>

@@ -1,5 +1,8 @@
 package io.github.mdsadiqueinam.qamus.util
 
+import java.text.Normalizer
+import java.util.Locale
+
 
 val arabicToUrduMap = mapOf(
     'ا' to 'ا', // Arabic Alef to Urdu Alef
@@ -46,4 +49,14 @@ fun mapArabicToUrdu(input: String): String {
         output.append(arabicToUrduMap[char] ?: char)
     }
     return output.toString()
+}
+
+
+fun checkAnswer(answer: String, meaning: String): Boolean {
+    val meanings = meaning.split(Regex("[,،]")).map {
+        Normalizer.normalize(mapArabicToUrdu(it.trim()), Normalizer.Form.NFKD).lowercase(Locale.ROOT)
+    }
+    val normalizedAnswer =
+        Normalizer.normalize(mapArabicToUrdu(answer.trim()), Normalizer.Form.NFKD).lowercase(Locale.ROOT)
+    return meanings.contains(normalizedAnswer)
 }
