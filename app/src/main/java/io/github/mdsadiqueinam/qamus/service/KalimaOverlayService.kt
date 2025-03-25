@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -47,6 +48,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
@@ -107,18 +109,18 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
                 val randomKalima = kalimaatRepository.getRandomEntry()
 
                 if (randomKalima != null) {
-                    Log.d(TAG, "Found random kalima: ${randomKalima.huroof}")
+                    Log.d(TAG, applicationContext.getString(R.string.log_found_random_kalima, randomKalima.huroof))
 
                     // Switch to the main dispatcher to show the overlay
                     withContext(Dispatchers.Main) {
                         showKalimaOverlay(randomKalima)
                     }
                 } else {
-                    Log.w(TAG, "No kalima found, stopping service")
+                    Log.w(TAG, applicationContext.getString(R.string.log_no_kalima_found))
                     stopSelf()
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error getting random kalima", e)
+                Log.e(TAG, applicationContext.getString(R.string.log_error_getting_random_kalima), e)
                 stopSelf()
             }
         }
@@ -146,7 +148,7 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
     private fun showKalimaOverlay(kalima: Kalima) {
         // Check if we have the permission to draw overlays
         if (!PermissionUtils.canDrawOverlays(this)) {
-            Log.w(TAG, "Cannot show Kalima overlay: SYSTEM_ALERT_WINDOW permission not granted")
+            Log.w(TAG, applicationContext.getString(R.string.log_cannot_show_kalima_overlay))
             stopSelf()
             return
         }
@@ -190,9 +192,9 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
             // Add the view to the window manager
             windowManager.addView(view, layoutParams)
             overlayView = view
-            Log.d(TAG, "Kalima overlay shown successfully")
+            Log.d(TAG, applicationContext.getString(R.string.log_kalima_overlay_shown))
         } catch (e: Exception) {
-            Log.e(TAG, "Error showing Kalima overlay", e)
+            Log.e(TAG, applicationContext.getString(R.string.log_error_showing_kalima_overlay), e)
             stopSelf()
         }
     }
@@ -205,7 +207,7 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
             try {
                 windowManager.removeView(it)
             } catch (e: Exception) {
-                Log.e(TAG, "Error removing overlay view", e)
+                Log.e(TAG, applicationContext.getString(R.string.log_error_removing_overlay), e)
             }
             overlayView = null
         }
@@ -252,7 +254,7 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
 
                 if (isAnswerCorrect !== null) {
                     Text(
-                        text = if (isAnswerCorrect == true) "Correct Answer!" else "Wrong Answer!",
+                        text = if (isAnswerCorrect == true) stringResource(R.string.correct_answer) else stringResource(R.string.wrong_answer),
                         fontSize = 36.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -265,8 +267,8 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
                         OutlinedTextField(
                             value = answer,
                             onValueChange = { answer = it },
-                            label = { Text("Meaning") },
-                            placeholder = { Text("Meaning") },
+                            label = { Text(stringResource(R.string.meaning)) },
+                            placeholder = { Text(stringResource(R.string.meaning)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -281,14 +283,14 @@ class KalimaOverlayService : LifecycleService(), SavedStateRegistryOwner {
                     OutlinedButton(
                         onClick = onClose,
                     ) {
-                        Text("Close")
+                        Text(stringResource(R.string.close))
                     }
 
                     if (isAnswerCorrect == null) {
                         Button(onClick = {
                             isAnswerCorrect = checkAnswer(answer, kalima.meaning)
                         }) {
-                            Text("Submit")
+                            Text(stringResource(R.string.submit))
                         }
                     }
                 }

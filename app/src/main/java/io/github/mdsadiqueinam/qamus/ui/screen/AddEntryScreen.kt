@@ -33,9 +33,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.AddEntryViewModel
@@ -70,13 +72,13 @@ fun AddEntryScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = if (uiState.isEditMode) "Edit Entry" else "Add New Entry",
+                        text = if (uiState.isEditMode) stringResource(R.string.edit_entry) else stringResource(R.string.add_new_entry),
                         modifier = Modifier.fillMaxWidth()
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.navigateBack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -95,7 +97,7 @@ fun AddEntryScreen(
                 // Show loading indicator if loading
                 if (uiState.isLoading) {
                     Text(
-                        text = "Loading...",
+                        text = stringResource(R.string.loading),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
                     )
@@ -104,7 +106,7 @@ fun AddEntryScreen(
                     OutlinedTextField(
                         value = uiState.huroof,
                         onValueChange = { viewModel.updateHuroof(it) },
-                        label = { Text("Arabic Word (kalima)") },
+                        label = { Text(stringResource(R.string.arabic_word)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -115,7 +117,7 @@ fun AddEntryScreen(
                     OutlinedTextField(
                         value = uiState.meaning,
                         onValueChange = { viewModel.updateMeaning(it) },
-                        label = { Text("Meaning") },
+                        label = { Text(stringResource(R.string.meaning)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -126,7 +128,7 @@ fun AddEntryScreen(
                     OutlinedTextField(
                         value = uiState.desc,
                         onValueChange = { viewModel.updateDesc(it) },
-                        label = { Text("Description") },
+                        label = { Text(stringResource(R.string.description)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3
                     )
@@ -158,7 +160,7 @@ fun AddEntryScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = if (uiState.isEditMode) "Update Entry" else "Save Entry",
+                            text = if (uiState.isEditMode) stringResource(R.string.update_entry) else stringResource(R.string.save_entry),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -188,8 +190,8 @@ fun RootIdDropdown(
             value = selectedEntry?.huroof ?: "",
             onValueChange = {},
             readOnly = true,
-            label = { Text("Root Word (optional)") },
-            placeholder = { Text("Select a root word") },
+            label = { Text(stringResource(R.string.root_word)) },
+            placeholder = { Text(stringResource(R.string.select_root_word)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .fillMaxWidth()

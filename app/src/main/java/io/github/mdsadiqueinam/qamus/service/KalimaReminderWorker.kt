@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -19,7 +20,7 @@ class KalimaReminderWorker(
 
     override suspend fun doWork(): Result {
         try {
-            Log.d(TAG, "KalimaReminderWorker: Starting work")
+            Log.d(TAG, appContext.getString(R.string.log_kalima_reminder_starting))
 
             // Start the KalimaOverlayService which will get a random Kalima
             val intent = KalimaOverlayService.createIntent(appContext)
@@ -28,7 +29,7 @@ class KalimaReminderWorker(
             return Result.success()
         } catch (e: Exception) {
             // Log the error and retry
-            Log.e(TAG, "KalimaReminderWorker: Error during work", e)
+            Log.e(TAG, appContext.getString(R.string.log_kalima_reminder_error), e)
             return Result.retry()
         }
     }

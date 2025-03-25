@@ -1,3 +1,60 @@
 <resources>
     <string name="app_name">Qamus</string>
+
+    <!-- KalimaOverlayService -->
+    <string name="correct_answer">Correct Answer!</string>
+    <string name="wrong_answer">Wrong Answer!</string>
+    <string name="meaning">Meaning</string>
+    <string name="close">Close</string>
+    <string name="submit">Submit</string>
+    <string name="log_found_random_kalima">Found random kalima: %1$s</string>
+    <string name="log_no_kalima_found">No kalima found, stopping service</string>
+    <string name="log_error_getting_random_kalima">Error getting random kalima</string>
+    <string name="log_cannot_show_kalima_overlay">Cannot show Kalima overlay: SYSTEM_ALERT_WINDOW permission not granted</string>
+    <string name="log_kalima_overlay_shown">Kalima overlay shown successfully</string>
+    <string name="log_error_showing_kalima_overlay">Error showing Kalima overlay</string>
+    <string name="log_error_removing_overlay">Error removing overlay view</string>
+
+    <!-- AddEntryScreen -->
+    <string name="edit_entry">Edit Entry</string>
+    <string name="add_new_entry">Add New Entry</string>
+    <string name="back">Back</string>
+    <string name="loading">Loading…</string>
+    <string name="arabic_word">Arabic Word (kalima)</string>
+    <string name="description">Description</string>
+    <string name="root_word">Root Word (optional)</string>
+    <string name="select_root_word">Select a root word</string>
+    <string name="none">None</string>
+    <string name="word_type">Word Type</string>
+    <string name="update_entry">Update Entry</string>
+    <string name="save_entry">Save Entry</string>
+    <string name="entry_with_meaning">%1$s (%2$s)</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings">Settings</string>
+    <string name="reset_settings">Reset Settings</string>
+    <string name="reset_settings_confirmation">Are you sure you want to reset all settings to default values?</string>
+    <string name="reset">Reset</string>
+    <string name="cancel">Cancel</string>
+    <string name="reset_settings_desc">Reset Settings</string>
+    <string name="reminder_interval">Reminder Interval</string>
+    <string name="reminder_interval_desc">Set how often you want to be reminded to backup your dictionary</string>
+    <string name="backup">Backup</string>
+    <string name="backup_desc">Backup your dictionary to prevent data loss</string>
+    <string name="permission_required">Permission Required</string>
+    <string name="permission_required_desc">This app needs permission to display over other apps to show reminders. Please grant this permission to enable reminders.</string>
+    <string name="grant">Grant</string>
+    <string name="deny">Deny</string>
+    <string name="remind_every">Remind every %1$s minutes</string>
+    <string name="ten_minutes">10m</string>
+    <string name="three_hours">3h</string>
+    <string name="enable_reminder">Enable Reminder</string>
+    <string name="last_backup">Last backup: %1$s (v%2$d)</string>
+    <string name="backup_now">Backup Now</string>
+    <string name="time_format_hours_minutes">%1$d hours %2$d minutes</string>
+    <string name="time_format_minutes">%1$d minutes</string>
+
+    <!-- KalimaReminderWorker -->
+    <string name="log_kalima_reminder_starting">KalimaReminderWorker: Starting work</string>
+    <string name="log_kalima_reminder_error">KalimaReminderWorker: Error during work</string>
 </resources>
