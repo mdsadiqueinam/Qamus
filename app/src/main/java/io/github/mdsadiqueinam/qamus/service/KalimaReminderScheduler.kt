@@ -7,7 +7,6 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
-import io.github.mdsadiqueinam.qamus.util.PermissionUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -56,16 +55,9 @@ class KalimaReminderScheduler @Inject constructor(
 
     /**
      * Schedule the worker to run at the specified interval.
-     * This will only schedule the worker if the SYSTEM_ALERT_WINDOW permission is granted.
      */
     private fun scheduleWorker(interval: Int) {
         Log.d(TAG, "Scheduling worker with interval: $interval minutes")
-
-        // Check if we have the permission to draw overlays
-        if (!PermissionUtils.canDrawOverlays(context)) {
-            Log.w(TAG, "Cannot schedule Kalima reminder worker: SYSTEM_ALERT_WINDOW permission not granted")
-            return
-        }
 
         // Ensure the interval is at least 15 minutes
         val repeatInterval = interval.toLong().coerceIn(MIN_PERIODIC_INTERVAL, MAX_PERIODIC_INTERVAL)

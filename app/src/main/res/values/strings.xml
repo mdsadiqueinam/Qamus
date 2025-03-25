@@ -58,4 +58,9 @@
     <string name="log_kalima_reminder_starting">KalimaReminderWorker: Starting work</string>
     <string name="log_kalima_reminder_error">KalimaReminderWorker: Error during work</string>
     <string name="kalima_overlay_notification">Qamus overlay notification</string>
+
+    <!-- KalimaReminderActivity and Notifications -->
+    <string name="kalima_reminder_notification">Time to practice your Arabic vocabulary!</string>
+    <string name="kalima_reminder_channel_name">Kalima Reminders</string>
+    <string name="kalima_reminder_channel_description">Notifications for Arabic vocabulary practice reminders</string>
 </resources>

@@ -6,7 +6,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
-import io.github.mdsadiqueinam.qamus.util.PermissionUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

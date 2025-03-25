@@ -1,12 +1,12 @@
 package io.github.mdsadiqueinam.qamus.service
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import io.github.mdsadiqueinam.qamus.R
-import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
-import kotlinx.coroutines.flow.first
+import io.github.mdsadiqueinam.qamus.receiver.ScreenStateReceiver
 import javax.inject.Inject
 
 /**
@@ -22,9 +22,10 @@ class KalimaReminderWorker(
         try {
             Log.d(TAG, appContext.getString(R.string.log_kalima_reminder_starting))
 
-            // Start the KalimaOverlayService which will get a random Kalima
-            val intent = KalimaOverlayService.createIntent(appContext)
-            appContext.startForegroundService(intent)
+            // Send a broadcast to the ScreenStateReceiver which will handle showing
+            // either the ReminderActivity or a notification based on device state
+            val intent = Intent(appContext, ScreenStateReceiver::class.java)
+            appContext.sendBroadcast(intent)
 
             return Result.success()
         } catch (e: Exception) {

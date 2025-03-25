@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permission to draw over other apps -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Permission to show notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Permission to run in the background -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -47,10 +47,18 @@
             </intent-filter>
         </activity>
 
-        <!-- Service for displaying Kalima overlays -->
-        <service
-                android:name=".service.KalimaOverlayService"
+        <!-- Activity for displaying Kalima reminders -->
+        <activity
+                android:name=".ui.ReminderActivity"
                 android:exported="false"
-                android:foregroundServiceType="specialUse" />
+                android:theme="@style/Theme.Qamus"
+                android:launchMode="singleTask"
+                android:taskAffinity=""
+                android:excludeFromRecents="true" />
+
+        <!-- Receiver for handling screen state changes -->
+        <receiver
+                android:name=".receiver.ScreenStateReceiver"
+                android:exported="false" />
     </application>
 </manifest>

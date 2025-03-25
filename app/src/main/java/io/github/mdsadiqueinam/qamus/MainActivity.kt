@@ -16,7 +16,6 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavHost
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
-import io.github.mdsadiqueinam.qamus.util.PermissionUtils
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
