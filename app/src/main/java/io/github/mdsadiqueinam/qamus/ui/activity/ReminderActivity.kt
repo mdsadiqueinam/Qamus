@@ -57,8 +57,6 @@ class ReminderActivity : ComponentActivity() {
             setTurnScreenOn(true)
         }
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
         setContent {
             QamusTheme {
                 val kalima by viewModel.kalima.collectAsState()
