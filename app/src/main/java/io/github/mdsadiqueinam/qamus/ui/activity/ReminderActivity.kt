@@ -2,6 +2,7 @@ package io.github.mdsadiqueinam.qamus.ui.activity
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.view.WindowManager
@@ -51,27 +52,22 @@ class ReminderActivity : ComponentActivity() {
 
         // Set up wake lock
         val powerManager = getSystemService<PowerManager>()
-        wakeLock = powerManager?.newWakeLock(
-            PowerManager.FULL_WAKE_LOCK or
-                    PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                    PowerManager.ON_AFTER_RELEASE,
-            "Qamus:ReminderActivityWakeLock"
-        ) ?: throw IllegalStateException("Could not get PowerManager")
-
-        // Configure window based on whether we should show when locked
         val showWhenLocked = intent.getBooleanExtra(EXTRA_SHOW_WHEN_LOCKED, false)
+
+        // Configure window to show when locked and turn screen on
         if (showWhenLocked) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-            )
 
-            // Acquire wake lock if needed
-            if (!wakeLock.isHeld) {
-                wakeLock.acquire(5 * 60 * 1000L) // 5 minutes max
-            }
+            // Acquire wake lock to keep the screen on
+            wakeLock = powerManager?.newWakeLock(
+                PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                "Qamus:ReminderActivityWakeLock"
+            )?.apply {
+                if (!isHeld) {
+                    acquire(5 * 60 * 1000L) // 5 minutes max
+                }
+            }!!
         }
 
         setContent {

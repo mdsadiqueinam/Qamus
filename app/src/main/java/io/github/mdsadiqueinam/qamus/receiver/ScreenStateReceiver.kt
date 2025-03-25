@@ -35,14 +35,14 @@ class ScreenStateReceiver : BroadcastReceiver() {
         val keyguardManager = context.getSystemService<KeyguardManager>()
         val powerManager = context.getSystemService<PowerManager>()
         
-        val isDeviceLocked = keyguardManager?.isKeyguardLocked ?: false
-        val isScreenOn = powerManager?.isInteractive ?: true
+        val isDeviceLocked = keyguardManager?.isKeyguardLocked == true
+        val isScreenOn = powerManager?.isInteractive != false
 
         if (isDeviceLocked || !isScreenOn) {
             // If device is locked or screen is off, start the ReminderActivity directly
             Log.d(TAG, "Device is locked or screen is off, starting ReminderActivity")
             val activityIntent = ReminderActivity.createIntent(context, showWhenLocked = true)
-            ContextCompat.startActivity(context, activityIntent, null)
+            context.startActivity(activityIntent, null)
         } else {
             // If device is in use, show a notification
             Log.d(TAG, "Device is in use, showing notification")
