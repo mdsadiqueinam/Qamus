@@ -33,6 +33,8 @@ class KalimaReminderScheduler @Inject constructor(
     companion object {
         private const val TAG = "KalimaReminder"
         private const val WORK_NAME = "kalima_reminder_worker"
+        private const val MIN_PERIODIC_INTERVAL = 15L
+        private const val MAX_PERIODIC_INTERVAL = 180L
     }
 
     /**
@@ -65,9 +67,12 @@ class KalimaReminderScheduler @Inject constructor(
             return
         }
 
+        // Ensure the interval is at least 15 minutes
+        val repeatInterval = interval.toLong().coerceIn(MIN_PERIODIC_INTERVAL, MAX_PERIODIC_INTERVAL)
+
         // Create the work request
         val workRequest = PeriodicWorkRequestBuilder<KalimaReminderWorker>(
-            interval.toLong(),
+            repeatInterval,
             TimeUnit.MINUTES
         ).build()
 
