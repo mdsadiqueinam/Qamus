@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -78,7 +78,7 @@ fun DictionaryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = "Arabic Dictionary",
                         modifier = Modifier.fillMaxWidth()
@@ -107,7 +107,7 @@ fun DictionaryScreen(
             // Search bar
             SearchBar(
                 query = searchQuery,
-                onQueryChange = { query -> 
+                onQueryChange = { query ->
                     viewModel.searchEntries(query)
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -118,7 +118,7 @@ fun DictionaryScreen(
             // Filter by type
             FilterByType(
                 selectedType = selectedType,
-                onTypeSelected = { type -> 
+                onTypeSelected = { type ->
                     viewModel.filterByType(type)
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -149,6 +149,7 @@ fun EntriesList(
                 CircularProgressIndicator()
             }
         }
+
         entries.itemCount == 0 -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -157,6 +158,7 @@ fun EntriesList(
                 Text("No entries found")
             }
         }
+
         else -> {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -263,7 +265,7 @@ fun FilterByType(
                 onDismissRequest = { expanded = false }
             ) {
                 DropdownMenuItem(
-                    text = { 
+                    text = {
                         Text(
                             text = "All",
                             modifier = Modifier.fillMaxWidth(),

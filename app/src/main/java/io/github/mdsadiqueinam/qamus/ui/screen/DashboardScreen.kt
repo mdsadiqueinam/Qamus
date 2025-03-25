@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -65,7 +64,7 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = "Qamus - Arabic Dictionary",
                         modifier = Modifier.fillMaxWidth()
@@ -190,7 +189,7 @@ fun ExpandableFab(
             onClick = { expanded = !expanded }
         ) {
             Icon(
-                if(expanded)  Icons.Default.Add else Icons.Default.Menu,
+                if (expanded) Icons.Default.Add else Icons.Default.Menu,
                 contentDescription = "Expandable Menu",
                 modifier = Modifier.rotate(rotation)
             )

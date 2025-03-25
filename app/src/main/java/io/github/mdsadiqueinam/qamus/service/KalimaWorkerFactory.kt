@@ -21,8 +21,9 @@ class KalimaWorkerFactory @Inject constructor(
         workerParameters: WorkerParameters
     ): ListenableWorker? {
         return when (workerClassName) {
-            KalimaReminderWorker::class.java.name -> 
+            KalimaReminderWorker::class.java.name ->
                 kalimaReminderWorkerFactory.create(appContext, workerParameters)
+
             else -> null
         }
     }

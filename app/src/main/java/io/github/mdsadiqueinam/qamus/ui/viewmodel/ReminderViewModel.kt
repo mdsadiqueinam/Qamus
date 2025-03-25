@@ -42,7 +42,7 @@ class ReminderViewModel @Inject constructor(
             try {
                 _isLoading.value = true
                 _error.value = null
-                
+
                 val randomKalima = kalimaatRepository.getRandomEntry()
                 if (randomKalima != null) {
                     _kalima.value = randomKalima

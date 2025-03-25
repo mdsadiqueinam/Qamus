@@ -35,12 +35,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -200,7 +199,7 @@ fun ReminderSetting(
     val valueRange = 10f..180f
     val step = 10
     val steps = ((valueRange.endInclusive - valueRange.start) / step).toInt()
-    val context = LocalContext.current
+    LocalContext.current
 
     // Slider state (in minutes)
     var sliderPosition by remember(currentInterval) {
@@ -218,33 +217,33 @@ fun ReminderSetting(
         Spacer(modifier = Modifier.height(8.dp))
 
         Slider(
-            value = sliderPosition, 
+            value = sliderPosition,
             onValueChange = {
                 val snappedValue = ((it / step).roundToInt() * step).toFloat()
                 sliderPosition = snappedValue.coerceIn(valueRange)
-            }, 
+            },
             onValueChangeFinished = {
                 // Convert minutes back to milliseconds
                 onIntervalChanged(sliderPosition.toInt())
-            }, 
-            valueRange = valueRange, 
-            steps = steps - 1, 
+            },
+            valueRange = valueRange,
+            steps = steps - 1,
             modifier = Modifier.fillMaxWidth()
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(), 
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "10m", 
+                text = "10m",
                 style = MaterialTheme.typography.bodySmall
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = "3h", 
+                text = "3h",
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -253,11 +252,11 @@ fun ReminderSetting(
 
         // Reminder enable or disable settings
         Row(
-            modifier = Modifier.fillMaxWidth(), 
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Enable Reminder", 
+                text = "Enable Reminder",
                 style = MaterialTheme.typography.bodyMedium
             )
 

@@ -10,7 +10,6 @@ import android.content.Intent
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.ui.activity.ReminderActivity
@@ -34,7 +33,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
         // Check if the device is locked or the screen is off
         val keyguardManager = context.getSystemService<KeyguardManager>()
         val powerManager = context.getSystemService<PowerManager>()
-        
+
         val isDeviceLocked = keyguardManager?.isKeyguardLocked == true
         val isScreenOn = powerManager?.isInteractive != false
 
@@ -55,10 +54,10 @@ class ScreenStateReceiver : BroadcastReceiver() {
      */
     private fun showNotification(context: Context) {
         val notificationManager = context.getSystemService<NotificationManager>()
-        
+
         // Create notification channel (required for Android 8.0+)
         createNotificationChannel(context)
-        
+
         // Create intent for notification tap action
         val intent = ReminderActivity.createIntent(context)
         val pendingIntent = PendingIntent.getActivity(
@@ -67,7 +66,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        
+
         // Build the notification
         val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(context.getString(R.string.app_name))
@@ -76,7 +75,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
-        
+
         // Show the notification
         notificationManager?.notify(NOTIFICATION_ID, notification)
     }
@@ -86,7 +85,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
      */
     private fun createNotificationChannel(context: Context) {
         val notificationManager = context.getSystemService<NotificationManager>() ?: return
-        
+
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
             context.getString(R.string.kalima_reminder_channel_name),
@@ -94,7 +93,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
         ).apply {
             description = context.getString(R.string.kalima_reminder_channel_description)
         }
-        
+
         notificationManager.createNotificationChannel(channel)
     }
 }

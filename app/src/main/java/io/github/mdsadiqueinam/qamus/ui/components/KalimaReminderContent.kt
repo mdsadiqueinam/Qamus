@@ -18,7 +18,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -81,6 +80,7 @@ fun KalimaReminderContent(
                             textAlign = TextAlign.Center
                         )
                     }
+
                     error != null -> {
                         Text(
                             text = error,
@@ -94,6 +94,7 @@ fun KalimaReminderContent(
                             Text(stringResource(R.string.close), fontSize = 16.sp)
                         }
                     }
+
                     kalima == null -> {
                         Text(
                             text = stringResource(R.string.no_kalima_available),
@@ -115,6 +116,7 @@ fun KalimaReminderContent(
                             Text(stringResource(R.string.close), fontSize = 16.sp)
                         }
                     }
+
                     else -> {
                         KalimaContent(kalima, onClose)
                     }

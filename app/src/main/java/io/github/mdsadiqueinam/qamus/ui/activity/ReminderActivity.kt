@@ -2,18 +2,16 @@ package io.github.mdsadiqueinam.qamus.ui.activity
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.content.getSystemService
+import androidx.core.view.WindowCompat
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.ui.components.KalimaReminderContent
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.ReminderViewModel
@@ -51,24 +49,16 @@ class ReminderActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Set up wake lock
-        val powerManager = getSystemService<PowerManager>()
+        getSystemService<PowerManager>()
         val showWhenLocked = intent.getBooleanExtra(EXTRA_SHOW_WHEN_LOCKED, false)
 
         // Configure window to show when locked and turn screen on
         if (showWhenLocked) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
-
-            // Acquire wake lock to keep the screen on
-            wakeLock = powerManager?.newWakeLock(
-                PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
-                "Qamus:ReminderActivityWakeLock"
-            )?.apply {
-                if (!isHeld) {
-                    acquire(5 * 60 * 1000L) // 5 minutes max
-                }
-            }!!
         }
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             QamusTheme {
@@ -84,13 +74,5 @@ class ReminderActivity : ComponentActivity() {
                 )
             }
         }
-    }
-
-    override fun onDestroy() {
-        // Release wake lock if held
-        if (::wakeLock.isInitialized && wakeLock.isHeld) {
-            wakeLock.release()
-        }
-        super.onDestroy()
     }
 }

@@ -70,7 +70,7 @@ fun AddEntryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = if (uiState.isEditMode) stringResource(R.string.edit_entry) else stringResource(R.string.add_new_entry),
                         modifier = Modifier.fillMaxWidth()
@@ -214,7 +214,7 @@ fun RootIdDropdown(
             // List all entries
             entries.forEach { entry ->
                 DropdownMenuItem(
-                    text = { 
+                    text = {
                         Text("${entry.huroof} (${entry.meaning})")
                     },
                     onClick = {

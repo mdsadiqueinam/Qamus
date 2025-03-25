@@ -64,7 +64,7 @@ fun KalimaDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = "Kalima Details",
                         modifier = Modifier.fillMaxWidth()
@@ -106,6 +106,7 @@ fun KalimaDetailsScreen(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
+
                 uiState.entry == null -> {
                     Text(
                         text = "Entry not found",
@@ -114,6 +115,7 @@ fun KalimaDetailsScreen(
                             .padding(16.dp)
                     )
                 }
+
                 else -> {
                     EntryDetails(
                         entry = uiState.entry!!,

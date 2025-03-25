@@ -93,4 +93,4 @@ interface KalimaatDao {
      */
     @Query("SELECT * FROM kalimaat ORDER BY RANDOM() LIMIT 1")
     suspend fun getRandomEntry(): Kalima?
-    }
+}
