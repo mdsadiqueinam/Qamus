@@ -13,7 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import io.github.mdsadiqueinam.qamus.R
-import io.github.mdsadiqueinam.qamus.ui.ReminderActivity
+import io.github.mdsadiqueinam.qamus.ui.activity.ReminderActivity
 
 /**
  * BroadcastReceiver to handle screen state changes and show Kalima reminders accordingly.

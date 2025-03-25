@@ -1,4 +1,4 @@
-package io.github.mdsadiqueinam.qamus.ui
+package io.github.mdsadiqueinam.qamus.ui.activity
 
 import android.content.Context
 import android.content.Intent
@@ -53,8 +53,8 @@ class ReminderActivity : ComponentActivity() {
         val powerManager = getSystemService<PowerManager>()
         wakeLock = powerManager?.newWakeLock(
             PowerManager.FULL_WAKE_LOCK or
-            PowerManager.ACQUIRE_CAUSES_WAKEUP or
-            PowerManager.ON_AFTER_RELEASE,
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                    PowerManager.ON_AFTER_RELEASE,
             "Qamus:ReminderActivityWakeLock"
         ) ?: throw IllegalStateException("Could not get PowerManager")
 
@@ -65,7 +65,7 @@ class ReminderActivity : ComponentActivity() {
             setTurnScreenOn(true)
             window.addFlags(
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
             )
 
             // Acquire wake lock if needed
