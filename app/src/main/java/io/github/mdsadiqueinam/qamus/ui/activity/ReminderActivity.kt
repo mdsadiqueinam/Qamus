@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.core.content.getSystemService
 import androidx.core.view.WindowCompat
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.mdsadiqueinam.qamus.ui.components.KalimaReminderContent
+import io.github.mdsadiqueinam.qamus.ui.screen.KalimaReminderScreen
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.ReminderViewModel
 
@@ -65,7 +65,7 @@ class ReminderActivity : ComponentActivity() {
                 val isLoading by viewModel.isLoading.collectAsState()
                 val error by viewModel.error.collectAsState()
 
-                KalimaReminderContent(
+                KalimaReminderScreen(
                     kalima = kalima,
                     onClose = { finish() },
                     isLoading = isLoading,
