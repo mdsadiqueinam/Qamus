@@ -24,7 +24,6 @@ import io.github.mdsadiqueinam.qamus.ui.viewmodel.ReminderViewModel
 class ReminderActivity : ComponentActivity() {
 
     private val viewModel: ReminderViewModel by viewModels()
-    private lateinit var wakeLock: PowerManager.WakeLock
 
     companion object {
         private const val TAG = "ReminderActivity"
