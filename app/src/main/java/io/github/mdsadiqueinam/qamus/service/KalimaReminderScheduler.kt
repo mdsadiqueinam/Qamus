@@ -62,6 +62,7 @@ class KalimaReminderScheduler @Inject constructor(
         val repeatInterval = interval.toLong().coerceIn(MIN_PERIODIC_INTERVAL, MAX_PERIODIC_INTERVAL)
         val repeatIntervalMillis = TimeUnit.MINUTES.toMillis(repeatInterval)
 
+        // Check if the worker is already scheduled with the same interval
         if (workerInfo.any { it.periodicityInfo?.repeatIntervalMillis == repeatIntervalMillis && it.state == androidx.work.WorkInfo.State.ENQUEUED }) {
             Log.d(TAG, "Worker already scheduled with interval: $repeatInterval minutes, ignoring")
             return
