@@ -2,6 +2,7 @@ package io.github.mdsadiqueinam.qamus.data.model
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
@@ -23,6 +24,10 @@ import androidx.room.PrimaryKey
             childColumns = ["rootId"],
             onDelete = ForeignKey.SET_NULL
         )
+    ],
+    indices = [
+        Index(value = ["rootId"]),
+        Index(value = ["huroof"], unique = true)
     ]
 )
 data class Kalima(
