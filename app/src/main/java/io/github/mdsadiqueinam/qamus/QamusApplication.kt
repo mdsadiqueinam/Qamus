@@ -19,18 +19,8 @@ class QamusApplication() : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: KalimaWorkerFactory
 
-    @Inject
-    lateinit var kalimaReminderScheduler: KalimaReminderScheduler
-
     override val workManagerConfiguration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
-
-    override fun onCreate() {
-        super.onCreate()
-
-        // Schedule the Kalima reminder
-        kalimaReminderScheduler.startScheduling()
-    }
 }

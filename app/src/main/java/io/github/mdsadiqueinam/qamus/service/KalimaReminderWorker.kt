@@ -24,7 +24,9 @@ class KalimaReminderWorker(
 
             // Send a broadcast to the ScreenStateReceiver which will handle showing
             // either the ReminderActivity or a notification based on device state
-            val intent = Intent(appContext, ScreenStateReceiver::class.java)
+            val intent = Intent(appContext, ScreenStateReceiver::class.java).apply {
+                action = ScreenStateReceiver.ACTION_SHOW_REMINDER
+            }
             appContext.sendBroadcast(intent)
 
             return Result.success()

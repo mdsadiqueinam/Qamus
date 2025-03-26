@@ -48,7 +48,6 @@ class ReminderActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Set up wake lock
-        getSystemService<PowerManager>()
         val showWhenLocked = intent.getBooleanExtra(EXTRA_SHOW_WHEN_LOCKED, false)
 
         // Configure window to show when locked and turn screen on

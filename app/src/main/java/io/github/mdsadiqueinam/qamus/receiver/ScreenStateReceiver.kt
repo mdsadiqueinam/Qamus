@@ -1,5 +1,6 @@
 package io.github.mdsadiqueinam.qamus.receiver
 
+import android.app.KeyguardManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -7,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
@@ -24,31 +26,30 @@ class ScreenStateReceiver : BroadcastReceiver() {
         private const val TAG = "ScreenStateReceiver"
         private const val NOTIFICATION_CHANNEL_ID = "KalimaReminderChannel"
         private const val NOTIFICATION_ID = 1
+        // Add to companion object in ScreenStateReceiver
+        const val ACTION_SHOW_REMINDER = "io.github.mdsadiqueinam.qamus.action.SHOW_REMINDER"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(TAG, "Received broadcast: ${intent.action}")
-
+        val useNotificationForNow = true
         // Check if the device is locked or the screen is off
-//        val keyguardManager = context.getSystemService<KeyguardManager>()
-//        val powerManager = context.getSystemService<PowerManager>()
-//
-//        val isDeviceLocked = keyguardManager?.isKeyguardLocked == true
-//        val isScreenOn = powerManager?.isInteractive != false
-//
-//        if (isDeviceLocked || !isScreenOn) {
-//            // If device is locked or screen is off, start the ReminderActivity directly
-//            Log.d(TAG, "Device is locked or screen is off, starting ReminderActivity")
-//            val activityIntent = ReminderActivity.createIntent(context, showWhenLocked = true)
-//            context.startActivity(activityIntent, null)
-//        } else {
-//            // If device is in use, show a notification
-//            Log.d(TAG, "Device is in use, showing notification")
-//            showNotification(context)
-//        }
+        val keyguardManager = context.getSystemService<KeyguardManager>()
+        val powerManager = context.getSystemService<PowerManager>()
 
-        // TODO: Unable to start activity from BroadcastReceiver right using notification for now
-        showNotification(context)
+        val isDeviceLocked = keyguardManager?.isKeyguardLocked == true
+        val isScreenOn = powerManager?.isInteractive != false
+
+        if ((isDeviceLocked || !isScreenOn) && !useNotificationForNow) {
+            // If device is locked or screen is off, start the ReminderActivity directly
+            Log.d(TAG, "Device is locked or screen is off, starting ReminderActivity")
+            val activityIntent = ReminderActivity.createIntent(context, showWhenLocked = true)
+            context.startActivity(activityIntent, null)
+        } else {
+            // If device is in use, show a notification
+            Log.d(TAG, "Device is in use, showing notification")
+            showNotification(context)
+        }
     }
 
     /**
@@ -56,6 +57,11 @@ class ScreenStateReceiver : BroadcastReceiver() {
      */
     private fun showNotification(context: Context) {
         val notificationManager = context.getSystemService<NotificationManager>()
+
+        if (notificationManager == null) {
+            Log.e(TAG, "NotificationManager not available, cannot show notification")
+            return
+        }
 
         // Create notification channel (required for Android 8.0+)
         createNotificationChannel(context)
@@ -83,7 +89,9 @@ class ScreenStateReceiver : BroadcastReceiver() {
             .build()
 
         // Show the notification
-        notificationManager?.notify(NOTIFICATION_ID, notification)
+        notificationManager.notify(NOTIFICATION_ID, notification)
+
+        Log.d(TAG, "Notified user with reminder notification")
     }
 
     /**
