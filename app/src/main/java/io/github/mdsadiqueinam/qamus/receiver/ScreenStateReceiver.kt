@@ -103,7 +103,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
             context.getString(R.string.kalima_reminder_channel_name),
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = context.getString(R.string.kalima_reminder_channel_description)
         }
