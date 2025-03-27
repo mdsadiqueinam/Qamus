@@ -107,6 +107,8 @@ class ScreenStateReceiver : BroadcastReceiver() {
         ).apply {
             description = context.getString(R.string.kalima_reminder_channel_description)
             setSound(soundUri, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
+            enableVibration(true)
+            enableLights(true)
         }
 
         notificationManager.createNotificationChannel(channel)
