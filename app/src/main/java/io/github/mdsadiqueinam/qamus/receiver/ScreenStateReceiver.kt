@@ -7,13 +7,14 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.media.AudioAttributes
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.ui.activity.ReminderActivity
+import androidx.core.net.toUri
 
 /**
  * BroadcastReceiver to handle screen state changes and show Kalima reminders accordingly.
@@ -74,7 +75,6 @@ class ScreenStateReceiver : BroadcastReceiver() {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val soundUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.notification_sound)
 
         // Build the notification
         val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
@@ -85,7 +85,6 @@ class ScreenStateReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setAutoCancel(true)
-            .setSound(soundUri)
             .build()
 
         // Show the notification
@@ -99,6 +98,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
      */
     private fun createNotificationChannel(context: Context) {
         val notificationManager = context.getSystemService<NotificationManager>() ?: return
+        val soundUri = ("android.resource://" + context.packageName + "/" + R.raw.notification_sound).toUri()
 
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
@@ -106,6 +106,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = context.getString(R.string.kalima_reminder_channel_description)
+            setSound(soundUri, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
         }
 
         notificationManager.createNotificationChannel(channel)
