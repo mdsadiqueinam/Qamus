@@ -1,5 +1,6 @@
 package io.github.mdsadiqueinam.qamus.ui.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -117,6 +118,11 @@ fun SettingsScreen(
                         viewModel.performRestore() 
                     },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
+                    onSelectAccountClicked = {
+                        // Show account picker dialog
+                        // For now, we'll just use a dummy account for demonstration
+                        viewModel.updateGoogleAccount("user@gmail.com")
+                    },
                     modifier = Modifier.fillMaxSize().padding(16.dp)
                 )
             }
@@ -131,6 +137,7 @@ fun SettingsContent(
     onBackupClicked: () -> Unit,
     onRestoreClicked: () -> Unit,
     onReminderStateChanged: (Boolean) -> Unit,
+    onSelectAccountClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -157,8 +164,10 @@ fun SettingsContent(
                 BackupSetting(
                     lastBackupAt = settings.lastBackupAt,
                     lastBackupVersion = settings.lastBackupVersion,
+                    googleAccount = settings.googleAccount,
                     onBackupClicked = onBackupClicked,
-                    onRestoreClicked = onRestoreClicked
+                    onRestoreClicked = onRestoreClicked,
+                    onSelectAccountClicked = onSelectAccountClicked
                 )
             }
         )
@@ -283,11 +292,30 @@ fun ReminderSetting(
 fun BackupSetting(
     lastBackupAt: Instant?, 
     lastBackupVersion: Long, 
+    googleAccount: String?,
     onBackupClicked: () -> Unit, 
     onRestoreClicked: () -> Unit,
+    onSelectAccountClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val hasAccount = googleAccount != null
+
     Column(modifier = modifier.fillMaxWidth()) {
+        // Google Account selection
+        Column(
+            modifier = Modifier.fillMaxWidth().clickable { onSelectAccountClicked },
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Google account",
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Text(googleAccount ?: "Select account")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         // Last backup info
         if (lastBackupAt != null) {
             val localDateTime = lastBackupAt.toLocalDateTime(TimeZone.currentSystemDefault())
@@ -308,14 +336,16 @@ fun BackupSetting(
         ) {
             // Restore button
             Button(
-                onClick = onRestoreClicked
+                onClick = onRestoreClicked,
+                enabled = hasAccount
             ) {
                 Text("Restore Now")
             }
 
             // Backup button
             Button(
-                onClick = onBackupClicked
+                onClick = onBackupClicked,
+                enabled = hasAccount
             ) {
                 Text("Backup Now")
             }

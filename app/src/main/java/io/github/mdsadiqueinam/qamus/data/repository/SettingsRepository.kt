@@ -33,6 +33,7 @@ class SettingsRepository @Inject constructor(
         val LAST_BACKUP_AT = longPreferencesKey("last_backup_at")
         val LAST_BACKUP_VERSION = longPreferencesKey("last_backup_version")
         val IS_REMINDER_ENABLED = booleanPreferencesKey("is_reminder_enabled")
+        val GOOGLE_ACCOUNT = stringPreferencesKey("google_account")
     }
 
     /**
@@ -43,7 +44,8 @@ class SettingsRepository @Inject constructor(
             reminderInterval = preferences[PreferencesKeys.REMINDER_INTERVAL] ?: Settings.DEFAULT_REMINDER_INTERVAL,
             lastBackupAt = preferences[PreferencesKeys.LAST_BACKUP_AT]?.let { Instant.fromEpochMilliseconds(it) },
             lastBackupVersion = preferences[PreferencesKeys.LAST_BACKUP_VERSION] ?: 0,
-            isReminderEnabled = preferences[PreferencesKeys.IS_REMINDER_ENABLED] == true
+            isReminderEnabled = preferences[PreferencesKeys.IS_REMINDER_ENABLED] == true,
+            googleAccount = preferences[PreferencesKeys.GOOGLE_ACCOUNT]
         )
     }
 
@@ -81,6 +83,19 @@ class SettingsRepository @Inject constructor(
     suspend fun setReminderEnabled(isEnabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_REMINDER_ENABLED] = isEnabled
+        }
+    }
+
+    /**
+     * Update the Google account used for backup/restore.
+     */
+    suspend fun updateGoogleAccount(accountName: String?) {
+        context.settingsDataStore.edit { preferences ->
+            if (accountName != null) {
+                preferences[PreferencesKeys.GOOGLE_ACCOUNT] = accountName
+            } else {
+                preferences.remove(PreferencesKeys.GOOGLE_ACCOUNT)
+            }
         }
     }
 }

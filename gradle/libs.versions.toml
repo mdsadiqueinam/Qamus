@@ -18,9 +18,9 @@ hiltNavigationCompose = "1.2.0"
 datastore = "1.1.4"
 kotlinxDatetime = "0.6.2"
 workManager = "2.10.0"
-googleApiClient = "2.2.0"
-googleDriveApi = "v3-rev20230822-2.0.0"
-gson = "2.10.1"
+googleApiClient = "2.7.0"
+googleDriveApi = "v3-rev20250220-2.0.0"
+gson = "2.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

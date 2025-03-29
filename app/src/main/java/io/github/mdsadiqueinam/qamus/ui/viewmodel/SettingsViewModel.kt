@@ -91,14 +91,30 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
+     * Update the Google account used for backup/restore.
+     */
+    fun updateGoogleAccount(accountName: String?) {
+        viewModelScope.launch {
+            try {
+                settingsRepository.updateGoogleAccount(accountName)
+            } catch (e: Exception) {
+                _errorMessage.value = "Error updating Google account: ${e.message}"
+            }
+        }
+    }
+
+    /**
      * Perform a backup of the database to Google Drive and update the last backup information.
      */
     fun performBackup() {
         viewModelScope.launch {
             try {
-                // For simplicity, using a hardcoded account name
-                // In a real implementation, we would show a dialog for the user to select an account
-                val accountName = "user@gmail.com" // Replace with actual account selection logic
+                val accountName = uiState.value.settings.googleAccount
+
+                if (accountName == null) {
+                    _errorMessage.value = "Please select a Google account first"
+                    return@launch
+                }
 
                 // Perform the backup
                 val backupInfo = backupRestoreRepository.backupToGoogleDrive(accountName)
@@ -152,9 +168,12 @@ class SettingsViewModel @Inject constructor(
     fun performRestore() {
         viewModelScope.launch {
             try {
-                // For simplicity, using a hardcoded account name
-                // In a real implementation, we would show a dialog for the user to select an account
-                val accountName = "user@gmail.com" // Replace with actual account selection logic
+                val accountName = uiState.value.settings.googleAccount
+
+                if (accountName == null) {
+                    _errorMessage.value = "Please select a Google account first"
+                    return@launch
+                }
 
                 // Perform the restore using the latest backup
                 val success = backupRestoreRepository.restoreFromGoogleDrive(accountName)
