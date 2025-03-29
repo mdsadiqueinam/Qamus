@@ -1,48 +1,16 @@
 package io.github.mdsadiqueinam.qamus.ui.screen
 
-import android.accounts.AccountManager
-import android.app.Activity
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -64,14 +32,7 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
-
-    // Create a launcher for the account picker activity result
-    val accountPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        viewModel.handleAccountPickerResult(result.resultCode, result.data)
-    }
+    LocalContext.current
 
     // Show error message in snackbar
     LaunchedEffect(errorMessage) {
@@ -101,11 +62,15 @@ fun SettingsScreen(
 
     // Account picker dialog
     if (uiState.showAccountPicker) {
-        LaunchedEffect(Unit) {
-            val credential = viewModel.createGoogleAccountCredential(context as Activity)
-            val intent = credential.newChooseAccountIntent()
-            accountPickerLauncher.launch(intent)
-        }
+        AccountPickerDialog(
+            accounts = uiState.googleAccounts,
+            selectedAccount = uiState.settings.googleAccount,
+            onAccountSelected = { accountName ->
+                viewModel.updateGoogleAccount(accountName)
+                viewModel.hideAccountPicker()
+            },
+            onDismiss = { viewModel.hideAccountPicker() }
+        )
     }
 
     Scaffold(topBar = {
@@ -135,9 +100,9 @@ fun SettingsScreen(
                     settings = uiState.settings,
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
                     onBackupClicked = { viewModel.performBackup() },
-                    onRestoreClicked = { 
+                    onRestoreClicked = {
                         // Will automatically use the latest backup file
-                        viewModel.performRestore() 
+                        viewModel.performRestore()
                     },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
                     onSelectAccountClicked = {
@@ -311,10 +276,10 @@ fun ReminderSetting(
 
 @Composable
 fun BackupSetting(
-    lastBackupAt: Instant?, 
-    lastBackupVersion: Long, 
+    lastBackupAt: Instant?,
+    lastBackupVersion: Long,
     googleAccount: String?,
-    onBackupClicked: () -> Unit, 
+    onBackupClicked: () -> Unit,
     onRestoreClicked: () -> Unit,
     onSelectAccountClicked: () -> Unit,
     modifier: Modifier = Modifier
@@ -323,16 +288,21 @@ fun BackupSetting(
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Google Account selection
-        Column(
-            modifier = Modifier.fillMaxWidth().clickable(enabled = true) { onSelectAccountClicked() },
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        Box(
+            modifier = Modifier.clickable(enabled = true) { onSelectAccountClicked() }.fillMaxWidth(),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "Google account",
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Column(
+                modifier = Modifier.padding(4.dp).fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Google account",
+                    style = MaterialTheme.typography.bodyMedium
+                )
 
-            Text(googleAccount ?: "Select account")
+                Text(googleAccount ?: "Select account")
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -343,7 +313,7 @@ fun BackupSetting(
             val formattedDate = "${localDateTime.date} ${localDateTime.time}"
 
             Text(
-                text = "Last backup: $formattedDate (v$lastBackupVersion)", 
+                text = "Last backup: $formattedDate (v$lastBackupVersion)",
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -383,4 +353,52 @@ fun formatTime(minutes: Float): String {
     } else {
         "$mins minutes"
     }
+}
+
+/**
+ * A custom dialog to display the list of Google accounts and allow the user to select one.
+ */
+@Composable
+fun AccountPickerDialog(
+    accounts: List<String>,
+    selectedAccount: String?,
+    onAccountSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Google Account") },
+        text = {
+            if (accounts.isEmpty()) {
+                Text("No Google accounts found on this device.")
+            } else {
+                LazyColumn {
+                    items(accounts) { account ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onAccountSelected(account) },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = account == selectedAccount,
+                                onClick = { onAccountSelected(account) }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = account,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

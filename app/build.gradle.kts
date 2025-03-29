@@ -95,6 +95,7 @@ dependencies {
     // Google Drive API
     implementation(libs.google.api.client)
     implementation(libs.google.drive.api)
+    implementation(libs.google.play.services.auth)
     implementation(libs.gson)
 
     testImplementation(libs.junit)

@@ -20,6 +20,7 @@ kotlinxDatetime = "0.6.2"
 workManager = "2.10.0"
 googleApiClient = "2.7.0"
 googleDriveApi = "v3-rev20250220-2.0.0"
+googlePlayServicesAuth = "21.3.0"
 gson = "2.11.0"
 
 [libraries]
@@ -55,6 +56,7 @@ kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime",
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
 google-api-client = { group = "com.google.api-client", name = "google-api-client-android", version.ref = "googleApiClient" }
 google-drive-api = { group = "com.google.apis", name = "google-api-services-drive", version.ref = "googleDriveApi" }
+google-play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "googlePlayServicesAuth" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 
 [plugins]

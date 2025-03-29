@@ -2,12 +2,14 @@ package io.github.mdsadiqueinam.qamus.ui.viewmodel
 
 import android.accounts.AccountManager
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.services.drive.DriveScopes
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import io.github.mdsadiqueinam.qamus.data.repository.BackupRestoreRepository
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
@@ -29,7 +31,8 @@ data class SettingsUIState(
     val isLoading: Boolean = true,
     val showResetConfirmation: Boolean = false,
     val showPermissionDialog: Boolean = false,
-    val showAccountPicker: Boolean = false
+    val showAccountPicker: Boolean = false,
+    val googleAccounts: List<String> = emptyList()
 )
 
 /**
@@ -39,7 +42,8 @@ data class SettingsUIState(
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val backupRestoreRepository: BackupRestoreRepository,
-    private val navigator: QamusNavigator
+    private val navigator: QamusNavigator,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     // UI state for the settings screen
@@ -216,7 +220,21 @@ class SettingsViewModel @Inject constructor(
      * Show the account picker dialog.
      */
     fun showAccountPicker() {
-        _uiState.value = _uiState.value.copy(showAccountPicker = true)
+        val accounts = getGoogleAccounts()
+        _uiState.value = _uiState.value.copy(
+            showAccountPicker = true,
+            googleAccounts = accounts
+        )
+    }
+
+    /**
+     * Get the list of Google accounts on the device.
+     * @return The list of Google account names
+     */
+    private fun getGoogleAccounts(): List<String> {
+        val accountManager = AccountManager.get(context)
+        val accounts = accountManager.getAccountsByType("com.google")
+        return accounts.map { it.name }
     }
 
     /**
