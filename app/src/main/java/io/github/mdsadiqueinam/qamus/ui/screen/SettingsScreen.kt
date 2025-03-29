@@ -112,6 +112,10 @@ fun SettingsScreen(
                     settings = uiState.settings,
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
                     onBackupClicked = { viewModel.performBackup() },
+                    onRestoreClicked = { 
+                        // Will automatically use the latest backup file
+                        viewModel.performRestore() 
+                    },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
                     modifier = Modifier.fillMaxSize().padding(16.dp)
                 )
@@ -125,6 +129,7 @@ fun SettingsContent(
     settings: Settings,
     onReminderIntervalChanged: (Int) -> Unit,
     onBackupClicked: () -> Unit,
+    onRestoreClicked: () -> Unit,
     onReminderStateChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -152,7 +157,8 @@ fun SettingsContent(
                 BackupSetting(
                     lastBackupAt = settings.lastBackupAt,
                     lastBackupVersion = settings.lastBackupVersion,
-                    onBackupClicked = onBackupClicked
+                    onBackupClicked = onBackupClicked,
+                    onRestoreClicked = onRestoreClicked
                 )
             }
         )
@@ -275,7 +281,11 @@ fun ReminderSetting(
 
 @Composable
 fun BackupSetting(
-    lastBackupAt: Instant?, lastBackupVersion: Long, onBackupClicked: () -> Unit, modifier: Modifier = Modifier
+    lastBackupAt: Instant?, 
+    lastBackupVersion: Long, 
+    onBackupClicked: () -> Unit, 
+    onRestoreClicked: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         // Last backup info
@@ -284,17 +294,31 @@ fun BackupSetting(
             val formattedDate = "${localDateTime.date} ${localDateTime.time}"
 
             Text(
-                text = "Last backup: $formattedDate (v$lastBackupVersion)", style = MaterialTheme.typography.bodyMedium
+                text = "Last backup: $formattedDate (v$lastBackupVersion)", 
+                style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        // Backup button
-        Button(
-            onClick = onBackupClicked, modifier = Modifier.align(Alignment.End)
+        // Buttons row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
         ) {
-            Text("Backup Now")
+            // Restore button
+            Button(
+                onClick = onRestoreClicked
+            ) {
+                Text("Restore Now")
+            }
+
+            // Backup button
+            Button(
+                onClick = onBackupClicked
+            ) {
+                Text("Backup Now")
+            }
         }
     }
 }

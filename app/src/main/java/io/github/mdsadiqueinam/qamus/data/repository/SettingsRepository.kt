@@ -30,7 +30,7 @@ class SettingsRepository @Inject constructor(
     // Define keys for preferences
     private object PreferencesKeys {
         val REMINDER_INTERVAL = intPreferencesKey("reminder_interval")
-        val LAST_BACKUP_AT = stringPreferencesKey("last_backup_at")
+        val LAST_BACKUP_AT = longPreferencesKey("last_backup_at")
         val LAST_BACKUP_VERSION = longPreferencesKey("last_backup_version")
         val IS_REMINDER_ENABLED = booleanPreferencesKey("is_reminder_enabled")
     }
@@ -41,7 +41,7 @@ class SettingsRepository @Inject constructor(
     val settings: Flow<Settings> = context.settingsDataStore.data.map { preferences ->
         Settings(
             reminderInterval = preferences[PreferencesKeys.REMINDER_INTERVAL] ?: Settings.DEFAULT_REMINDER_INTERVAL,
-            lastBackupAt = preferences[PreferencesKeys.LAST_BACKUP_AT]?.let { Instant.parse(it) },
+            lastBackupAt = preferences[PreferencesKeys.LAST_BACKUP_AT]?.let { Instant.fromEpochMilliseconds(it) },
             lastBackupVersion = preferences[PreferencesKeys.LAST_BACKUP_VERSION] ?: 0,
             isReminderEnabled = preferences[PreferencesKeys.IS_REMINDER_ENABLED] == true
         )
@@ -61,7 +61,7 @@ class SettingsRepository @Inject constructor(
      */
     suspend fun updateLastBackup(timestamp: Instant, version: Long) {
         context.settingsDataStore.edit { preferences ->
-            preferences[PreferencesKeys.LAST_BACKUP_AT] = timestamp.toString()
+            preferences[PreferencesKeys.LAST_BACKUP_AT] = timestamp.toEpochMilliseconds()
             preferences[PreferencesKeys.LAST_BACKUP_VERSION] = version
         }
     }

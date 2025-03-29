@@ -8,14 +8,14 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
-import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.mdsadiqueinam.qamus.data.database.QamusDatabase
+import io.github.mdsadiqueinam.qamus.data.model.BackupInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock.System
 import java.io.File
 import java.io.FileOutputStream
-import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -37,8 +37,6 @@ class BackupRestoreRepository @Inject constructor(
         private const val MIME_TYPE_FOLDER = "application/vnd.google-apps.folder"
         private const val DATABASE_NAME = "qamus_database"
     }
-
-    private val gson = Gson()
 
     /**
      * Create a Google Drive API client.
@@ -99,12 +97,44 @@ class BackupRestoreRepository @Inject constructor(
     }
 
     /**
+     * Delete existing backup files with the specified prefix in Google Drive.
+     *
+     * @param driveService The Drive service to use
+     * @param folderId The ID of the folder containing the backups
+     */
+    private suspend fun deleteExistingBackups(driveService: Drive, folderId: String) = withContext(Dispatchers.IO) {
+        try {
+            // Query for files with the backup prefix in the specified folder
+            val query = "'$folderId' in parents and name contains '$BACKUP_FILE_PREFIX' and trashed = false"
+            val result = driveService.files().list()
+                .setQ(query)
+                .setSpaces("drive")
+                .setFields("files(id, name)")
+                .execute()
+
+            val files = result.files
+            if (files != null && files.isNotEmpty()) {
+                Log.d(TAG, "Found ${files.size} existing backup files to delete")
+
+                // Delete each file
+                for (file in files) {
+                    Log.d(TAG, "Deleting backup file: ${file.name}")
+                    driveService.files().delete(file.id).execute()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting existing backups", e)
+        }
+    }
+
+    /**
      * Backup the entire database file to Google Drive.
+     * First deletes any existing backups with the same prefix.
      *
      * @param accountName The Google account name to use for authentication
      * @return The ID of the created backup file, or null if backup failed
      */
-    suspend fun backupToGoogleDrive(accountName: String): String? = withContext(Dispatchers.IO) {
+    suspend fun backupToGoogleDrive(accountName: String): BackupInfo? = withContext(Dispatchers.IO) {
         try {
             val driveService = getDriveService(accountName)
 
@@ -116,8 +146,15 @@ class BackupRestoreRepository @Inject constructor(
                 return@withContext null
             }
 
+            // Find or create the backup folder in Google Drive
+            val folderId = findOrCreateBackupFolder(driveService)
+
+            // Delete existing backups
+            deleteExistingBackups(driveService, folderId)
+
             // Create a temporary file to store the backup
-            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val backupAt = System.now()
+            val timestamp = backupAt.toEpochMilliseconds()
             val backupFileName = "$BACKUP_FILE_PREFIX$timestamp$BACKUP_FILE_EXTENSION_DB"
             val backupFile = File(context.cacheDir, backupFileName)
 
@@ -127,9 +164,6 @@ class BackupRestoreRepository @Inject constructor(
                     input.copyTo(output)
                 }
             }
-
-            // Find or create the backup folder in Google Drive
-            val folderId = findOrCreateBackupFolder(driveService)
 
             // Create file metadata
             val fileMetadata = com.google.api.services.drive.model.File().apply {
@@ -148,7 +182,8 @@ class BackupRestoreRepository @Inject constructor(
             // Delete the temporary file
             backupFile.delete()
 
-            return@withContext uploadedFile.id
+            // Return the ID and the timestamp of the backup in pair
+            return@withContext BackupInfo(id = uploadedFile.id, backupAt = backupAt)
         } catch (e: Exception) {
             Log.e(TAG, "Error backing up database to Google Drive", e)
             return@withContext null
@@ -156,15 +191,58 @@ class BackupRestoreRepository @Inject constructor(
     }
 
     /**
-     * Restore the entire database from a Google Drive database file backup.
+     * Find the latest backup file with the specified prefix in Google Drive.
+     *
+     * @param driveService The Drive service to use
+     * @return The ID of the latest backup file, or null if no backup files were found
+     */
+    private suspend fun findLatestBackup(driveService: Drive): String? = withContext(Dispatchers.IO) {
+        try {
+            // Find the backup folder
+            val folderId = findOrCreateBackupFolder(driveService)
+
+            // Query for files with the backup prefix in the specified folder, ordered by creation time descending
+            val query = "'$folderId' in parents and name contains '$BACKUP_FILE_PREFIX' and trashed = false"
+            val result = driveService.files().list()
+                .setQ(query)
+                .setOrderBy("createdTime desc")
+                .setSpaces("drive")
+                .setFields("files(id, name, createdTime)")
+                .setPageSize(1)  // We only need the most recent one
+                .execute()
+
+            val files = result.files
+            if (files != null && files.isNotEmpty()) {
+                val latestFile = files[0]
+                Log.d(TAG, "Found latest backup file: ${latestFile.name}")
+                return@withContext latestFile.id
+            }
+
+            Log.d(TAG, "No backup files found")
+            return@withContext null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error finding latest backup", e)
+            return@withContext null
+        }
+    }
+
+    /**
+     * Restore the entire database from the latest Google Drive database file backup.
      *
      * @param accountName The Google account name to use for authentication
-     * @param fileId The ID of the backup file to restore from
      * @return True if restore was successful, false otherwise
      */
-    suspend fun restoreFromGoogleDrive(accountName: String, fileId: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun restoreFromGoogleDrive(accountName: String): Boolean = withContext(Dispatchers.IO) {
         try {
             val driveService = getDriveService(accountName)
+
+            // Find the latest backup file
+            val fileId = findLatestBackup(driveService)
+
+            if (fileId == null) {
+                Log.e(TAG, "No backup files found to restore")
+                return@withContext false
+            }
 
             // Create a temporary file to store the downloaded database
             val tempFile = File(context.cacheDir, "temp_$DATABASE_NAME")
