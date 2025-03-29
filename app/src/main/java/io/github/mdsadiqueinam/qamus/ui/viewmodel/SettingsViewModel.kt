@@ -1,7 +1,12 @@
 package io.github.mdsadiqueinam.qamus.ui.viewmodel
 
+import android.accounts.AccountManager
+import android.app.Activity
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.services.drive.DriveScopes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import io.github.mdsadiqueinam.qamus.data.repository.BackupRestoreRepository
@@ -13,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import java.util.Collections
 import javax.inject.Inject
 
 /**
@@ -22,7 +28,8 @@ data class SettingsUIState(
     val settings: Settings = Settings(),
     val isLoading: Boolean = true,
     val showResetConfirmation: Boolean = false,
-    val showPermissionDialog: Boolean = false
+    val showPermissionDialog: Boolean = false,
+    val showAccountPicker: Boolean = false
 )
 
 /**
@@ -203,5 +210,46 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             navigator.navigateBack()
         }
+    }
+
+    /**
+     * Show the account picker dialog.
+     */
+    fun showAccountPicker() {
+        _uiState.value = _uiState.value.copy(showAccountPicker = true)
+    }
+
+    /**
+     * Hide the account picker dialog.
+     */
+    fun hideAccountPicker() {
+        _uiState.value = _uiState.value.copy(showAccountPicker = false)
+    }
+
+    /**
+     * Create a Google account credential for account selection.
+     * @param activity The activity to use for showing the account picker
+     * @return The Google account credential
+     */
+    fun createGoogleAccountCredential(activity: Activity): GoogleAccountCredential {
+        return GoogleAccountCredential.usingOAuth2(
+            activity,
+            Collections.singleton(DriveScopes.DRIVE_FILE)
+        )
+    }
+
+    /**
+     * Handle the result of the account picker.
+     * @param resultCode The result code from the account picker
+     * @param data The intent data from the account picker
+     */
+    fun handleAccountPickerResult(resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK && data != null) {
+            val accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
+            if (accountName != null) {
+                updateGoogleAccount(accountName)
+            }
+        }
+        hideAccountPicker()
     }
 }

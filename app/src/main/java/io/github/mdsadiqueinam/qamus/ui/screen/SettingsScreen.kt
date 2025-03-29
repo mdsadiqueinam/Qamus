@@ -1,5 +1,10 @@
 package io.github.mdsadiqueinam.qamus.ui.screen
 
+import android.accounts.AccountManager
+import android.app.Activity
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,6 +64,14 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    // Create a launcher for the account picker activity result
+    val accountPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.handleAccountPickerResult(result.resultCode, result.data)
+    }
 
     // Show error message in snackbar
     LaunchedEffect(errorMessage) {
@@ -84,6 +97,15 @@ fun SettingsScreen(
                     Text("Cancel")
                 }
             })
+    }
+
+    // Account picker dialog
+    if (uiState.showAccountPicker) {
+        LaunchedEffect(Unit) {
+            val credential = viewModel.createGoogleAccountCredential(context as Activity)
+            val intent = credential.newChooseAccountIntent()
+            accountPickerLauncher.launch(intent)
+        }
     }
 
     Scaffold(topBar = {
@@ -120,8 +142,7 @@ fun SettingsScreen(
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
                     onSelectAccountClicked = {
                         // Show account picker dialog
-                        // For now, we'll just use a dummy account for demonstration
-                        viewModel.updateGoogleAccount("user@gmail.com")
+                        viewModel.showAccountPicker()
                     },
                     modifier = Modifier.fillMaxSize().padding(16.dp)
                 )
@@ -303,7 +324,7 @@ fun BackupSetting(
     Column(modifier = modifier.fillMaxWidth()) {
         // Google Account selection
         Column(
-            modifier = Modifier.fillMaxWidth().clickable { onSelectAccountClicked },
+            modifier = Modifier.fillMaxWidth().clickable(enabled = true) { onSelectAccountClicked() },
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
