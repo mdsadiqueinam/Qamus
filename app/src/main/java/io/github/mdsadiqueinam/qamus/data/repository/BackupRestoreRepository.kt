@@ -1,12 +1,8 @@
 package io.github.mdsadiqueinam.qamus.data.repository
 
 import android.accounts.Account
-import android.app.Activity
 import android.content.Context
-import android.credentials.GetCredentialException
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.credentials.*
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -33,7 +29,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-
 @Singleton
 class BackupRestoreRepository @Inject constructor(
     @ApplicationContext private val context: Context, private val firebaseAuth: FirebaseAuth
@@ -54,8 +49,8 @@ class BackupRestoreRepository @Inject constructor(
     val googleIdOption = GetGoogleIdOption.Builder()
         // Your server's client ID, not your Android client ID.
         .setServerClientId("48648782705-p8432n5lspdttoe7np0sgfnopm73fm2r.apps.googleusercontent.com")
-        // Only show accounts previously used to sign in.
-        .setFilterByAuthorizedAccounts(true).build()
+        // Show all available Google accounts, not just previously authorized ones
+        .setFilterByAuthorizedAccounts(false).setAutoSelectEnabled(true).setNonce("nonce").build()
 
     // Create the Credential Manager request
     val request = GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build()
@@ -72,14 +67,20 @@ class BackupRestoreRepository @Inject constructor(
         try {
             // Launch Credential Manager UI
             val result = credentialManager.getCredential(
-                context = activity,
-                request = request
+                context = activity, request = request
             )
 
             // Extract credential from the result returned by Credential Manager
             handleSignIn(result.credential)
         } catch (e: Exception) {
+            // Log the exception with detailed information
             Log.e(TAG, "Couldn't retrieve user's credentials: ${e.localizedMessage}")
+
+            // If the error is "Cannot find a matching credential", provide more specific logging
+            if (e.message?.contains("Cannot find a matching credential") == true) {
+                Log.d(TAG, "No matching credentials found. This is normal for first-time sign-in or new devices.")
+                // The app will continue with the updated configuration that allows non-authorized accounts
+            }
         }
     }
 
@@ -217,10 +218,7 @@ class BackupRestoreRepository @Inject constructor(
 
             val backups = result.files.map { file ->
                 BackupMetadata(
-                    id = file.id,
-                    name = file.name,
-                    createdTime = file.createdTime.toStringRfc3339(),
-                    size = file.size
+                    id = file.id, name = file.name, createdTime = file.createdTime.toStringRfc3339(), size = file.size
                 )
             }
 
@@ -277,8 +275,5 @@ class BackupRestoreRepository @Inject constructor(
  * @property size The size of the backup file in bytes
  */
 data class BackupMetadata(
-    val id: String,
-    val name: String,
-    val createdTime: String,
-    val size: Int
+    val id: String, val name: String, val createdTime: String, val size: Int
 )
