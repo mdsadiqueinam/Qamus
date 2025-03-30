@@ -46,6 +46,7 @@ class BackupRestoreRepository @Inject constructor(
     }
 
     private val _isSignedIn = MutableStateFlow(false)
+    val isSignedIn = _isSignedIn.asStateFlow()
     private val credentialManager = CredentialManager.create(context)
     private val driveService get() = getGoogleDrive()
 
@@ -66,7 +67,7 @@ class BackupRestoreRepository @Inject constructor(
 
     fun isSignedIn(): Flow<Boolean> = _isSignedIn.asStateFlow()
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+
     suspend fun signIn() {
         try {
             // Launch Credential Manager UI
@@ -77,7 +78,7 @@ class BackupRestoreRepository @Inject constructor(
 
             // Extract credential from the result returned by Credential Manager
             handleSignIn(result.credential)
-        } catch (e: GetCredentialException) {
+        } catch (e: Exception) {
             Log.e(TAG, "Couldn't retrieve user's credentials: ${e.localizedMessage}")
         }
     }

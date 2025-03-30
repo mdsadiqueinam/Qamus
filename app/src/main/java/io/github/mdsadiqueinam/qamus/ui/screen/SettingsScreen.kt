@@ -1,42 +1,13 @@
 package io.github.mdsadiqueinam.qamus.ui.screen
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -110,9 +81,11 @@ fun SettingsScreen(
             } else {
                 SettingsContent(
                     settings = uiState.settings,
+                    isSignedIn = uiState.isSignedIn,
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
                     onBackupClicked = { viewModel.performBackup() },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
+                    signIn = { viewModel.signIn() },
                     modifier = Modifier.fillMaxSize().padding(16.dp)
                 )
             }
@@ -123,14 +96,15 @@ fun SettingsScreen(
 @Composable
 fun SettingsContent(
     settings: Settings,
+    isSignedIn: Boolean,
     onReminderIntervalChanged: (Int) -> Unit,
     onBackupClicked: () -> Unit,
     onReminderStateChanged: (Boolean) -> Unit,
+    signIn: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Reminder Interval Setting
         SettingCard(
@@ -143,19 +117,19 @@ fun SettingsContent(
                     isEnabledReminder = settings.isReminderEnabled,
                     onReminderStateChanged = onReminderStateChanged
                 )
-            }
-        )
+            })
 
         // Backup Setting
         SettingCard(
             title = "Backup", description = "Backup your dictionary to prevent data loss", content = {
                 BackupSetting(
+                    isSignedIn = isSignedIn,
                     lastBackupAt = settings.lastBackupAt,
                     lastBackupVersion = settings.lastBackupVersion,
-                    onBackupClicked = onBackupClicked
+                    onBackupClicked = onBackupClicked,
+                    signIn = signIn
                 )
-            }
-        )
+            })
 
         // Reminder enable or disable settings
     }
@@ -217,34 +191,26 @@ fun ReminderSetting(
         Spacer(modifier = Modifier.height(8.dp))
 
         Slider(
-            value = sliderPosition,
-            onValueChange = {
-                val snappedValue = ((it / step).roundToInt() * step).toFloat()
-                sliderPosition = snappedValue.coerceIn(valueRange)
-            },
-            onValueChangeFinished = {
-                // Convert minutes back to milliseconds
-                onIntervalChanged(sliderPosition.toInt())
-            },
-            valueRange = valueRange,
-            steps = steps - 1,
-            modifier = Modifier.fillMaxWidth()
+            value = sliderPosition, onValueChange = {
+            val snappedValue = ((it / step).roundToInt() * step).toFloat()
+            sliderPosition = snappedValue.coerceIn(valueRange)
+        }, onValueChangeFinished = {
+            // Convert minutes back to milliseconds
+            onIntervalChanged(sliderPosition.toInt())
+        }, valueRange = valueRange, steps = steps - 1, modifier = Modifier.fillMaxWidth()
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "10m",
-                style = MaterialTheme.typography.bodySmall
+                text = "10m", style = MaterialTheme.typography.bodySmall
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = "3h",
-                style = MaterialTheme.typography.bodySmall
+                text = "3h", style = MaterialTheme.typography.bodySmall
             )
         }
 
@@ -252,49 +218,68 @@ fun ReminderSetting(
 
         // Reminder enable or disable settings
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Enable Reminder",
-                style = MaterialTheme.typography.bodyMedium
+                text = "Enable Reminder", style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
             Switch(
-                checked = isEnabledReminder,
-                onCheckedChange = { isEnabled ->
+                checked = isEnabledReminder, onCheckedChange = { isEnabled ->
                     // Simply enable or disable the reminder without permission check
                     onReminderStateChanged(isEnabled)
-                }
-            )
+                })
         }
     }
 }
 
 @Composable
 fun BackupSetting(
-    lastBackupAt: Instant?, lastBackupVersion: Long, onBackupClicked: () -> Unit, modifier: Modifier = Modifier
+    isSignedIn: Boolean,
+    lastBackupAt: Instant?,
+    lastBackupVersion: Long,
+    onBackupClicked: () -> Unit,
+    signIn: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        // Last backup info
-        if (lastBackupAt != null) {
-            val localDateTime = lastBackupAt.toLocalDateTime(TimeZone.currentSystemDefault())
-            val formattedDate = "${localDateTime.date} ${localDateTime.time}"
+    if (isSignedIn) {
+        Column(modifier = modifier.fillMaxWidth()) {
+            // Last backup info
+            if (lastBackupAt != null) {
+                val localDateTime = lastBackupAt.toLocalDateTime(TimeZone.currentSystemDefault())
+                val formattedDate = "${localDateTime.date} ${localDateTime.time}"
 
+                Text(
+                    text = "Last backup: $formattedDate (v$lastBackupVersion)",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Backup button
+            Button(
+                onClick = onBackupClicked, modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Backup Now")
+            }
+        }
+    } else {
+        Column(modifier = modifier.fillMaxWidth()) {
             Text(
-                text = "Last backup: $formattedDate (v$lastBackupVersion)", style = MaterialTheme.typography.bodyMedium
+                text = "You need to sign in to backup your dictionary",
+                style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-        }
 
-        // Backup button
-        Button(
-            onClick = onBackupClicked, modifier = Modifier.align(Alignment.End)
-        ) {
-            Text("Backup Now")
+            Button(
+                onClick = signIn, modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Sign In")
+            }
         }
     }
 }

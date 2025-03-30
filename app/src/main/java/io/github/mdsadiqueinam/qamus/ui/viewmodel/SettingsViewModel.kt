@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Settings
+import io.github.mdsadiqueinam.qamus.data.repository.BackupRestoreRepository
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +22,8 @@ data class SettingsUIState(
     val settings: Settings = Settings(),
     val isLoading: Boolean = true,
     val showResetConfirmation: Boolean = false,
-    val showPermissionDialog: Boolean = false
+    val showPermissionDialog: Boolean = false,
+    val isSignedIn: Boolean = false
 )
 
 /**
@@ -29,7 +31,8 @@ data class SettingsUIState(
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val repository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
+    private val backupRestoreRepository: BackupRestoreRepository,
     private val navigator: QamusNavigator
 ) : ViewModel() {
 
@@ -52,11 +55,16 @@ class SettingsViewModel @Inject constructor(
     private fun loadSettings() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            repository.settings.collectLatest { settings ->
+            settingsRepository.settings.collectLatest { settings ->
                 _uiState.value = SettingsUIState(
                     settings = settings,
                     isLoading = false
                 )
+            }
+
+            // Check if the user is signed in
+            backupRestoreRepository.isSignedIn.collectLatest { isSignedIn ->
+                _uiState.value = _uiState.value.copy(isSignedIn = isSignedIn)
             }
         }
     }
@@ -67,7 +75,7 @@ class SettingsViewModel @Inject constructor(
     fun updateReminderInterval(interval: Int) {
         viewModelScope.launch {
             try {
-                repository.updateReminderInterval(interval)
+                settingsRepository.updateReminderInterval(interval)
             } catch (e: Exception) {
                 _errorMessage.value = "Error updating reminder interval: ${e.message}"
             }
@@ -81,7 +89,7 @@ class SettingsViewModel @Inject constructor(
     fun updateReminderState(isEnabled: Boolean) {
         viewModelScope.launch {
             try {
-                repository.setReminderEnabled(isEnabled)
+                settingsRepository.setReminderEnabled(isEnabled)
             } catch (e: Exception) {
                 _errorMessage.value = "Error updating reminder state: ${e.message}"
             }
@@ -96,7 +104,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 val currentTime = Clock.System.now()
                 val currentVersion = uiState.value.settings.lastBackupVersion + 1
-                repository.updateLastBackup(currentTime, currentVersion)
+                settingsRepository.updateLastBackup(currentTime, currentVersion)
             } catch (e: Exception) {
                 _errorMessage.value = "Error performing backup: ${e.message}"
             }
@@ -123,10 +131,20 @@ class SettingsViewModel @Inject constructor(
     fun resetSettings() {
         viewModelScope.launch {
             try {
-                repository.resetSettings()
+                settingsRepository.resetSettings()
                 hideResetConfirmation()
             } catch (e: Exception) {
                 _errorMessage.value = "Error resetting settings: ${e.message}"
+            }
+        }
+    }
+
+    fun signIn() {
+        viewModelScope.launch {
+            try {
+                backupRestoreRepository.signIn()
+            } catch (e: Exception) {
+                _errorMessage.value = "Error logging in: ${e.message}"
             }
         }
     }
