@@ -61,9 +61,6 @@ class BackupRestoreRepository @Inject constructor(
         _isSignedIn.value = firebaseAuth.currentUser != null
     }
 
-    fun isSignedIn(): Flow<Boolean> = _isSignedIn.asStateFlow()
-
-
     suspend fun signIn(activity: Context) {
         try {
             // Launch Credential Manager UI
@@ -72,7 +69,7 @@ class BackupRestoreRepository @Inject constructor(
             )
 
             // Extract credential from the result returned by Credential Manager
-//            handleSignIn(result.credential)
+            handleSignIn(result.credential)
         } catch (e: Exception) {
             // Log the exception with detailed information
             Log.e(TAG, "Couldn't retrieve user's credentials: ${e.localizedMessage}")
@@ -100,14 +97,11 @@ class BackupRestoreRepository @Inject constructor(
                 // Sign in success, update UI with the signed-in user's information
                 Log.d(TAG, "signInWithCredential:success")
                 _isSignedIn.value = true
-//                updateUI(user)
             } else {
                 // If sign in fails, display a message to the user
                 Log.w(TAG, "signInWithCredential:failure", task.exception)
                 _isSignedIn.value = false
-//                updateUI(null)
             }
-
         }
     }
 

@@ -122,7 +122,7 @@ fun SettingsContent(
 
         // Backup Setting
         SettingCard(
-            title = "Backup", description = "Backup your dictionary to prevent data loss", content = {
+            title = "Backup $isSignedIn", description = "Backup your dictionary to prevent data loss", content = {
                 BackupSetting(
                     isSignedIn = isSignedIn,
                     lastBackupAt = settings.lastBackupAt,
