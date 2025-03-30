@@ -67,4 +67,7 @@
     <string name="check_back_later">Please check back later for new vocabulary to practice</string>
     <string name="your_random_kalima">Your Random Kalima</string>
     <string name="default_web_client_id">NO_ID_YET</string>
+
+    <!-- Google Drive API -->
+    <string name="google_drive_client_id">48648782705-p8432n5lspdttoe7np0sgfnopm73fm2r.apps.googleusercontent.com</string>
 </resources>

@@ -15,6 +15,7 @@ import com.google.api.services.drive.model.File
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.database.QamusDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -48,7 +49,7 @@ class BackupRestoreRepository @Inject constructor(
     // Instantiate a Google sign-in request
     val googleIdOption = GetGoogleIdOption.Builder()
         // Your server's client ID, not your Android client ID.
-        .setServerClientId("48648782705-p8432n5lspdttoe7np0sgfnopm73fm2r.apps.googleusercontent.com")
+        .setServerClientId(context.getString(R.string.google_drive_client_id))
         // Show all available Google accounts, not just previously authorized ones
         .setFilterByAuthorizedAccounts(false).setAutoSelectEnabled(true).setNonce("nonce").build()
 
