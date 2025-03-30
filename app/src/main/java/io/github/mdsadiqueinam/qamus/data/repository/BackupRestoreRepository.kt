@@ -36,7 +36,7 @@ class BackupRestoreRepository @Inject constructor(
 ) {
 
     companion object {
-        private const val TAG = "GoogleDriveBackupRepo"
+        private const val TAG = "BackupRestoreRepository"
         private const val BACKUP_FOLDER_NAME = "QamusBackups"
         private const val DATABASE_NAME = "qamus_database"
     }
@@ -49,7 +49,7 @@ class BackupRestoreRepository @Inject constructor(
     // Instantiate a Google sign-in request
     val googleIdOption = GetGoogleIdOption.Builder()
         // Your server's client ID, not your Android client ID.
-        .setServerClientId(context.getString(R.string.google_drive_client_id))
+        .setServerClientId(context.getString(R.string.default_web_client_id))
         // Show all available Google accounts, not just previously authorized ones
         .setFilterByAuthorizedAccounts(false).setAutoSelectEnabled(true).setNonce("nonce").build()
 
@@ -72,16 +72,10 @@ class BackupRestoreRepository @Inject constructor(
             )
 
             // Extract credential from the result returned by Credential Manager
-            handleSignIn(result.credential)
+//            handleSignIn(result.credential)
         } catch (e: Exception) {
             // Log the exception with detailed information
             Log.e(TAG, "Couldn't retrieve user's credentials: ${e.localizedMessage}")
-
-            // If the error is "Cannot find a matching credential", provide more specific logging
-            if (e.message?.contains("Cannot find a matching credential") == true) {
-                Log.d(TAG, "No matching credentials found. This is normal for first-time sign-in or new devices.")
-                // The app will continue with the updated configuration that allows non-authorized accounts
-            }
         }
     }
 
