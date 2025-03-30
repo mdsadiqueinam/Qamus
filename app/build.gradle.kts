@@ -91,6 +91,11 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
 
+    // Google Drive API
+    implementation(libs.google.api.client)
+    implementation(libs.google.drive.api)
+    implementation(libs.google.auth)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
