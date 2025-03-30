@@ -1,5 +1,8 @@
 package io.github.mdsadiqueinam.qamus.ui.viewmodel
 
+import android.app.Activity
+import android.content.Context
+import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -139,10 +142,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun signIn() {
+    fun signIn(activity: Context) {
         viewModelScope.launch {
             try {
-                backupRestoreRepository.signIn()
+                backupRestoreRepository.signIn(activity)
             } catch (e: Exception) {
                 _errorMessage.value = "Error logging in: ${e.message}"
             }

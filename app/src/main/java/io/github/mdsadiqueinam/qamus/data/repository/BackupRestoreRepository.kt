@@ -1,6 +1,7 @@
 package io.github.mdsadiqueinam.qamus.data.repository
 
 import android.accounts.Account
+import android.app.Activity
 import android.content.Context
 import android.credentials.GetCredentialException
 import android.os.Build
@@ -9,7 +10,6 @@ import androidx.annotation.RequiresApi
 import androidx.credentials.*
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
@@ -53,7 +53,7 @@ class BackupRestoreRepository @Inject constructor(
     // Instantiate a Google sign-in request
     val googleIdOption = GetGoogleIdOption.Builder()
         // Your server's client ID, not your Android client ID.
-        .setServerClientId("48648782705-p8432n5lspdttoe7np0sgfnopm73fm2r.apps.googleusercontent.com\n")
+        .setServerClientId("48648782705-p8432n5lspdttoe7np0sgfnopm73fm2r.apps.googleusercontent.com")
         // Only show accounts previously used to sign in.
         .setFilterByAuthorizedAccounts(true).build()
 
@@ -68,11 +68,11 @@ class BackupRestoreRepository @Inject constructor(
     fun isSignedIn(): Flow<Boolean> = _isSignedIn.asStateFlow()
 
 
-    suspend fun signIn() {
+    suspend fun signIn(activity: Context) {
         try {
             // Launch Credential Manager UI
             val result = credentialManager.getCredential(
-                context = context,
+                context = activity,
                 request = request
             )
 
@@ -85,7 +85,7 @@ class BackupRestoreRepository @Inject constructor(
 
     private fun handleSignIn(credential: Credential) {
         // Check if credential is of type Google ID
-        if (credential is CustomCredential && credential.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+        if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
             // Create Google ID Token
             val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
 

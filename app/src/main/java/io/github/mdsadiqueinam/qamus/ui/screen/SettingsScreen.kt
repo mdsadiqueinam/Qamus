@@ -29,6 +29,7 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val localContext = LocalContext.current
 
     // Show error message in snackbar
     LaunchedEffect(errorMessage) {
@@ -85,7 +86,7 @@ fun SettingsScreen(
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
                     onBackupClicked = { viewModel.performBackup() },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
-                    signIn = { viewModel.signIn() },
+                    signIn = { viewModel.signIn(localContext) },
                     modifier = Modifier.fillMaxSize().padding(16.dp)
                 )
             }
