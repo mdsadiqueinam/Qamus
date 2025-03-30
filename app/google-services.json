@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "403899040219",
+    "project_id": "qamus-242ac",
+    "storage_bucket": "qamus-242ac.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:403899040219:android:cbed2ef169c761b14a27fe",
+        "android_client_info": {
+          "package_name": "io.github.mdsadiqueinam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBq6aWZ5hgJe3qwnEbCsAwYXWHoMGCdMac"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
