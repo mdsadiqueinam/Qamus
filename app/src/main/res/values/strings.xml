@@ -66,4 +66,5 @@
     <string name="no_kalima_available">No Kalima Available</string>
     <string name="check_back_later">Please check back later for new vocabulary to practice</string>
     <string name="your_random_kalima">Your Random Kalima</string>
+    <string name="default_web_client_id">NO_ID_YET</string>
 </resources>

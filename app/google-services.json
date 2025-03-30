@@ -12,7 +12,20 @@
           "package_name": "io.github.mdsadiqueinam"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "403899040219-ngurslgd04e8glv1uji0idjfu8fpbkk0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "io.github.mdsadiqueinam",
+            "certificate_hash": "e766a4bbee641dd1cc1c31a77348ae37a5e3107e"
+          }
+        },
+        {
+          "client_id": "403899040219-2a9a8aff2pfhv1u1i96gism5s4qg76ir.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBq6aWZ5hgJe3qwnEbCsAwYXWHoMGCdMac"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "403899040219-2a9a8aff2pfhv1u1i96gism5s4qg76ir.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

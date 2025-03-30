@@ -96,6 +96,11 @@ dependencies {
     implementation(libs.google.drive.api)
     implementation(libs.google.auth)
 
+    // Credential Manager (replacing Google Sign-In)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.android.libraries.identity.googleid)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
