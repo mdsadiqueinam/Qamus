@@ -22,8 +22,6 @@ import io.github.mdsadiqueinam.qamus.data.database.QamusDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
@@ -63,7 +61,6 @@ class BackupRestoreRepository @Inject constructor(
             val authListener = FirebaseAuth.AuthStateListener {
                 val currentUser = it.currentUser
                 trySend(currentUser)
-                Log.d(TAG, "observeUserState user: $currentUser")
             }
             firebaseAuth.addAuthStateListener(authListener)
             awaitClose {

@@ -73,7 +73,6 @@ class SettingsViewModel @Inject constructor(
             launch {
                 // Check if the user is signed in
                 backupRestoreRepository.observeUserState().collectLatest { user ->
-                    Log.d("SettingsViewModel", "user collected: $user")
                     _uiState.value = _uiState.value.copy(isSignedIn = user != null, user = user)
                 }
             }
