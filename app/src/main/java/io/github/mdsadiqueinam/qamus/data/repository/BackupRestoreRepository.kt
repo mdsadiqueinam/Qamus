@@ -39,7 +39,9 @@ import javax.inject.Singleton
 
 @Singleton
 class BackupRestoreRepository @Inject constructor(
-    @ApplicationContext private val context: Context, private val firebaseAuth: FirebaseAuth
+    @ApplicationContext private val context: Context,
+    private val firebaseAuth: FirebaseAuth,
+    private val database: QamusDatabase,
 ) {
 
     companion object {
@@ -180,7 +182,7 @@ class BackupRestoreRepository @Inject constructor(
             mediaContent.setLength(file.length())
 
             val uploadedFile =
-                driveService!!.files().create(fileMetadata, mediaContent).setFields("id, name, createdTime, size")
+                driveService.files().create(fileMetadata, mediaContent).setFields("id, name, createdTime, size")
                     .apply {
                         mediaHttpUploader.setProgressListener(listener)
                     }.execute()
@@ -240,7 +242,7 @@ class BackupRestoreRepository @Inject constructor(
             val databaseFile = context.getDatabasePath(DATABASE_NAME)
 
             // Close the database connection
-            QamusDatabase.getDatabase(context).close()
+            database.close()
 
             // Download the backup file
             val outputStream = FileOutputStream(databaseFile)
