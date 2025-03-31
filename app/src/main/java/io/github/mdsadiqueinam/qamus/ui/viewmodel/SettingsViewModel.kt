@@ -2,10 +2,8 @@ package io.github.mdsadiqueinam.qamus.ui.viewmodel
 
 import android.app.Activity
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.auth.UserRecoverableAuthException
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,10 +37,9 @@ data class SettingsUIState(
 sealed class BackupRestoreState {
     object Idle : BackupRestoreState()
     data class InProgress(
-        val progress: Int = 0,
-        val transferType: DataTransferState.TransferType,
-        val bytesTransferred: Long = 0
+        val progress: Int = 0, val transferType: DataTransferState.TransferType, val bytesTransferred: Long = 0
     ) : BackupRestoreState()
+
     data class Error(val message: String) : BackupRestoreState()
     object Success : BackupRestoreState()
 }
@@ -77,7 +74,6 @@ class SettingsViewModel @Inject constructor(
      * Load settings from the repository.
      */
     private fun loadSettings() {
-        Log.d("SettingsViewModel", "ViewModel initialized") // Add this log
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
@@ -121,21 +117,6 @@ class SettingsViewModel @Inject constructor(
                 settingsRepository.setReminderEnabled(isEnabled)
             } catch (e: Exception) {
                 _errorMessage.value = "Error updating reminder state: ${e.message}"
-            }
-        }
-    }
-
-    /**
-     * Simulate a backup by updating the last backup information.
-     */
-    fun performBackup() {
-        viewModelScope.launch {
-            try {
-                val currentTime = Clock.System.now()
-                val currentVersion = uiState.value.settings.lastBackupVersion + 1
-                settingsRepository.updateLastBackup(currentTime, currentVersion)
-            } catch (e: Exception) {
-                _errorMessage.value = "Error performing backup: ${e.message}"
             }
         }
     }
@@ -187,7 +168,7 @@ class SettingsViewModel @Inject constructor(
     // Job to keep track of backup/restore operations for cancellation
     private var backupRestoreJob: kotlinx.coroutines.Job? = null
 
-    fun progressBackup(activity: Context) {
+    fun performBackup(activity: Context) {
         // Cancel any existing job
         backupRestoreJob?.cancel()
 
@@ -209,6 +190,7 @@ class SettingsViewModel @Inject constructor(
                         val currentVersion = uiState.value.settings.lastBackupVersion + 1
                         settingsRepository.updateLastBackup(currentTime, currentVersion)
                     }
+
                     is DataTransferState.Error -> {
                         if (it.exception is UserRecoverableAuthIOException) {
                             (activity as Activity).startActivityForResult(it.exception.intent, REQUEST_AUTHORIZATION)
@@ -219,6 +201,7 @@ class SettingsViewModel @Inject constructor(
                             )
                         }
                     }
+
                     is DataTransferState.Uploading -> {
                         _uiState.value = _uiState.value.copy(
                             backupRestoreState = BackupRestoreState.InProgress(
@@ -233,7 +216,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun progressRestore(activity: Context) {
+    fun performRestore(activity: Context) {
         // Cancel any existing job
         backupRestoreJob?.cancel()
 
@@ -251,6 +234,7 @@ class SettingsViewModel @Inject constructor(
                             backupRestoreState = BackupRestoreState.Success
                         )
                     }
+
                     is DataTransferState.Error -> {
                         if (it.exception is UserRecoverableAuthIOException) {
                             (activity as Activity).startActivityForResult(it.exception.intent, REQUEST_AUTHORIZATION)
@@ -261,6 +245,7 @@ class SettingsViewModel @Inject constructor(
                             )
                         }
                     }
+
                     is DataTransferState.Uploading -> {
                         _uiState.value = _uiState.value.copy(
                             backupRestoreState = BackupRestoreState.InProgress(

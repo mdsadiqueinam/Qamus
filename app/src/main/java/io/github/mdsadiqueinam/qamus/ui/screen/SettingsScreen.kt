@@ -94,12 +94,12 @@ fun SettingsScreen(
                     settings = uiState.settings,
                     user = uiState.user,
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
-                    onBackupClicked = { viewModel.progressBackup(localContext) },
+                    onBackupClicked = { viewModel.performBackup(localContext) },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
                     signIn = { viewModel.signIn(localContext) },
                     signOut = { viewModel.signOut() },
                     backupRestoreState = uiState.backupRestoreState,
-                    onRestoreClicked = { viewModel.progressRestore(localContext) },
+                    onRestoreClicked = { viewModel.performRestore(localContext) },
                     onCancelClicked = { viewModel.cancelBackupRestore() },
                     modifier = Modifier.fillMaxSize().padding(16.dp)
                 )

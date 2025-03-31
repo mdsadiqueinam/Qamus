@@ -4,11 +4,7 @@ package io.github.mdsadiqueinam.qamus.data.repository
 import android.accounts.Account
 import android.content.Context
 import android.util.Log
-import androidx.credentials.ClearCredentialStateRequest
-import androidx.credentials.Credential
-import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
-import androidx.credentials.GetCredentialRequest
+import androidx.credentials.*
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
@@ -31,13 +27,12 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -121,8 +116,8 @@ class BackupRestoreRepository @Inject constructor(
         }
     }
 
-    private fun getGoogleDrive(): Drive? {
-        return firebaseAuth.currentUser?.email?.let { email ->
+    private fun getGoogleDrive(): Drive {
+        val drive = firebaseAuth.currentUser?.email?.let { email ->
             val credential = GoogleAccountCredential.usingOAuth2(
                 context, listOf(DriveScopes.DRIVE_FILE)
             ).apply {
@@ -133,6 +128,8 @@ class BackupRestoreRepository @Inject constructor(
                 NetHttpTransport(), GsonFactory.getDefaultInstance(), credential
             ).setApplicationName("Qamus").build()
         }
+
+        return drive ?: throw IllegalStateException("Not signed in")
     }
 
     suspend fun signOut() {
@@ -157,37 +154,21 @@ class BackupRestoreRepository @Inject constructor(
                 )
             }
 
-            if (driveService == null) {
-                trySend(
-                    DataTransferState.Error(
-                        "Not signed in", DataTransferState.TransferType.BACKUP
-                    )
-                )
-                return@callbackFlow
-            }
-
             // Create backup folder if it doesn't exist
             val folderId = getOrCreateBackupFolder()
 
             // Get the database file
             val databaseFile = context.getDatabasePath(DATABASE_NAME)
             if (!databaseFile.exists()) {
-                trySend(
-                    DataTransferState.Error(
-                        "Database file not found", DataTransferState.TransferType.BACKUP
-                    )
-                )
-                return@callbackFlow
+                throw IOException("Database file does not exist")
             }
-
-            deleteExistingBackup()
 
             // Create backup file metadata
             val timestamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US).format(Date())
             val backupFileName = "qamus_backup_$timestamp.db"
 
-            val fileMetadata = File().setName(backupFileName).setParents(listOf(folderId))
-                .setMimeType("application/octet-stream")
+            val fileMetadata =
+                File().setName(backupFileName).setParents(listOf(folderId)).setMimeType("application/octet-stream")
 
             // Upload the file and emit progress
             val file = java.io.File(databaseFile.path)
@@ -198,22 +179,20 @@ class BackupRestoreRepository @Inject constructor(
             )
             mediaContent.setLength(file.length())
 
-            val uploadedFile = driveService!!.files().create(fileMetadata, mediaContent)
-                .setFields("id, name, createdTime, size").apply {
-                    mediaHttpUploader.setProgressListener(listener)
-                }.execute()
+            val uploadedFile =
+                driveService!!.files().create(fileMetadata, mediaContent).setFields("id, name, createdTime, size")
+                    .apply {
+                        mediaHttpUploader.setProgressListener(listener)
+                    }.execute()
 
             Log.d(TAG, "Backup successful: ${uploadedFile.id}")
+
+            deleteExistingBackup()
+
             trySend(DataTransferState.Success)
         } catch (e: Exception) {
             Log.w(TAG, "Error backing up database", e)
-            trySend(
-                DataTransferState.Error(
-                    "Error backing up database: ${e.message}",
-                    DataTransferState.TransferType.BACKUP,
-                    e
-                )
-            )
+            trySend(DataTransferState.Error(e.message ?: "Unknown error occurred on backup", DataTransferState.TransferType.BACKUP, e))
         }
         awaitClose {
             // Clean up resources if needed
@@ -227,7 +206,7 @@ class BackupRestoreRepository @Inject constructor(
         if (existingBackups != null && existingBackups.isNotEmpty()) {
             existingBackups.forEach { backup ->
                 Log.d(TAG, "Deleting previous backup: ${backup.id}")
-                driveService!!.files().delete(backup.id).execute()
+                driveService.files().delete(backup.id).execute()
             }
         }
     }
@@ -243,45 +222,18 @@ class BackupRestoreRepository @Inject constructor(
                     )
                 )
             }
-            if (driveService == null) {
-                trySend(
-                    DataTransferState.Error(
-                        "Not signed in", type = DataTransferState.TransferType.RESTORE
-                    )
-                )
-                return@callbackFlow
-            }
 
             // Find the latest backup
             val backups = listBackupsInternal()
-            if (backups == null) {
-                trySend(
-                    DataTransferState.Error(
-                        "Failed to list backups", type = DataTransferState.TransferType.RESTORE
-                    )
-                )
-                return@callbackFlow
-            }
-
-            if (backups.isEmpty()) {
-                trySend(
-                    DataTransferState.Error(
-                        "No backups found", type = DataTransferState.TransferType.RESTORE
-                    )
-                )
-                return@callbackFlow
+            if (backups == null || backups.isEmpty()) {
+                throw IOException("Failed to list backups")
             }
 
             // Sort backups by creation time (newest first)
             val latestBackup = backups.maxByOrNull { it.createdTime }
 
             if (latestBackup == null) {
-                trySend(
-                    DataTransferState.Error(
-                        "No valid backup found", type = DataTransferState.TransferType.RESTORE
-                    )
-                )
-                return@callbackFlow
+                throw IOException("No valid backup found")
             }
 
             // Get the database file path
@@ -292,7 +244,7 @@ class BackupRestoreRepository @Inject constructor(
 
             // Download the backup file
             val outputStream = FileOutputStream(databaseFile)
-            driveService!!.files().get(latestBackup.id).apply {
+            driveService.files().get(latestBackup.id).apply {
                 mediaHttpDownloader.setProgressListener(listener)
             }.executeMediaAndDownloadTo(outputStream)
             outputStream.close()
@@ -301,13 +253,7 @@ class BackupRestoreRepository @Inject constructor(
             trySend(DataTransferState.Success)
         } catch (e: Exception) {
             Log.w(TAG, "Error restoring database", e)
-            trySend(
-                DataTransferState.Error(
-                    "Error restoring database: ${e.message}",
-                    type = DataTransferState.TransferType.RESTORE,
-                    e
-                )
-            )
+            trySend(DataTransferState.Error(e.message ?: "Unknown error occurred on restore", DataTransferState.TransferType.RESTORE, e))
         }
         awaitClose {
             // Clean up resources if needed
@@ -318,17 +264,13 @@ class BackupRestoreRepository @Inject constructor(
     private fun listBackupsInternal(): List<BackupMetadata>? {
         val folderId = getOrCreateBackupFolder()
 
-        val result = driveService!!.files().list()
-            .setQ("'$folderId' in parents and mimeType='application/octet-stream'")
+        val result = driveService.files().list().setQ("'$folderId' in parents and mimeType='application/octet-stream'")
             .setFields("files(id, name, createdTime, size)").execute()
 
         return result?.let {
             it.files.map { file ->
                 BackupMetadata(
-                    id = file.id,
-                    name = file.name,
-                    createdTime = file.createdTime.toStringRfc3339(),
-                    size = file.size
+                    id = file.id, name = file.name, createdTime = file.createdTime.toStringRfc3339(), size = file.size
                 )
             }
         }
@@ -337,9 +279,9 @@ class BackupRestoreRepository @Inject constructor(
 
     private fun getOrCreateBackupFolder(): String? {
         // Check if backup folder already exists
-        val folderQuery = driveService!!.files().list()
-            .setQ("mimeType='application/vnd.google-apps.folder' and name='$BACKUP_FOLDER_NAME'")
-            .setSpaces("drive").setFields("files(id)").execute()
+        val folderQuery = driveService.files().list()
+            .setQ("mimeType='application/vnd.google-apps.folder' and name='$BACKUP_FOLDER_NAME'").setSpaces("drive")
+            .setFields("files(id)").execute()
 
         // If folder exists, return its ID
         if (folderQuery.files.isNotEmpty()) {
@@ -347,10 +289,9 @@ class BackupRestoreRepository @Inject constructor(
         }
 
         // Create folder if it doesn't exist
-        val folderMetadata =
-            File().setName(BACKUP_FOLDER_NAME).setMimeType("application/vnd.google-apps.folder")
+        val folderMetadata = File().setName(BACKUP_FOLDER_NAME).setMimeType("application/vnd.google-apps.folder")
 
-        val folder = driveService!!.files().create(folderMetadata).setFields("id").execute()
+        val folder = driveService.files().create(folderMetadata).setFields("id").execute()
 
         return folder.id
     }
