@@ -217,7 +217,7 @@ class BackupRestoreRepository @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
 
-    private suspend fun deleteExistingBackup() {
+    private fun deleteExistingBackup() {
         // Delete existing backups
         val existingBackups = listBackupsInternal()
         if (existingBackups != null && existingBackups.isNotEmpty()) {
@@ -307,8 +307,7 @@ class BackupRestoreRepository @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
 
-    private suspend fun listBackupsInternal(): List<BackupMetadata>? {
-
+    private fun listBackupsInternal(): List<BackupMetadata>? {
         val folderId = getOrCreateBackupFolder()
 
         val result = driveService!!.files().list()
@@ -328,7 +327,7 @@ class BackupRestoreRepository @Inject constructor(
     }
 
 
-    private suspend fun getOrCreateBackupFolder(): String = withContext(Dispatchers.IO) {
+    private fun getOrCreateBackupFolder(): String? {
         // Check if backup folder already exists
         val folderQuery = driveService!!.files().list()
             .setQ("mimeType='application/vnd.google-apps.folder' and name='$BACKUP_FOLDER_NAME'")
@@ -336,7 +335,7 @@ class BackupRestoreRepository @Inject constructor(
 
         // If folder exists, return its ID
         if (folderQuery.files.isNotEmpty()) {
-            return@withContext folderQuery.files[0].id
+            return folderQuery.files[0].id
         }
 
         // Create folder if it doesn't exist
@@ -345,7 +344,7 @@ class BackupRestoreRepository @Inject constructor(
 
         val folder = driveService!!.files().create(folderMetadata).setFields("id").execute()
 
-        return@withContext folder.id
+        return folder.id
     }
 }
 
