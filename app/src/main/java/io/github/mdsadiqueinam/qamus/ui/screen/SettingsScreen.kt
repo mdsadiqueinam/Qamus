@@ -1,5 +1,6 @@
 package io.github.mdsadiqueinam.qamus.ui.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,9 +12,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import com.google.firebase.auth.FirebaseUser
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.SettingsViewModel
 import kotlinx.datetime.Instant
@@ -82,11 +86,12 @@ fun SettingsScreen(
             } else {
                 SettingsContent(
                     settings = uiState.settings,
-                    isSignedIn = uiState.isSignedIn,
+                    user = uiState.user,
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
-                    onBackupClicked = { viewModel.signOut() },
+                    onBackupClicked = { viewModel.performBackup() },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
                     signIn = { viewModel.signIn(localContext) },
+                    signOut = { viewModel.signOut() },
                     modifier = Modifier.fillMaxSize().padding(16.dp)
                 )
             }
@@ -97,11 +102,12 @@ fun SettingsScreen(
 @Composable
 fun SettingsContent(
     settings: Settings,
-    isSignedIn: Boolean,
+    user: FirebaseUser?,
     onReminderIntervalChanged: (Int) -> Unit,
     onBackupClicked: () -> Unit,
     onReminderStateChanged: (Boolean) -> Unit,
     signIn: () -> Unit,
+    signOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -122,13 +128,14 @@ fun SettingsContent(
 
         // Backup Setting
         SettingCard(
-            title = "Backup $isSignedIn", description = "Backup your dictionary to prevent data loss", content = {
+            title = "Backup", description = "Backup your dictionary to prevent data loss", content = {
                 BackupSetting(
-                    isSignedIn = isSignedIn,
+                    user = user,
                     lastBackupAt = settings.lastBackupAt,
                     lastBackupVersion = settings.lastBackupVersion,
                     onBackupClicked = onBackupClicked,
-                    signIn = signIn
+                    signIn = signIn,
+                    sinOut = signOut
                 )
             })
 
@@ -236,15 +243,59 @@ fun ReminderSetting(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BackupSetting(
-    isSignedIn: Boolean,
+    user: FirebaseUser?,
     lastBackupAt: Instant?,
     lastBackupVersion: Long,
     onBackupClicked: () -> Unit,
     signIn: () -> Unit,
+    sinOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isSignedIn = remember(user) { user != null }
+    var openEditAccountDialog by remember { mutableStateOf(false) }
+
+    if (openEditAccountDialog) {
+        Dialog(onDismissRequest = { openEditAccountDialog = false }) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(text = "Google Account", style = MaterialTheme.typography.titleLarge)
+
+                    Column {
+                        Text(text = "Name", style = MaterialTheme.typography.titleMedium)
+                        Text(text = user?.displayName ?: "Unknown", style = MaterialTheme.typography.bodyMedium)
+                    }
+
+                    Column {
+                        Text(text = "Email", style = MaterialTheme.typography.titleMedium)
+                        Text(text = user?.email ?: "Unknown", style = MaterialTheme.typography.bodyMedium)
+                    }
+
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // change account button
+                        ElevatedButton(onClick = signIn) {
+                            Text("Change Account")
+                        }
+
+                        // logout button
+                        FilledTonalButton(onClick = {
+                            sinOut()
+                            openEditAccountDialog = false
+                        }) {
+                            Text("Logout")
+                        }
+
+                        TextButton(onClick = { openEditAccountDialog = false }) {
+                            Text("Dismiss")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (isSignedIn) {
         Column(modifier = modifier.fillMaxWidth()) {
             // Last backup info
@@ -258,6 +309,12 @@ fun BackupSetting(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            Column(modifier = Modifier.fillMaxWidth().clickable { openEditAccountDialog = true }) {
+                Text(text = "Google Account", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = user?.email ?: "Unknown", style = MaterialTheme.typography.bodyMedium)
             }
 
             // Backup button
