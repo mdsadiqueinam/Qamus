@@ -1,13 +1,16 @@
 package io.github.mdsadiqueinam.qamus.ui.viewmodel
 
+import android.app.Activity
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import io.github.mdsadiqueinam.qamus.data.repository.BackupRestoreRepository
+import io.github.mdsadiqueinam.qamus.data.repository.DataTransferState
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +43,9 @@ class SettingsViewModel @Inject constructor(
     private val backupRestoreRepository: BackupRestoreRepository,
     private val navigator: QamusNavigator
 ) : ViewModel() {
+    companion object {
+        private const val REQUEST_AUTHORIZATION = 1001
+    }
 
     // UI state for the settings screen
     private val _uiState = MutableStateFlow(SettingsUIState())
@@ -162,6 +168,28 @@ class SettingsViewModel @Inject constructor(
     fun signOut() {
         viewModelScope.launch {
             backupRestoreRepository.signOut()
+        }
+    }
+
+    fun progressBackup(activity: Context) {
+        val job = viewModelScope.launch {
+            backupRestoreRepository.backupDatabase().collectLatest {
+                when (it) {
+                    is DataTransferState.Success -> {
+                        // success logic
+                    }
+                    is DataTransferState.Error -> {
+                        if (it.exception is UserRecoverableAuthIOException) {
+                            (activity as Activity).startActivityForResult(it.exception.intent, REQUEST_AUTHORIZATION)
+                        } else {
+                            // error logic
+                        }
+                    }
+                    is DataTransferState.Uploading -> {
+                        // Handle progress updates if needed
+                    }
+                }
+            }
         }
     }
 
