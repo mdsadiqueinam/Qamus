@@ -165,6 +165,8 @@ class BackupRestoreRepository @Inject constructor(
                 throw IOException("Database file does not exist")
             }
 
+            val existingBackups = listBackupsInternal()
+
             // Create backup file metadata
             val timestamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US).format(Date())
             val backupFileName = "qamus_backup_$timestamp.db"
@@ -189,7 +191,13 @@ class BackupRestoreRepository @Inject constructor(
 
             Log.d(TAG, "Backup successful: ${uploadedFile.id}")
 
-            deleteExistingBackup()
+            // delete existing backup after new backup
+            if (existingBackups != null && existingBackups.isNotEmpty()) {
+                existingBackups.forEach { backup ->
+                    Log.d(TAG, "Deleting previous backup: ${backup.id}")
+                    driveService.files().delete(backup.id).execute()
+                }
+            }
 
             trySend(DataTransferState.Success)
         } catch (e: Exception) {
@@ -201,17 +209,6 @@ class BackupRestoreRepository @Inject constructor(
             Log.d(TAG, "Closing backup flow")
         }
     }.flowOn(Dispatchers.IO)
-
-    private fun deleteExistingBackup() {
-        // Delete existing backups
-        val existingBackups = listBackupsInternal()
-        if (existingBackups != null && existingBackups.isNotEmpty()) {
-            existingBackups.forEach { backup ->
-                Log.d(TAG, "Deleting previous backup: ${backup.id}")
-                driveService.files().delete(backup.id).execute()
-            }
-        }
-    }
 
     fun restoreDatabase(): Flow<DataTransferState> = callbackFlow {
         try {
