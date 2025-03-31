@@ -1,15 +1,16 @@
 package io.github.mdsadiqueinam.qamus.ui.viewmodel
 
-import android.app.Activity
 import android.content.Context
-import androidx.compose.runtime.currentCompositionLocalContext
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import io.github.mdsadiqueinam.qamus.data.repository.BackupRestoreRepository
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +27,8 @@ data class SettingsUIState(
     val isLoading: Boolean = true,
     val showResetConfirmation: Boolean = false,
     val showPermissionDialog: Boolean = false,
-    val isSignedIn: Boolean = false
+    val isSignedIn: Boolean = false,
+    val user: FirebaseUser? = null,
 )
 
 /**
@@ -56,18 +58,24 @@ class SettingsViewModel @Inject constructor(
      * Load settings from the repository.
      */
     private fun loadSettings() {
-        viewModelScope.launch {
+        Log.d("SettingsViewModel", "ViewModel initialized") // Add this log
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            settingsRepository.settings.collectLatest { settings ->
-                _uiState.value = SettingsUIState(
-                    settings = settings,
-                    isLoading = false
-                )
+
+            launch {
+                settingsRepository.settings.collectLatest { settings ->
+                    _uiState.value = SettingsUIState(
+                        settings = settings, isLoading = false
+                    )
+                }
             }
 
-            // Check if the user is signed in
-            backupRestoreRepository.isSignedIn.collectLatest { isSignedIn ->
-                _uiState.value = _uiState.value.copy(isSignedIn = isSignedIn)
+            launch {
+                // Check if the user is signed in
+                backupRestoreRepository.observeUserState().collectLatest { user ->
+                    Log.d("SettingsViewModel", "user collected: $user")
+                    _uiState.value = _uiState.value.copy(isSignedIn = user != null, user = user)
+                }
             }
         }
     }
@@ -144,11 +152,17 @@ class SettingsViewModel @Inject constructor(
 
     fun signIn(activity: Context) {
         viewModelScope.launch {
-            try {
+            try {// Check if the user is signed in
                 backupRestoreRepository.signIn(activity)
             } catch (e: Exception) {
                 _errorMessage.value = "Error logging in: ${e.message}"
             }
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            backupRestoreRepository.signOut()
         }
     }
 

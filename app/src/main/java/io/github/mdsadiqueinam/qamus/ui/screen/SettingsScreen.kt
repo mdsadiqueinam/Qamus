@@ -84,7 +84,7 @@ fun SettingsScreen(
                     settings = uiState.settings,
                     isSignedIn = uiState.isSignedIn,
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
-                    onBackupClicked = { viewModel.performBackup() },
+                    onBackupClicked = { viewModel.signOut() },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
                     signIn = { viewModel.signIn(localContext) },
                     modifier = Modifier.fillMaxSize().padding(16.dp)

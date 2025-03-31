@@ -1,5 +1,6 @@
 package io.github.mdsadiqueinam.qamus.data.repository
 
+
 import android.accounts.Account
 import android.content.Context
 import android.util.Log
@@ -13,14 +14,17 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.google.api.services.drive.model.File
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.database.QamusDatabase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
 import java.io.IOException
@@ -41,8 +45,6 @@ class BackupRestoreRepository @Inject constructor(
         private const val DATABASE_NAME = "qamus_database"
     }
 
-    private val _isSignedIn = MutableStateFlow(false)
-    val isSignedIn = _isSignedIn.asStateFlow()
     private val credentialManager = CredentialManager.create(context)
     private val driveService get() = getGoogleDrive()
 
@@ -56,9 +58,18 @@ class BackupRestoreRepository @Inject constructor(
     // Create the Credential Manager request
     val request = GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build()
 
-    init {
-        // Initialize the sign-in state based on Firebase Auth
-        _isSignedIn.value = firebaseAuth.currentUser != null
+    fun observeUserState(): Flow<FirebaseUser?> {
+        return callbackFlow {
+            val authListener = FirebaseAuth.AuthStateListener {
+                val currentUser = it.currentUser
+                trySend(currentUser)
+                Log.d(TAG, "observeUserState user: $currentUser")
+            }
+            firebaseAuth.addAuthStateListener(authListener)
+            awaitClose {
+                firebaseAuth.removeAuthStateListener(authListener)
+            }
+        }
     }
 
     suspend fun signIn(activity: Context) {
@@ -96,11 +107,9 @@ class BackupRestoreRepository @Inject constructor(
             if (task.isSuccessful) {
                 // Sign in success, update UI with the signed-in user's information
                 Log.d(TAG, "signInWithCredential:success")
-                _isSignedIn.value = true
             } else {
                 // If sign in fails, display a message to the user
                 Log.w(TAG, "signInWithCredential:failure", task.exception)
-                _isSignedIn.value = false
             }
         }
     }
@@ -119,12 +128,11 @@ class BackupRestoreRepository @Inject constructor(
         }
     }
 
-    suspend fun signOut(): Unit = withContext(Dispatchers.IO) {
+    suspend fun signOut() {
         try {
             firebaseAuth.signOut()
             val clearRequest = ClearCredentialStateRequest()
             credentialManager.clearCredentialState(clearRequest)
-            _isSignedIn.value = false
         } catch (e: Exception) {
             Log.e(TAG, "Error signing out", e)
         }
