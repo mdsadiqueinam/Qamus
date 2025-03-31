@@ -12,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,8 +24,7 @@ import io.github.mdsadiqueinam.qamus.ui.viewmodel.SettingsViewModel
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import java.lang.Math.pow
-import java.util.Locale
+import java.util.*
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -140,7 +138,9 @@ fun SettingsContent(
 
         // Backup Setting
         SettingCard(
-            title = "Backup & Restore", description = "Backup and restore your dictionary to prevent data loss", content = {
+            title = "Backup & Restore",
+            description = "Backup and restore your dictionary to prevent data loss",
+            content = {
                 BackupSetting(
                     user = user,
                     lastBackupAt = settings.lastBackupAt,
@@ -278,7 +278,10 @@ fun BackupSetting(
     if (openEditAccountDialog) {
         Dialog(onDismissRequest = { openEditAccountDialog = false }) {
             Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Text(text = "Google Account", style = MaterialTheme.typography.titleLarge)
 
                     Column {
@@ -329,7 +332,11 @@ fun BackupSetting(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Column(modifier = Modifier.fillMaxWidth().clickable { openEditAccountDialog = true }) {
+            Column(modifier = Modifier.fillMaxWidth().clickable {
+                if (backupRestoreState !is BackupRestoreState.InProgress) {
+                    openEditAccountDialog = true
+                }
+            }) {
                 Text(text = "Google Account", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = user?.email ?: "Unknown", style = MaterialTheme.typography.bodyMedium)
@@ -342,8 +349,8 @@ fun BackupSetting(
                 is BackupRestoreState.InProgress -> {
                     // Show progress indicator and cancel button
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        val operationType = if (backupRestoreState.transferType == DataTransferState.TransferType.BACKUP) 
-                            "Backup" else "Restore"
+                        val operationType =
+                            if (backupRestoreState.transferType == DataTransferState.TransferType.BACKUP) "Backup" else "Restore"
 
                         Text(
                             text = "$operationType in progress: ${backupRestoreState.progress}%",
@@ -363,21 +370,20 @@ fun BackupSetting(
                         }
 
                         LinearProgressIndicator(
-                            progress = { backupRestoreState.progress / 100f },
-                            modifier = Modifier.fillMaxWidth()
+                            progress = { backupRestoreState.progress / 100f }, modifier = Modifier.fillMaxWidth()
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
                         // Cancel button
                         Button(
-                            onClick = onCancelClicked,
-                            modifier = Modifier.align(Alignment.End)
+                            onClick = onCancelClicked, modifier = Modifier.align(Alignment.End)
                         ) {
                             Text("Cancel")
                         }
                     }
                 }
+
                 else -> {
                     // Show normal buttons
                     Row(
@@ -387,8 +393,7 @@ fun BackupSetting(
                     ) {
                         // Restore button
                         OutlinedButton(
-                            onClick = onRestoreClicked,
-                            modifier = Modifier.padding(end = 8.dp)
+                            onClick = onRestoreClicked, modifier = Modifier.padding(end = 8.dp)
                         ) {
                             Text("Restore")
                         }
@@ -406,8 +411,7 @@ fun BackupSetting(
     } else {
         Column(modifier = modifier.fillMaxWidth()) {
             Text(
-                text = "You need to sign in to backup your dictionary",
-                style = MaterialTheme.typography.bodyMedium
+                text = "You need to sign in to backup your dictionary", style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(modifier = Modifier.height(8.dp))

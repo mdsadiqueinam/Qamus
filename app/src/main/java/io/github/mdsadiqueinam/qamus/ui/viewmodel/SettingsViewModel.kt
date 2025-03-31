@@ -79,9 +79,7 @@ class SettingsViewModel @Inject constructor(
 
             launch {
                 settingsRepository.settings.collectLatest { settings ->
-                    _uiState.value = SettingsUIState(
-                        settings = settings, isLoading = false
-                    )
+                    _uiState.value = _uiState.value.copy(settings = settings, isLoading = false)
                 }
             }
 
