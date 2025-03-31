@@ -19,10 +19,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.google.firebase.auth.FirebaseUser
 import io.github.mdsadiqueinam.qamus.data.model.Settings
+import io.github.mdsadiqueinam.qamus.data.repository.DataTransferState
+import io.github.mdsadiqueinam.qamus.ui.viewmodel.BackupRestoreState
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.SettingsViewModel
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import java.lang.Math.pow
+import java.util.Locale
+import kotlin.math.log10
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,10 +94,13 @@ fun SettingsScreen(
                     settings = uiState.settings,
                     user = uiState.user,
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
-                    onBackupClicked = { viewModel.performBackup() },
+                    onBackupClicked = { viewModel.progressBackup(localContext) },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
                     signIn = { viewModel.signIn(localContext) },
                     signOut = { viewModel.signOut() },
+                    backupRestoreState = uiState.backupRestoreState,
+                    onRestoreClicked = { viewModel.progressRestore(localContext) },
+                    onCancelClicked = { viewModel.cancelBackupRestore() },
                     modifier = Modifier.fillMaxSize().padding(16.dp)
                 )
             }
@@ -108,6 +117,9 @@ fun SettingsContent(
     onReminderStateChanged: (Boolean) -> Unit,
     signIn: () -> Unit,
     signOut: () -> Unit,
+    backupRestoreState: BackupRestoreState = BackupRestoreState.Idle,
+    onRestoreClicked: () -> Unit = {},
+    onCancelClicked: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -128,12 +140,15 @@ fun SettingsContent(
 
         // Backup Setting
         SettingCard(
-            title = "Backup", description = "Backup your dictionary to prevent data loss", content = {
+            title = "Backup & Restore", description = "Backup and restore your dictionary to prevent data loss", content = {
                 BackupSetting(
                     user = user,
                     lastBackupAt = settings.lastBackupAt,
                     lastBackupVersion = settings.lastBackupVersion,
                     onBackupClicked = onBackupClicked,
+                    onRestoreClicked = onRestoreClicked,
+                    onCancelClicked = onCancelClicked,
+                    backupRestoreState = backupRestoreState,
                     signIn = signIn,
                     sinOut = signOut
                 )
@@ -250,6 +265,9 @@ fun BackupSetting(
     lastBackupAt: Instant?,
     lastBackupVersion: Long,
     onBackupClicked: () -> Unit,
+    onRestoreClicked: () -> Unit,
+    onCancelClicked: () -> Unit,
+    backupRestoreState: BackupRestoreState,
     signIn: () -> Unit,
     sinOut: () -> Unit,
     modifier: Modifier = Modifier
@@ -317,11 +335,72 @@ fun BackupSetting(
                 Text(text = user?.email ?: "Unknown", style = MaterialTheme.typography.bodyMedium)
             }
 
-            // Backup button
-            Button(
-                onClick = onBackupClicked, modifier = Modifier.align(Alignment.End)
-            ) {
-                Text("Backup Now")
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Show progress or buttons based on state
+            when (backupRestoreState) {
+                is BackupRestoreState.InProgress -> {
+                    // Show progress indicator and cancel button
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        val operationType = if (backupRestoreState.transferType == DataTransferState.TransferType.BACKUP) 
+                            "Backup" else "Restore"
+
+                        Text(
+                            text = "$operationType in progress: ${backupRestoreState.progress}%",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Show bytes transferred if available
+                        if (backupRestoreState.bytesTransferred > 0) {
+                            Text(
+                                text = "Transferred: ${formatBytes(backupRestoreState.bytesTransferred)}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+
+                        LinearProgressIndicator(
+                            progress = { backupRestoreState.progress / 100f },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Cancel button
+                        Button(
+                            onClick = onCancelClicked,
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text("Cancel")
+                        }
+                    }
+                }
+                else -> {
+                    // Show normal buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Restore button
+                        OutlinedButton(
+                            onClick = onRestoreClicked,
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Text("Restore")
+                        }
+
+                        // Backup button
+                        Button(
+                            onClick = onBackupClicked
+                        ) {
+                            Text("Backup Now")
+                        }
+                    }
+                }
             }
         }
     } else {
@@ -351,4 +430,13 @@ fun formatTime(minutes: Float): String {
     } else {
         "$mins minutes"
     }
+}
+
+fun formatBytes(bytes: Long): String {
+    if (bytes <= 0) return "0 B"
+
+    val units = arrayOf("B", "KB", "MB", "GB", "TB")
+    val digitGroups = (log10(bytes.toDouble()) / log10(1024.0)).toInt()
+
+    return String.format(Locale.getDefault(), "%.1f %s", bytes / 1024.0.pow(digitGroups.toDouble()), units[digitGroups])
 }

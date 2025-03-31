@@ -32,7 +32,19 @@ data class SettingsUIState(
     val showPermissionDialog: Boolean = false,
     val isSignedIn: Boolean = false,
     val user: FirebaseUser? = null,
+    val backupRestoreState: BackupRestoreState = BackupRestoreState.Idle,
 )
+
+sealed class BackupRestoreState {
+    object Idle : BackupRestoreState()
+    data class InProgress(
+        val progress: Int = 0,
+        val transferType: DataTransferState.TransferType,
+        val bytesTransferred: Long = 0
+    ) : BackupRestoreState()
+    data class Error(val message: String) : BackupRestoreState()
+    object Success : BackupRestoreState()
+}
 
 /**
  * ViewModel for the settings screen.
@@ -171,26 +183,103 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    // Job to keep track of backup/restore operations for cancellation
+    private var backupRestoreJob: kotlinx.coroutines.Job? = null
+
     fun progressBackup(activity: Context) {
-        val job = viewModelScope.launch {
+        // Cancel any existing job
+        backupRestoreJob?.cancel()
+
+        // Reset state to idle
+        _uiState.value = _uiState.value.copy(
+            backupRestoreState = BackupRestoreState.Idle
+        )
+
+        // Start new backup job
+        backupRestoreJob = viewModelScope.launch {
             backupRestoreRepository.backupDatabase().collectLatest {
                 when (it) {
                     is DataTransferState.Success -> {
-                        // success logic
+                        _uiState.value = _uiState.value.copy(
+                            backupRestoreState = BackupRestoreState.Success
+                        )
+                        // Update last backup time and version
+                        val currentTime = Clock.System.now()
+                        val currentVersion = uiState.value.settings.lastBackupVersion + 1
+                        settingsRepository.updateLastBackup(currentTime, currentVersion)
                     }
                     is DataTransferState.Error -> {
                         if (it.exception is UserRecoverableAuthIOException) {
                             (activity as Activity).startActivityForResult(it.exception.intent, REQUEST_AUTHORIZATION)
                         } else {
-                            // error logic
+                            _errorMessage.value = "Error: ${it.message}"
+                            _uiState.value = _uiState.value.copy(
+                                backupRestoreState = BackupRestoreState.Idle
+                            )
                         }
                     }
                     is DataTransferState.Uploading -> {
-                        // Handle progress updates if needed
+                        _uiState.value = _uiState.value.copy(
+                            backupRestoreState = BackupRestoreState.InProgress(
+                                progress = it.progress,
+                                transferType = it.type,
+                                bytesTransferred = 0 // We don't have bytes info in the current implementation
+                            )
+                        )
                     }
                 }
             }
         }
+    }
+
+    fun progressRestore(activity: Context) {
+        // Cancel any existing job
+        backupRestoreJob?.cancel()
+
+        // Reset state to idle
+        _uiState.value = _uiState.value.copy(
+            backupRestoreState = BackupRestoreState.Idle
+        )
+
+        // Start new restore job
+        backupRestoreJob = viewModelScope.launch {
+            backupRestoreRepository.restoreDatabase().collectLatest {
+                when (it) {
+                    is DataTransferState.Success -> {
+                        _uiState.value = _uiState.value.copy(
+                            backupRestoreState = BackupRestoreState.Success
+                        )
+                    }
+                    is DataTransferState.Error -> {
+                        if (it.exception is UserRecoverableAuthIOException) {
+                            (activity as Activity).startActivityForResult(it.exception.intent, REQUEST_AUTHORIZATION)
+                        } else {
+                            _errorMessage.value = "Error: ${it.message}"
+                            _uiState.value = _uiState.value.copy(
+                                backupRestoreState = BackupRestoreState.Idle
+                            )
+                        }
+                    }
+                    is DataTransferState.Uploading -> {
+                        _uiState.value = _uiState.value.copy(
+                            backupRestoreState = BackupRestoreState.InProgress(
+                                progress = it.progress,
+                                transferType = it.type,
+                                bytesTransferred = 0 // We don't have bytes info in the current implementation
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun cancelBackupRestore() {
+        backupRestoreJob?.cancel()
+        backupRestoreJob = null
+        _uiState.value = _uiState.value.copy(
+            backupRestoreState = BackupRestoreState.Idle
+        )
     }
 
     /**
