@@ -150,6 +150,15 @@ class BackupRestoreRepository @Inject constructor(
                 return@withContext Result.failure(IOException("Database file not found"))
             }
 
+            // Delete existing backups
+            val existingBackups = listBackupsInternal()
+            if (existingBackups.isSuccess) {
+                existingBackups.getOrNull()?.forEach { backup ->
+                    Log.d(TAG, "Deleting previous backup: ${backup.id}")
+                    driveService!!.files().delete(backup.id).execute()
+                }
+            }
+
             // Create backup file metadata
             val timestamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US).format(Date())
             val backupFileName = "qamus_backup_$timestamp.db"
@@ -173,11 +182,26 @@ class BackupRestoreRepository @Inject constructor(
         }
     }
 
-    suspend fun restoreDatabase(backupFileId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun restoreDatabase(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             if (driveService == null) {
                 return@withContext Result.failure(IllegalStateException("Not signed in"))
             }
+
+            // Find the latest backup
+            val backups = listBackupsInternal()
+            if (backups.isFailure) {
+                return@withContext Result.failure(IOException("Failed to list backups"))
+            }
+
+            val backupsList = backups.getOrNull()
+            if (backupsList.isNullOrEmpty()) {
+                return@withContext Result.failure(IOException("No backups found"))
+            }
+
+            // Sort backups by creation time (newest first)
+            val latestBackup = backupsList.maxByOrNull { it.createdTime }
+                ?: return@withContext Result.failure(IOException("No valid backups found"))
 
             // Get the database file path
             val databaseFile = context.getDatabasePath(DATABASE_NAME)
@@ -187,10 +211,10 @@ class BackupRestoreRepository @Inject constructor(
 
             // Download the backup file
             val outputStream = FileOutputStream(databaseFile)
-            driveService!!.files().get(backupFileId).executeMediaAndDownloadTo(outputStream)
+            driveService!!.files().get(latestBackup.id).executeMediaAndDownloadTo(outputStream)
             outputStream.close()
 
-            Log.d(TAG, "Restore successful")
+            Log.d(TAG, "Restore successful from backup: ${latestBackup.id}")
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Error restoring database", e)
@@ -198,7 +222,7 @@ class BackupRestoreRepository @Inject constructor(
         }
     }
 
-    suspend fun listBackups(): Result<List<BackupMetadata>> = withContext(Dispatchers.IO) {
+    private suspend fun listBackupsInternal(): Result<List<BackupMetadata>> = withContext(Dispatchers.IO) {
         try {
             if (driveService == null) {
                 return@withContext Result.failure(IllegalStateException("Not signed in"))
@@ -223,21 +247,6 @@ class BackupRestoreRepository @Inject constructor(
         }
     }
 
-    suspend fun deleteBackup(backupFileId: String): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            if (driveService == null) {
-                return@withContext Result.failure(IllegalStateException("Not signed in"))
-            }
-
-            driveService!!.files().delete(backupFileId).execute()
-
-            Log.d(TAG, "Delete successful")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error deleting backup", e)
-            Result.failure(e)
-        }
-    }
 
     private suspend fun getOrCreateBackupFolder(): String = withContext(Dispatchers.IO) {
         // Check if backup folder already exists
