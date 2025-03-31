@@ -32,7 +32,7 @@ class KalimaReminderWorker(
             return Result.success()
         } catch (e: Exception) {
             // Log the error and retry
-            Log.e(TAG, appContext.getString(R.string.log_kalima_reminder_error), e)
+            Log.w(TAG, appContext.getString(R.string.log_kalima_reminder_error), e)
             return Result.retry()
         }
     }

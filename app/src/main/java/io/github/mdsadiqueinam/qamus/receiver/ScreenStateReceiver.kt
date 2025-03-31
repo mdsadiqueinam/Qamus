@@ -60,7 +60,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
         val notificationManager = context.getSystemService<NotificationManager>()
 
         if (notificationManager == null) {
-            Log.e(TAG, "NotificationManager not available, cannot show notification")
+            Log.w(TAG, "NotificationManager not available, cannot show notification")
             return
         }
 

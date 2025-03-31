@@ -90,7 +90,7 @@ class BackupRestoreRepository @Inject constructor(
             handleSignIn(result.credential)
         } catch (e: Exception) {
             // Log the exception with detailed information
-            Log.e(TAG, "Couldn't retrieve user's credentials: ${e.localizedMessage}")
+            Log.w(TAG, "Couldn't retrieve user's credentials: ${e.localizedMessage}")
         }
     }
 
@@ -141,7 +141,7 @@ class BackupRestoreRepository @Inject constructor(
             val clearRequest = ClearCredentialStateRequest()
             credentialManager.clearCredentialState(clearRequest)
         } catch (e: Exception) {
-            Log.e(TAG, "Error signing out", e)
+            Log.w(TAG, "Error signing out", e)
         }
     }
 
@@ -206,7 +206,7 @@ class BackupRestoreRepository @Inject constructor(
             Log.d(TAG, "Backup successful: ${uploadedFile.id}")
             trySend(DataTransferState.Success)
         } catch (e: Exception) {
-            Log.e(TAG, "Error backing up database", e)
+            Log.w(TAG, "Error backing up database", e)
             trySend(
                 DataTransferState.Error(
                     "Error backing up database: ${e.message}",
@@ -214,6 +214,10 @@ class BackupRestoreRepository @Inject constructor(
                     e
                 )
             )
+        }
+        awaitClose {
+            // Clean up resources if needed
+            Log.d(TAG, "Closing backup flow")
         }
     }.flowOn(Dispatchers.IO)
 
@@ -296,7 +300,7 @@ class BackupRestoreRepository @Inject constructor(
             Log.d(TAG, "Restore successful from backup: ${latestBackup.id}")
             trySend(DataTransferState.Success)
         } catch (e: Exception) {
-            Log.e(TAG, "Error restoring database", e)
+            Log.w(TAG, "Error restoring database", e)
             trySend(
                 DataTransferState.Error(
                     "Error restoring database: ${e.message}",
@@ -304,6 +308,10 @@ class BackupRestoreRepository @Inject constructor(
                     e
                 )
             )
+        }
+        awaitClose {
+            // Clean up resources if needed
+            Log.d(TAG, "Closing restore flow")
         }
     }.flowOn(Dispatchers.IO)
 
