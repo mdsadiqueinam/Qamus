@@ -1,6 +1,8 @@
 package io.github.mdsadiqueinam.qamus.data.repository
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -12,6 +14,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import javax.inject.Inject
@@ -33,6 +36,8 @@ class SettingsRepository @Inject constructor(
         val LAST_BACKUP_AT = stringPreferencesKey("last_backup_at")
         val LAST_BACKUP_VERSION = longPreferencesKey("last_backup_version")
         val IS_REMINDER_ENABLED = booleanPreferencesKey("is_reminder_enabled")
+        val AUTOMATIC_BACKUP_FREQUENCY = stringPreferencesKey("automatic_backup_frequency")
+        val USE_MOBILE_DATA = booleanPreferencesKey("use_mobile_data")
     }
 
     /**
@@ -43,7 +48,11 @@ class SettingsRepository @Inject constructor(
             reminderInterval = preferences[PreferencesKeys.REMINDER_INTERVAL] ?: Settings.DEFAULT_REMINDER_INTERVAL,
             lastBackupAt = preferences[PreferencesKeys.LAST_BACKUP_AT]?.let { Instant.parse(it) },
             lastBackupVersion = preferences[PreferencesKeys.LAST_BACKUP_VERSION] ?: 0,
-            isReminderEnabled = preferences[PreferencesKeys.IS_REMINDER_ENABLED] == true
+            isReminderEnabled = preferences[PreferencesKeys.IS_REMINDER_ENABLED] == true,
+            automaticBackupFrequency = preferences[PreferencesKeys.AUTOMATIC_BACKUP_FREQUENCY]?.let { 
+                Settings.AutomaticBackupFrequency.entries.find { freq -> freq.value == it }
+            } ?: Settings.AutomaticBackupFrequency.OFF,
+            useMobileData = preferences[PreferencesKeys.USE_MOBILE_DATA] == true
         )
     }
 
@@ -81,6 +90,47 @@ class SettingsRepository @Inject constructor(
     suspend fun setReminderEnabled(isEnabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_REMINDER_ENABLED] = isEnabled
+        }
+    }
+
+    /**
+     * Update the automatic backup frequency.
+     */
+    suspend fun updateAutomaticBackupFrequency(frequency: Settings.AutomaticBackupFrequency) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[PreferencesKeys.AUTOMATIC_BACKUP_FREQUENCY] = frequency.value
+        }
+    }
+
+    /**
+     * Enable or disable using mobile data for automatic backup.
+     */
+    suspend fun setUseMobileData(isEnabled: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[PreferencesKeys.USE_MOBILE_DATA] = isEnabled
+        }
+    }
+
+    /**
+     * Check if automatic backup can be performed based on network connectivity.
+     * Returns true if the device is connected to WiFi or if it's connected to mobile data
+     * and useMobileData setting is enabled.
+     */
+    suspend fun canPerformAutomaticBackup(): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        val currentSettings = settings.first()
+
+        return when {
+            // If connected to WiFi, always allow backup
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+
+            // If connected to mobile data, check if mobile data usage is allowed
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> currentSettings.useMobileData
+
+            // Otherwise, don't allow backup
+            else -> false
         }
     }
 }

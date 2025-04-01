@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">قاموس</string>
+
+    <!-- Google Drive API -->
+    <string name="google_drive_client_id">YEt to add</string>
+</resources>

@@ -66,4 +66,7 @@
     <string name="no_kalima_available">No Kalima Available</string>
     <string name="check_back_later">Please check back later for new vocabulary to practice</string>
     <string name="your_random_kalima">Your Random Kalima</string>
+
+    <!-- Google Drive API -->
+    <string name="google_drive_client_id">YET to add</string>
 </resources>

@@ -8,11 +8,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Custom WorkerFactory for creating KalimaReminderWorker instances with dependencies.
+ * Custom WorkerFactory for creating worker instances with dependencies.
  */
 @Singleton
-class KalimaWorkerFactory @Inject constructor(
-    private val kalimaReminderWorkerFactory: KalimaReminderWorker.Factory
+class QamusWorkerFactory @Inject constructor(
+    private val kalimaReminderWorkerFactory: KalimaReminderWorker.Factory,
+    private val automaticBackupWorkerFactory: AutomaticBackupWorker.Factory
 ) : WorkerFactory() {
 
     override fun createWorker(
@@ -23,6 +24,9 @@ class KalimaWorkerFactory @Inject constructor(
         return when (workerClassName) {
             KalimaReminderWorker::class.java.name ->
                 kalimaReminderWorkerFactory.create(appContext, workerParameters)
+
+            AutomaticBackupWorker::class.java.name ->
+                automaticBackupWorkerFactory.create(appContext, workerParameters)
 
             else -> null
         }

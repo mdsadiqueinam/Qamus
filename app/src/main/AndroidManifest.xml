@@ -12,6 +12,9 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
+    <!-- Permission for internet access (required for Google Drive backup) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
             android:name=".QamusApplication"
             android:allowBackup="true"

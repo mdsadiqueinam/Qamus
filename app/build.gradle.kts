@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.services)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
@@ -20,11 +21,20 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("/home/sadique/AndroidStudioProjects/Qamus/secret/keystore.jks")
+            storePassword = "7044647301"
+            keyAlias = "mdsadiqueinam"
+            keyPassword = "7044647301"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"
@@ -39,6 +49,12 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/DEPENDENCIES"
+        }
     }
 }
 
@@ -84,6 +100,21 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
+
+    // Google Drive API
+    implementation(libs.google.api.client)
+    implementation(libs.google.drive.api)
+    implementation(libs.google.auth)
+
+    // Credential Manager (replacing Google Sign-In)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.android.libraries.identity.googleid)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 import io.github.mdsadiqueinam.qamus.service.KalimaReminderScheduler
-import io.github.mdsadiqueinam.qamus.service.KalimaWorkerFactory
+import io.github.mdsadiqueinam.qamus.service.QamusWorkerFactory
 import javax.inject.Inject
 
 /**
@@ -17,7 +17,7 @@ import javax.inject.Inject
 class QamusApplication() : Application(), Configuration.Provider {
 
     @Inject
-    lateinit var workerFactory: KalimaWorkerFactory
+    lateinit var workerFactory: QamusWorkerFactory
 
     override val workManagerConfiguration
         get() = Configuration.Builder()

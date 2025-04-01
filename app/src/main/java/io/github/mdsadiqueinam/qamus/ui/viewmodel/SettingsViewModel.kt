@@ -1,11 +1,18 @@
 package io.github.mdsadiqueinam.qamus.ui.viewmodel
 
+import android.app.Activity
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
+import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.Settings
+import io.github.mdsadiqueinam.qamus.data.repository.BackupRestoreRepository
+import io.github.mdsadiqueinam.qamus.data.repository.DataTransferState
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,17 +28,34 @@ data class SettingsUIState(
     val settings: Settings = Settings(),
     val isLoading: Boolean = true,
     val showResetConfirmation: Boolean = false,
-    val showPermissionDialog: Boolean = false
+    val showPermissionDialog: Boolean = false,
+    val isSignedIn: Boolean = false,
+    val user: FirebaseUser? = null,
+    val backupRestoreState: BackupRestoreState = BackupRestoreState.Idle,
 )
+
+sealed class BackupRestoreState {
+    object Idle : BackupRestoreState()
+    data class InProgress(
+        val progress: Int = 0, val transferType: DataTransferState.TransferType, val bytesTransferred: Long = 0
+    ) : BackupRestoreState()
+
+    data class Error(val message: String) : BackupRestoreState()
+    object Success : BackupRestoreState()
+}
 
 /**
  * ViewModel for the settings screen.
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val repository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
+    private val backupRestoreRepository: BackupRestoreRepository,
     private val navigator: QamusNavigator
 ) : ViewModel() {
+    companion object {
+        private const val REQUEST_AUTHORIZATION = 1001
+    }
 
     // UI state for the settings screen
     private val _uiState = MutableStateFlow(SettingsUIState())
@@ -50,13 +74,20 @@ class SettingsViewModel @Inject constructor(
      * Load settings from the repository.
      */
     private fun loadSettings() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            repository.settings.collectLatest { settings ->
-                _uiState.value = SettingsUIState(
-                    settings = settings,
-                    isLoading = false
-                )
+
+            launch {
+                settingsRepository.settings.collectLatest { settings ->
+                    _uiState.value = _uiState.value.copy(settings = settings, isLoading = false)
+                }
+            }
+
+            launch {
+                // Check if the user is signed in
+                backupRestoreRepository.observeUserState().collectLatest { user ->
+                    _uiState.value = _uiState.value.copy(isSignedIn = user != null, user = user)
+                }
             }
         }
     }
@@ -67,7 +98,7 @@ class SettingsViewModel @Inject constructor(
     fun updateReminderInterval(interval: Int) {
         viewModelScope.launch {
             try {
-                repository.updateReminderInterval(interval)
+                settingsRepository.updateReminderInterval(interval)
             } catch (e: Exception) {
                 _errorMessage.value = "Error updating reminder interval: ${e.message}"
             }
@@ -81,7 +112,7 @@ class SettingsViewModel @Inject constructor(
     fun updateReminderState(isEnabled: Boolean) {
         viewModelScope.launch {
             try {
-                repository.setReminderEnabled(isEnabled)
+                settingsRepository.setReminderEnabled(isEnabled)
             } catch (e: Exception) {
                 _errorMessage.value = "Error updating reminder state: ${e.message}"
             }
@@ -89,16 +120,27 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
-     * Simulate a backup by updating the last backup information.
+     * Update the automatic backup frequency.
      */
-    fun performBackup() {
+    fun updateAutomaticBackupFrequency(frequency: Settings.AutomaticBackupFrequency) {
         viewModelScope.launch {
             try {
-                val currentTime = Clock.System.now()
-                val currentVersion = uiState.value.settings.lastBackupVersion + 1
-                repository.updateLastBackup(currentTime, currentVersion)
+                settingsRepository.updateAutomaticBackupFrequency(frequency)
             } catch (e: Exception) {
-                _errorMessage.value = "Error performing backup: ${e.message}"
+                _errorMessage.value = "Error updating automatic backup frequency: ${e.message}"
+            }
+        }
+    }
+
+    /**
+     * Update the mobile data usage setting for automatic backup.
+     */
+    fun updateUseMobileData(isEnabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                settingsRepository.setUseMobileData(isEnabled)
+            } catch (e: Exception) {
+                _errorMessage.value = "Error updating mobile data usage setting: ${e.message}"
             }
         }
     }
@@ -123,12 +165,131 @@ class SettingsViewModel @Inject constructor(
     fun resetSettings() {
         viewModelScope.launch {
             try {
-                repository.resetSettings()
+                settingsRepository.resetSettings()
                 hideResetConfirmation()
             } catch (e: Exception) {
                 _errorMessage.value = "Error resetting settings: ${e.message}"
             }
         }
+    }
+
+    fun signIn(activity: Context) {
+        viewModelScope.launch {
+            try {// Check if the user is signed in
+                backupRestoreRepository.signIn(activity)
+            } catch (e: Exception) {
+                _errorMessage.value = "Error logging in: ${e.message}"
+            }
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            backupRestoreRepository.signOut()
+        }
+    }
+
+    // Job to keep track of backup/restore operations for cancellation
+    private var backupRestoreJob: kotlinx.coroutines.Job? = null
+
+    fun performBackup(activity: Context) {
+        // Cancel any existing job
+        backupRestoreJob?.cancel()
+
+        // Reset state to idle
+        _uiState.value = _uiState.value.copy(
+            backupRestoreState = BackupRestoreState.Idle
+        )
+
+        // Start new backup job
+        backupRestoreJob = viewModelScope.launch {
+            backupRestoreRepository.backupDatabase().collectLatest {
+                when (it) {
+                    is DataTransferState.Success -> {
+                        _uiState.value = _uiState.value.copy(
+                            backupRestoreState = BackupRestoreState.Success
+                        )
+                        // Update last backup time and version
+                        val currentTime = Clock.System.now()
+                        val currentVersion = uiState.value.settings.lastBackupVersion + 1
+                        settingsRepository.updateLastBackup(currentTime, currentVersion)
+                    }
+
+                    is DataTransferState.Error -> {
+                        if (it.exception is UserRecoverableAuthIOException) {
+                            (activity as Activity).startActivityForResult(it.exception.intent, REQUEST_AUTHORIZATION)
+                        } else {
+                            _errorMessage.value = "Error: ${it.message}"
+                            _uiState.value = _uiState.value.copy(
+                                backupRestoreState = BackupRestoreState.Idle
+                            )
+                        }
+                    }
+
+                    is DataTransferState.Uploading -> {
+                        _uiState.value = _uiState.value.copy(
+                            backupRestoreState = BackupRestoreState.InProgress(
+                                progress = it.progress,
+                                transferType = it.type,
+                                bytesTransferred = it.bytes
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun performRestore(activity: Context) {
+        // Cancel any existing job
+        backupRestoreJob?.cancel()
+
+        // Reset state to idle
+        _uiState.value = _uiState.value.copy(
+            backupRestoreState = BackupRestoreState.Idle
+        )
+
+        // Start new restore job
+        backupRestoreJob = viewModelScope.launch {
+            backupRestoreRepository.restoreDatabase().collectLatest {
+                when (it) {
+                    is DataTransferState.Success -> {
+                        _uiState.value = _uiState.value.copy(
+                            backupRestoreState = BackupRestoreState.Success
+                        )
+                    }
+
+                    is DataTransferState.Error -> {
+                        if (it.exception is UserRecoverableAuthIOException) {
+                            (activity as Activity).startActivityForResult(it.exception.intent, REQUEST_AUTHORIZATION)
+                        } else {
+                            _errorMessage.value = "Error: ${it.message}"
+                            _uiState.value = _uiState.value.copy(
+                                backupRestoreState = BackupRestoreState.Idle
+                            )
+                        }
+                    }
+
+                    is DataTransferState.Uploading -> {
+                        _uiState.value = _uiState.value.copy(
+                            backupRestoreState = BackupRestoreState.InProgress(
+                                progress = it.progress,
+                                transferType = it.type,
+                                bytesTransferred = 0 // We don't have bytes info in the current implementation
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun cancelBackupRestore() {
+        backupRestoreJob?.cancel()
+        backupRestoreJob = null
+        _uiState.value = _uiState.value.copy(
+            backupRestoreState = BackupRestoreState.Idle
+        )
     }
 
     /**
