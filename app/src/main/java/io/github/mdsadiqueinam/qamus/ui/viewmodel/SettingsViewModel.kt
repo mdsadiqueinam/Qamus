@@ -122,7 +122,7 @@ class SettingsViewModel @Inject constructor(
     /**
      * Update the automatic backup frequency.
      */
-    fun updateAutomaticBackupFrequency(frequency: String) {
+    fun updateAutomaticBackupFrequency(frequency: Settings.AutomaticBackupFrequency) {
         viewModelScope.launch {
             try {
                 settingsRepository.updateAutomaticBackupFrequency(frequency)

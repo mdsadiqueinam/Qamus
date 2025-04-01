@@ -116,7 +116,7 @@ fun SettingsContent(
     onReminderIntervalChanged: (Int) -> Unit,
     onBackupClicked: () -> Unit,
     onReminderStateChanged: (Boolean) -> Unit,
-    onAutomaticBackupFrequencyChanged: (String) -> Unit,
+    onAutomaticBackupFrequencyChanged: (Settings.AutomaticBackupFrequency) -> Unit,
     signIn: () -> Unit,
     signOut: () -> Unit,
     backupRestoreState: BackupRestoreState = BackupRestoreState.Idle,
@@ -276,8 +276,8 @@ fun BackupSetting(
     backupRestoreState: BackupRestoreState,
     signIn: () -> Unit,
     sinOut: () -> Unit,
-    currentFrequency: String,
-    onFrequencyChanged: (String) -> Unit,
+    currentFrequency: Settings.AutomaticBackupFrequency,
+    onFrequencyChanged: (Settings.AutomaticBackupFrequency) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val isSignedIn = remember(user) { user != null }
@@ -463,7 +463,7 @@ fun formatBytes(bytes: Long): String {
 
 @Composable
 fun AutomaticBackupSetting(
-    currentFrequency: String, onFrequencyChanged: (String) -> Unit, modifier: Modifier = Modifier
+    currentFrequency: Settings.AutomaticBackupFrequency, onFrequencyChanged: (Settings.AutomaticBackupFrequency) -> Unit, modifier: Modifier = Modifier
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -485,12 +485,7 @@ fun AutomaticBackupSetting(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Radio buttons for frequency options
-                    val options = listOf(
-                        Settings.AUTOMATIC_BACKUP_OFF,
-                        Settings.AUTOMATIC_BACKUP_DAILY,
-                        Settings.AUTOMATIC_BACKUP_WEEKLY,
-                        Settings.AUTOMATIC_BACKUP_MONTHLY
-                    )
+                    val options = Settings.AutomaticBackupFrequency.entries
 
                     options.forEach { option ->
                         Row(modifier = Modifier.fillMaxWidth().clickable {
@@ -506,7 +501,7 @@ fun AutomaticBackupSetting(
                             Spacer(modifier = Modifier.width(8.dp))
 
                             Text(
-                                text = option, style = MaterialTheme.typography.bodyLarge
+                                text = option.value, style = MaterialTheme.typography.bodyLarge
                             )
                         }
                     }
@@ -529,7 +524,7 @@ fun AutomaticBackupSetting(
         Text(text = "Automatic Backup", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = currentFrequency, style = MaterialTheme.typography.bodyMedium
+            text = currentFrequency.value, style = MaterialTheme.typography.bodyMedium
         )
     }
 }

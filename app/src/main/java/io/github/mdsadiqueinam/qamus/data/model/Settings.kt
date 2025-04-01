@@ -16,16 +16,17 @@ data class Settings(
     val lastBackupAt: Instant? = null,
     val lastBackupVersion: Long = 0,
     val isReminderEnabled: Boolean = false,
-    val automaticBackupFrequency: String = AUTOMATIC_BACKUP_OFF
+    val automaticBackupFrequency: AutomaticBackupFrequency = AutomaticBackupFrequency.OFF
 ) {
     companion object {
         // Default reminder interval: 60m minutes
         const val DEFAULT_REMINDER_INTERVAL: Int = 60
-
-        // Automatic backup frequency options
-        const val AUTOMATIC_BACKUP_OFF: String = "Off"
-        const val AUTOMATIC_BACKUP_DAILY: String = "Daily"
-        const val AUTOMATIC_BACKUP_WEEKLY: String = "Weekly"
-        const val AUTOMATIC_BACKUP_MONTHLY: String = "Monthly"
+    }
+    // Automatic backup frequency options
+    enum class AutomaticBackupFrequency(val value: String) {
+        OFF("Off"),
+        DAILY("Daily"),
+        WEEKLY("Weekly"),
+        MONTHLY("Monthly")
     }
 }
