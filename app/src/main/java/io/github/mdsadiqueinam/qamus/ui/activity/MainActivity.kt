@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.mdsadiqueinam.qamus.service.AutomaticBackupScheduler
 import io.github.mdsadiqueinam.qamus.service.KalimaReminderScheduler
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavHost
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
@@ -23,6 +24,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var kalimaReminderScheduler: KalimaReminderScheduler
+
+    @Inject
+    lateinit var automaticBackupScheduler: AutomaticBackupScheduler
 
     // Permission request launcher
     private val requestPermissionLauncher = registerForActivityResult(
@@ -41,6 +45,9 @@ class MainActivity : ComponentActivity() {
 
         // Schedule the Kalima reminder
         kalimaReminderScheduler.startScheduling()
+
+        // Schedule automatic backups
+        automaticBackupScheduler.startScheduling()
 
         // Check and request notification permission
         checkNotificationPermission()

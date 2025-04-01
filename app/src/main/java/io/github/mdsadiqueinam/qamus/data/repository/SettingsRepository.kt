@@ -1,6 +1,8 @@
 package io.github.mdsadiqueinam.qamus.data.repository
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -12,6 +14,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import javax.inject.Inject
@@ -105,6 +108,29 @@ class SettingsRepository @Inject constructor(
     suspend fun setUseMobileData(isEnabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[PreferencesKeys.USE_MOBILE_DATA] = isEnabled
+        }
+    }
+
+    /**
+     * Check if automatic backup can be performed based on network connectivity.
+     * Returns true if the device is connected to WiFi or if it's connected to mobile data
+     * and useMobileData setting is enabled.
+     */
+    suspend fun canPerformAutomaticBackup(): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        val currentSettings = settings.first()
+
+        return when {
+            // If connected to WiFi, always allow backup
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+
+            // If connected to mobile data, check if mobile data usage is allowed
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> currentSettings.useMobileData
+
+            // Otherwise, don't allow backup
+            else -> false
         }
     }
 }

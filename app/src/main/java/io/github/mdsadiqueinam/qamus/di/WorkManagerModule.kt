@@ -8,7 +8,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import io.github.mdsadiqueinam.qamus.service.KalimaWorkerFactory
+import io.github.mdsadiqueinam.qamus.service.QamusWorkerFactory
 import javax.inject.Singleton
 
 /**
@@ -24,7 +24,7 @@ object WorkManagerModule {
     @Provides
     @Singleton
     fun provideWorkManagerConfiguration(
-        workerFactory: KalimaWorkerFactory
+        workerFactory: QamusWorkerFactory
     ): Configuration {
         return Configuration.Builder()
             .setWorkerFactory(workerFactory)
