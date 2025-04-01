@@ -10,13 +10,15 @@ import kotlinx.datetime.Instant
  * @property lastBackupVersion The version of the last backup
  * @property isReminderEnabled Whether reminders are enabled
  * @property automaticBackupFrequency The frequency of automatic backups
+ * @property useMobileData Whether to allow using mobile data for automatic backup
  */
 data class Settings(
     val reminderInterval: Int = DEFAULT_REMINDER_INTERVAL,
     val lastBackupAt: Instant? = null,
     val lastBackupVersion: Long = 0,
     val isReminderEnabled: Boolean = false,
-    val automaticBackupFrequency: AutomaticBackupFrequency = AutomaticBackupFrequency.OFF
+    val automaticBackupFrequency: AutomaticBackupFrequency = AutomaticBackupFrequency.OFF,
+    val useMobileData: Boolean = false
 ) {
     companion object {
         // Default reminder interval: 60m minutes

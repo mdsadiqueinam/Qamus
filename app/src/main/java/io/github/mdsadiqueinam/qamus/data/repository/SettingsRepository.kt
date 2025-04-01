@@ -34,6 +34,7 @@ class SettingsRepository @Inject constructor(
         val LAST_BACKUP_VERSION = longPreferencesKey("last_backup_version")
         val IS_REMINDER_ENABLED = booleanPreferencesKey("is_reminder_enabled")
         val AUTOMATIC_BACKUP_FREQUENCY = stringPreferencesKey("automatic_backup_frequency")
+        val USE_MOBILE_DATA = booleanPreferencesKey("use_mobile_data")
     }
 
     /**
@@ -47,7 +48,8 @@ class SettingsRepository @Inject constructor(
             isReminderEnabled = preferences[PreferencesKeys.IS_REMINDER_ENABLED] == true,
             automaticBackupFrequency = preferences[PreferencesKeys.AUTOMATIC_BACKUP_FREQUENCY]?.let { 
                 Settings.AutomaticBackupFrequency.entries.find { freq -> freq.value == it }
-            } ?: Settings.AutomaticBackupFrequency.OFF
+            } ?: Settings.AutomaticBackupFrequency.OFF,
+            useMobileData = preferences[PreferencesKeys.USE_MOBILE_DATA] == true
         )
     }
 
@@ -94,6 +96,15 @@ class SettingsRepository @Inject constructor(
     suspend fun updateAutomaticBackupFrequency(frequency: Settings.AutomaticBackupFrequency) {
         context.settingsDataStore.edit { preferences ->
             preferences[PreferencesKeys.AUTOMATIC_BACKUP_FREQUENCY] = frequency.value
+        }
+    }
+
+    /**
+     * Enable or disable using mobile data for automatic backup.
+     */
+    suspend fun setUseMobileData(isEnabled: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[PreferencesKeys.USE_MOBILE_DATA] = isEnabled
         }
     }
 }

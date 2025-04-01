@@ -133,6 +133,19 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
+     * Update the mobile data usage setting for automatic backup.
+     */
+    fun updateUseMobileData(isEnabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                settingsRepository.setUseMobileData(isEnabled)
+            } catch (e: Exception) {
+                _errorMessage.value = "Error updating mobile data usage setting: ${e.message}"
+            }
+        }
+    }
+
+    /**
      * Show the reset confirmation dialog.
      */
     fun showResetConfirmation() {

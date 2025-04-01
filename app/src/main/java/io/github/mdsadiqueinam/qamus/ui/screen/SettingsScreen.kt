@@ -97,6 +97,7 @@ fun SettingsScreen(
                     onBackupClicked = { viewModel.performBackup(localContext) },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
                     onAutomaticBackupFrequencyChanged = { viewModel.updateAutomaticBackupFrequency(it) },
+                    onUseMobileDataChanged = { viewModel.updateUseMobileData(it) },
                     signIn = { viewModel.signIn(localContext) },
                     signOut = { viewModel.signOut() },
                     backupRestoreState = uiState.backupRestoreState,
@@ -117,6 +118,7 @@ fun SettingsContent(
     onBackupClicked: () -> Unit,
     onReminderStateChanged: (Boolean) -> Unit,
     onAutomaticBackupFrequencyChanged: (Settings.AutomaticBackupFrequency) -> Unit,
+    onUseMobileDataChanged: (Boolean) -> Unit,
     signIn: () -> Unit,
     signOut: () -> Unit,
     backupRestoreState: BackupRestoreState = BackupRestoreState.Idle,
@@ -156,7 +158,9 @@ fun SettingsContent(
                     signIn = signIn,
                     sinOut = signOut,
                     currentFrequency = settings.automaticBackupFrequency,
-                    onFrequencyChanged = onAutomaticBackupFrequencyChanged
+                    onFrequencyChanged = onAutomaticBackupFrequencyChanged,
+                    useMobileData = settings.useMobileData,
+                    onUseMobileDataChanged = onUseMobileDataChanged
                 )
             })
 
@@ -278,6 +282,8 @@ fun BackupSetting(
     sinOut: () -> Unit,
     currentFrequency: Settings.AutomaticBackupFrequency,
     onFrequencyChanged: (Settings.AutomaticBackupFrequency) -> Unit,
+    useMobileData: Boolean,
+    onUseMobileDataChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val isSignedIn = remember(user) { user != null }
@@ -422,6 +428,25 @@ fun BackupSetting(
                         }
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Mobile data usage setting
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Allow using mobile data for automatic backup",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Switch(
+                    checked = useMobileData,
+                    onCheckedChange = onUseMobileDataChanged
+                )
             }
         }
     } else {
