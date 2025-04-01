@@ -6,10 +6,13 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -25,56 +28,61 @@ class AutomaticBackupScheduler @Inject constructor(
     private val workManager: WorkManager,
     private val settingsRepository: SettingsRepository,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e(TAG, "Error in backup scheduler", throwable)
+    }
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
 
     companion object {
         private const val TAG = "AutomaticBackupScheduler"
         private const val WORK_NAME = "automatic_backup_worker"
-        
+
         // Intervals in hours
-        private const val DAILY_INTERVAL = 24L
-        private const val WEEKLY_INTERVAL = 7 * 24L
-        private const val MONTHLY_INTERVAL = 30 * 24L
+        private val FREQUENCY_INTERVALS = mapOf(
+            Settings.AutomaticBackupFrequency.DAILY to 24L,
+            Settings.AutomaticBackupFrequency.WEEKLY to 7 * 24L,
+            Settings.AutomaticBackupFrequency.MONTHLY to 30 * 24L
+        )
     }
 
     /**
      * Start monitoring settings changes and schedule the worker accordingly.
      */
     fun startScheduling() {
-        Log.d(TAG, "Starting automatic backup scheduling")
         scope.launch {
-            settingsRepository.settings.collectLatest { settings ->
-                when (settings.automaticBackupFrequency) {
-                    Settings.AutomaticBackupFrequency.OFF -> {
-                        Log.d(TAG, "Automatic backup is disabled, stopping scheduling")
+            settingsRepository.settings
+                .map { it.automaticBackupFrequency } // Only extract the frequency
+                .distinctUntilChanged() // Only react to changes in frequency
+                .catch { e -> Log.e(TAG, "Error collecting settings", e) }
+                .collect { frequency ->
+                    if (frequency == Settings.AutomaticBackupFrequency.OFF) {
+                        Log.d(TAG, "Automatic backup disabled")
                         stopScheduling()
-                    }
-                    else -> {
-                        Log.d(TAG, "Settings updated, automaticBackupFrequency: ${settings.automaticBackupFrequency}")
-                        scheduleWorker(settings.automaticBackupFrequency)
+                    } else {
+                        val intervalHours = FREQUENCY_INTERVALS[frequency] ?: return@collect
+                        Log.d(TAG, "Scheduling backup: $frequency (every $intervalHours hours)")
+                        scheduleWorker(intervalHours)
                     }
                 }
-            }
         }
     }
 
     /**
-     * Schedule the worker to run at the specified interval based on frequency.
+     * Schedule the worker to run at the specified interval.
      */
-    private fun scheduleWorker(frequency: Settings.AutomaticBackupFrequency) {
-        // Determine the interval based on frequency
-        val intervalHours = when (frequency) {
-            Settings.AutomaticBackupFrequency.DAILY -> DAILY_INTERVAL
-            Settings.AutomaticBackupFrequency.WEEKLY -> WEEKLY_INTERVAL
-            Settings.AutomaticBackupFrequency.MONTHLY -> MONTHLY_INTERVAL
-            Settings.AutomaticBackupFrequency.OFF -> {
-                // If frequency is OFF, don't schedule
-                stopScheduling()
-                return
-            }
+    private fun scheduleWorker(intervalHours: Long) {
+        val workerInfo = workManager.getWorkInfosForUniqueWork(WORK_NAME).get() ?: emptyList()
+
+        // Check if the worker is already scheduled with the same interval
+        val intervalMillis = TimeUnit.HOURS.toMillis(intervalHours)
+        if (workerInfo.any { it.periodicityInfo?.repeatIntervalMillis == intervalMillis &&
+                    it.state == androidx.work.WorkInfo.State.ENQUEUED }) {
+            Log.d(TAG, "Worker already scheduled with interval: $intervalHours hours, ignoring")
+            return
         }
 
-        Log.d(TAG, "Scheduling worker with frequency: $frequency (every $intervalHours hours)")
+        Log.d(TAG, "Scheduling backup worker with interval: $intervalHours hours")
 
         // Create the work request
         val workRequest = PeriodicWorkRequestBuilder<AutomaticBackupWorker>(
@@ -89,7 +97,7 @@ class AutomaticBackupScheduler @Inject constructor(
             workRequest
         )
 
-        Log.d(TAG, "Worker scheduled successfully")
+        Log.d(TAG, "Automatic backup worker scheduled successfully")
     }
 
     /**
