@@ -205,7 +205,7 @@ class SettingsViewModel @Inject constructor(
                             backupRestoreState = BackupRestoreState.InProgress(
                                 progress = it.progress,
                                 transferType = it.type,
-                                bytesTransferred = 0 // We don't have bytes info in the current implementation
+                                bytesTransferred = it.bytes
                             )
                         )
                     }

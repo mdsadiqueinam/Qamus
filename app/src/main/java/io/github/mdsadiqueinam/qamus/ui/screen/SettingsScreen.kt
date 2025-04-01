@@ -23,7 +23,9 @@ import io.github.mdsadiqueinam.qamus.ui.viewmodel.BackupRestoreState
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.SettingsViewModel
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.math.log10
 import kotlin.math.pow
@@ -322,7 +324,8 @@ fun BackupSetting(
             // Last backup info
             if (lastBackupAt != null) {
                 val localDateTime = lastBackupAt.toLocalDateTime(TimeZone.currentSystemDefault())
-                val formattedDate = "${localDateTime.date} ${localDateTime.time}"
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                val formattedDate = formatter.format(localDateTime.toJavaLocalDateTime())
 
                 Text(
                     text = "Last backup: $formattedDate (v$lastBackupVersion)",

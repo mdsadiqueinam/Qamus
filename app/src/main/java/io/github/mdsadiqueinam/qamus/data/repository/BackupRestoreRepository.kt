@@ -151,7 +151,7 @@ class BackupRestoreRepository @Inject constructor(
                 Log.d(TAG, "Upload progress: $progressPercentage%")
                 trySend(
                     DataTransferState.Uploading(
-                        progressPercentage, DataTransferState.TransferType.BACKUP
+                        progressPercentage, it.numBytesUploaded, DataTransferState.TransferType.BACKUP
                     )
                 )
             }
@@ -217,7 +217,7 @@ class BackupRestoreRepository @Inject constructor(
                 Log.d(TAG, "Download progress: $progressPercentage%")
                 trySend(
                     DataTransferState.Uploading(
-                        progressPercentage, DataTransferState.TransferType.RESTORE
+                        progressPercentage, it.numBytesDownloaded, DataTransferState.TransferType.RESTORE,
                     )
                 )
             }
@@ -314,7 +314,7 @@ sealed class DataTransferState {
         BACKUP, RESTORE
     }
 
-    data class Uploading(val progress: Int, val type: TransferType) : DataTransferState()
+    data class Uploading(val progress: Int, val bytes: Long, val type: TransferType) : DataTransferState()
     object Success : DataTransferState()
     data class Error(
         val message: String, val type: TransferType, val exception: Exception? = null

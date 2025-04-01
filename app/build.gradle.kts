@@ -8,6 +8,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        create("release") {
+            storeFile = file("/home/sadique/AndroidStudioProjects/Qamus/secret/keystore.jks")
+            storePassword = "7044647301"
+            keyAlias = "mdsadiqueinam"
+            keyPassword = "7044647301"
+        }
+    }
     namespace = "io.github.mdsadiqueinam.qamus"
     compileSdk = 35
 
@@ -25,7 +33,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"
