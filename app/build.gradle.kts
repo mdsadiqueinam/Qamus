@@ -8,14 +8,6 @@ plugins {
 }
 
 android {
-    signingConfigs {
-        create("release") {
-            storeFile = file("/home/sadique/AndroidStudioProjects/Qamus/secret/keystore.jks")
-            storePassword = "7044647301"
-            keyAlias = "mdsadiqueinam"
-            keyPassword = "7044647301"
-        }
-    }
     namespace = "io.github.mdsadiqueinam.qamus"
     compileSdk = 35
 
@@ -27,6 +19,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("/home/sadique/AndroidStudioProjects/Qamus/secret/keystore.jks")
+            storePassword = "7044647301"
+            keyAlias = "mdsadiqueinam"
+            keyPassword = "7044647301"
+        }
     }
 
     buildTypes {
