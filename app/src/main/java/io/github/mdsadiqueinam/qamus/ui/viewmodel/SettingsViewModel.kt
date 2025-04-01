@@ -120,6 +120,19 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
+     * Update the automatic backup frequency.
+     */
+    fun updateAutomaticBackupFrequency(frequency: String) {
+        viewModelScope.launch {
+            try {
+                settingsRepository.updateAutomaticBackupFrequency(frequency)
+            } catch (e: Exception) {
+                _errorMessage.value = "Error updating automatic backup frequency: ${e.message}"
+            }
+        }
+    }
+
+    /**
      * Show the reset confirmation dialog.
      */
     fun showResetConfirmation() {

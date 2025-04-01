@@ -33,6 +33,7 @@ class SettingsRepository @Inject constructor(
         val LAST_BACKUP_AT = stringPreferencesKey("last_backup_at")
         val LAST_BACKUP_VERSION = longPreferencesKey("last_backup_version")
         val IS_REMINDER_ENABLED = booleanPreferencesKey("is_reminder_enabled")
+        val AUTOMATIC_BACKUP_FREQUENCY = stringPreferencesKey("automatic_backup_frequency")
     }
 
     /**
@@ -43,7 +44,8 @@ class SettingsRepository @Inject constructor(
             reminderInterval = preferences[PreferencesKeys.REMINDER_INTERVAL] ?: Settings.DEFAULT_REMINDER_INTERVAL,
             lastBackupAt = preferences[PreferencesKeys.LAST_BACKUP_AT]?.let { Instant.parse(it) },
             lastBackupVersion = preferences[PreferencesKeys.LAST_BACKUP_VERSION] ?: 0,
-            isReminderEnabled = preferences[PreferencesKeys.IS_REMINDER_ENABLED] == true
+            isReminderEnabled = preferences[PreferencesKeys.IS_REMINDER_ENABLED] == true,
+            automaticBackupFrequency = preferences[PreferencesKeys.AUTOMATIC_BACKUP_FREQUENCY] ?: Settings.AUTOMATIC_BACKUP_OFF
         )
     }
 
@@ -81,6 +83,15 @@ class SettingsRepository @Inject constructor(
     suspend fun setReminderEnabled(isEnabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_REMINDER_ENABLED] = isEnabled
+        }
+    }
+
+    /**
+     * Update the automatic backup frequency.
+     */
+    suspend fun updateAutomaticBackupFrequency(frequency: String) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[PreferencesKeys.AUTOMATIC_BACKUP_FREQUENCY] = frequency
         }
     }
 }

@@ -96,6 +96,7 @@ fun SettingsScreen(
                     onReminderIntervalChanged = { viewModel.updateReminderInterval(it) },
                     onBackupClicked = { viewModel.performBackup(localContext) },
                     onReminderStateChanged = { viewModel.updateReminderState(it) },
+                    onAutomaticBackupFrequencyChanged = { viewModel.updateAutomaticBackupFrequency(it) },
                     signIn = { viewModel.signIn(localContext) },
                     signOut = { viewModel.signOut() },
                     backupRestoreState = uiState.backupRestoreState,
@@ -115,6 +116,7 @@ fun SettingsContent(
     onReminderIntervalChanged: (Int) -> Unit,
     onBackupClicked: () -> Unit,
     onReminderStateChanged: (Boolean) -> Unit,
+    onAutomaticBackupFrequencyChanged: (String) -> Unit,
     signIn: () -> Unit,
     signOut: () -> Unit,
     backupRestoreState: BackupRestoreState = BackupRestoreState.Idle,
@@ -152,7 +154,9 @@ fun SettingsContent(
                     onCancelClicked = onCancelClicked,
                     backupRestoreState = backupRestoreState,
                     signIn = signIn,
-                    sinOut = signOut
+                    sinOut = signOut,
+                    currentFrequency = settings.automaticBackupFrequency,
+                    onFrequencyChanged = onAutomaticBackupFrequencyChanged
                 )
             })
 
@@ -272,6 +276,8 @@ fun BackupSetting(
     backupRestoreState: BackupRestoreState,
     signIn: () -> Unit,
     sinOut: () -> Unit,
+    currentFrequency: String,
+    onFrequencyChanged: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val isSignedIn = remember(user) { user != null }
@@ -281,8 +287,7 @@ fun BackupSetting(
         Dialog(onDismissRequest = { openEditAccountDialog = false }) {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(text = "Google Account", style = MaterialTheme.typography.titleLarge)
 
@@ -344,6 +349,14 @@ fun BackupSetting(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = user?.email ?: "Unknown", style = MaterialTheme.typography.bodyMedium)
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Automatic Backup Setting
+
+            AutomaticBackupSetting(
+                currentFrequency = currentFrequency, onFrequencyChanged = onFrequencyChanged
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -446,4 +459,77 @@ fun formatBytes(bytes: Long): String {
     val digitGroups = (log10(bytes.toDouble()) / log10(1024.0)).toInt()
 
     return String.format(Locale.getDefault(), "%.1f %s", bytes / 1024.0.pow(digitGroups.toDouble()), units[digitGroups])
+}
+
+@Composable
+fun AutomaticBackupSetting(
+    currentFrequency: String, onFrequencyChanged: (String) -> Unit, modifier: Modifier = Modifier
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    // Dialog for selecting backup frequency
+    if (showDialog) {
+        Dialog(onDismissRequest = { showDialog = false }) {
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp)
+                ) {
+                    Text(
+                        text = "Automatic Backup Frequency",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Radio buttons for frequency options
+                    val options = listOf(
+                        Settings.AUTOMATIC_BACKUP_OFF,
+                        Settings.AUTOMATIC_BACKUP_DAILY,
+                        Settings.AUTOMATIC_BACKUP_WEEKLY,
+                        Settings.AUTOMATIC_BACKUP_MONTHLY
+                    )
+
+                    options.forEach { option ->
+                        Row(modifier = Modifier.fillMaxWidth().clickable {
+                                onFrequencyChanged(option)
+                                showDialog = false
+                            }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(
+                                selected = currentFrequency == option, onClick = {
+                                    onFrequencyChanged(option)
+                                    showDialog = false
+                                })
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Text(
+                                text = option, style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Cancel button
+                    TextButton(
+                        onClick = { showDialog = false }, modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            }
+        }
+    }
+
+    // Display current frequency and make it clickable to open dialog
+    Column(modifier = Modifier.fillMaxWidth().clickable { showDialog = true }) {
+        Text(text = "Automatic Backup", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = currentFrequency, style = MaterialTheme.typography.bodyMedium
+        )
+    }
 }
