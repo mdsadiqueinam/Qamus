@@ -8,13 +8,14 @@ plugins {
 }
 
 android {
+    val javaVersion = 21
     namespace = "io.github.mdsadiqueinam.qamus"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "io.github.mdsadiqueinam.qamus"
+        applicationId = namespace
         minSdk = 29
-        targetSdk = 35
+        targetSdk = compileSdk
         versionCode = 1
         versionName = "1.2"
 
@@ -22,7 +23,6 @@ android {
     }
 
     val keystoreFile = File(project.rootDir,"/secret/keystore.jks")
-
     signingConfigs {
         create("release") {
             storeFile = keystoreFile
@@ -42,12 +42,16 @@ android {
             applicationIdSuffix = ".debug"
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.toVersion(javaVersion)
+        targetCompatibility = JavaVersion.toVersion(javaVersion)
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = javaVersion.toString()
+    }
+    kotlin {
+        jvmToolchain(javaVersion)
     }
     buildFeatures {
         compose = true
