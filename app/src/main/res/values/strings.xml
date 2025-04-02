@@ -18,7 +18,6 @@
     <!-- AddEntryScreen -->
     <string name="edit_entry">Edit Entry</string>
     <string name="add_new_entry">Add New Entry</string>
-    <string name="back">Back</string>
     <string name="loading">Loading…</string>
     <string name="arabic_word">Arabic Word (kalima)</string>
     <string name="description">Description</string>
@@ -30,29 +29,44 @@
     <string name="save_entry">Save Entry</string>
     <string name="entry_with_meaning">%1$s (%2$s)</string>
 
-    <!-- SettingsScreen -->
-    <string name="settings">Settings</string>
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="back">Back</string>
     <string name="reset_settings">Reset Settings</string>
-    <string name="reset_settings_confirmation">Are you sure you want to reset all settings to default values?</string>
+    <string name="reset_confirmation_title">Reset Settings</string>
+    <string name="reset_confirmation_message">Are you sure you want to reset all settings to default values?</string>
     <string name="reset">Reset</string>
     <string name="cancel">Cancel</string>
-    <string name="reset_settings_desc">Reset Settings</string>
-    <string name="reminder_interval">Reminder Interval</string>
+
+    <!-- Reminder Settings -->
+    <string name="reminder_interval_title">Reminder Interval</string>
     <string name="reminder_interval_desc">Set how often you want to be reminded to backup your dictionary</string>
-    <string name="backup">Backup</string>
-    <string name="backup_desc">Backup your dictionary to prevent data loss</string>
-    <string name="permission_required">Permission Required</string>
-    <string name="permission_required_desc">This app needs permission to display over other apps to show reminders. Please grant this permission to enable reminders.</string>
-    <string name="grant">Grant</string>
-    <string name="deny">Deny</string>
-    <string name="remind_every">Remind every %1$s minutes</string>
+    <string name="remind_every">Remind every %s minutes</string>
     <string name="ten_minutes">10m</string>
     <string name="three_hours">3h</string>
     <string name="enable_reminder">Enable Reminder</string>
-    <string name="last_backup">Last backup: %1$s (v%2$d)</string>
+
+    <!-- Backup Settings -->
+    <string name="backup_restore_title">Backup &amp; Restore</string>
+    <string name="backup_restore_desc">Backup and restore your dictionary to prevent data loss</string>
+    <string name="last_backup">Last backup: %s (v%d)</string>
+    <string name="google_account">Google Account</string>
+    <string name="unknown">Unknown</string>
+    <string name="sign_in_required">You need to sign in to backup your dictionary</string>
+    <string name="sign_in">Sign In</string>
+    <string name="change_account">Change Account</string>
+    <string name="logout">Logout</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="name">Name</string>
+    <string name="email">Email</string>
     <string name="backup_now">Backup Now</string>
-    <string name="time_format_hours_minutes">%1$d hours %2$d minutes</string>
-    <string name="time_format_minutes">%1$d minutes</string>
+    <string name="restore">Restore</string>
+    <string name="automatic_backup">Automatic Backup</string>
+    <string name="automatic_backup_frequency">Automatic Backup Frequency</string>
+    <string name="backup_in_progress">Backup in progress: %d%%</string>
+    <string name="restore_in_progress">Restore in progress: %d%%</string>
+    <string name="transferred">Transferred: %s</string>
+    <string name="allow_mobile_data">Allow using mobile data for automatic backup</string>
 
     <!-- KalimaReminderWorker -->
     <string name="log_kalima_reminder_starting">KalimaReminderWorker: Starting work</string>
@@ -69,4 +83,5 @@
 
     <!-- Google Drive API -->
     <string name="google_drive_client_id">YET to add</string>
+    <string name="enabled">Enabled</string>
 </resources>
