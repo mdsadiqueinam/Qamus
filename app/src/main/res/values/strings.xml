@@ -81,6 +81,15 @@
     <string name="check_back_later">Please check back later for new vocabulary to practice</string>
     <string name="your_random_kalima">Your Random Kalima</string>
 
+    <!-- Error messages -->
+    <string name="error_updating_reminder_interval">Error updating reminder interval: %s</string>
+    <string name="error_updating_reminder_state">Error updating reminder state: %s</string>
+    <string name="error_updating_backup_frequency">Error updating automatic backup frequency: %s</string>
+    <string name="error_updating_mobile_data">Error updating mobile data usage setting: %s</string>
+    <string name="error_resetting_settings">Error resetting settings: %s</string>
+    <string name="error_logging_in">Error logging in: %s</string>
+    <string name="error_generic">Error: %s</string>
+
     <!-- Google Drive API -->
     <string name="google_drive_client_id">YET to add</string>
     <string name="enabled">Enabled</string>
