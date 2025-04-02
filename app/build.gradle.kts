@@ -16,14 +16,16 @@ android {
         minSdk = 29
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    val keystoreFile = File(project.rootDir,"/secret/keystore.jks")
+
     signingConfigs {
         create("release") {
-            storeFile = file("/home/sadique/AndroidStudioProjects/Qamus/secret/keystore.jks")
+            storeFile = keystoreFile
             storePassword = "7044647301"
             keyAlias = "mdsadiqueinam"
             keyPassword = "7044647301"
