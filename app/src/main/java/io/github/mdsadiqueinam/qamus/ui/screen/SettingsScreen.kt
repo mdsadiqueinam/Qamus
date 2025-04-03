@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import io.github.mdsadiqueinam.qamus.extension.ShowSnackbar
 import io.github.mdsadiqueinam.qamus.ui.composables.*
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.SettingsViewModel
 
@@ -19,11 +20,8 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val localContext = LocalContext.current
 
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
-        }
+    snackbarHostState.ShowSnackbar(errorMessage) {
+        viewModel.clearError()
     }
 
     if (uiState.showResetConfirmation) {

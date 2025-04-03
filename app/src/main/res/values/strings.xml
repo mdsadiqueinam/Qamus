@@ -90,6 +90,11 @@
     <string name="error_logging_in">Error logging in: %s</string>
     <string name="error_generic">Error: %s</string>
 
+    <string name="entry_not_found">Entry not found</string>
+    <string name="error_loading_entry">Error loading entry: %s</string>
+    <string name="word_meaning_required">Word and meaning cannot be empty</string>
+    <string name="error_saving_entry">Error saving entry: %s</string>
+
     <!-- Google Drive API -->
     <string name="google_drive_client_id">YET to add</string>
     <string name="enabled">Enabled</string>

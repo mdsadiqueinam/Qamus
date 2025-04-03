@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.mdsadiqueinam.qamus.R
+import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
 import io.github.mdsadiqueinam.qamus.data.model.Settings
 import io.github.mdsadiqueinam.qamus.data.repository.BackupRestoreRepository
 import io.github.mdsadiqueinam.qamus.data.repository.DataTransferState
@@ -39,7 +40,9 @@ data class SettingsUIState(
 sealed class BackupRestoreState {
     data object Idle : BackupRestoreState()
     data class InProgress(
-        val progress: Int = 0, val transferType: DataTransferState.TransferType, val bytesTransferred: Long = 0
+        val progress: Int = 0,
+        val transferType: DataTransferState.TransferType,
+        val bytesTransferred: Long = 0
     ) : BackupRestoreState()
 
     data class Error(val message: String) : BackupRestoreState()
@@ -53,8 +56,7 @@ sealed class BackupRestoreState {
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val backupRestoreRepository: BackupRestoreRepository,
-    private val navigator: QamusNavigator,
-    @ApplicationContext private val context: Context,
+    private val navigator: QamusNavigator
 ) : ViewModel() {
     companion object {
         private const val REQUEST_AUTHORIZATION = 1001
@@ -65,8 +67,8 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUIState> = _uiState.asStateFlow()
 
     // State for error messages
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    private val _errorMessage = MutableStateFlow<ErrorMessage>(ErrorMessage.None)
+    val errorMessage = _errorMessage.asStateFlow()
 
     // Job to keep track of backup/restore operations for cancellation
     private var backupRestoreJob: kotlinx.coroutines.Job? = null
@@ -109,7 +111,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 operation()
             } catch (e: Exception) {
-                _errorMessage.value = context.getString(errorResourceId, e.message)
+                _errorMessage.value = ErrorMessage.Resource(errorResourceId, e.message ?: "")
             }
         }
     }
@@ -218,7 +220,11 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun handleDataTransferState(state: DataTransferState, activity: Context, isBackup: Boolean) {
+    private fun handleDataTransferState(
+        state: DataTransferState,
+        activity: Context,
+        isBackup: Boolean
+    ) {
         when (state) {
             is DataTransferState.Success -> {
                 _uiState.value = _uiState.value.copy(
@@ -242,7 +248,7 @@ class SettingsViewModel @Inject constructor(
                         REQUEST_AUTHORIZATION
                     )
                 } else {
-                    _errorMessage.value = context.getString(R.string.error_generic, state.message)
+                    _errorMessage.value = ErrorMessage.Resource(R.string.error_generic, state.message)
                     _uiState.value = _uiState.value.copy(
                         backupRestoreState = BackupRestoreState.Idle
                     )
@@ -273,7 +279,7 @@ class SettingsViewModel @Inject constructor(
      * Clear error message.
      */
     fun clearError() {
-        _errorMessage.value = null
+        _errorMessage.value = ErrorMessage.None
     }
 
     /**
