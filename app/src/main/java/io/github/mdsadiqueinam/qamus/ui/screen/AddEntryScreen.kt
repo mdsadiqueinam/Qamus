@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
+import io.github.mdsadiqueinam.qamus.extension.ShowSnackbar
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.AddEntryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,12 +62,7 @@ fun AddEntryScreen(
     }
 
     // Show error message in snackbar
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
-        }
-    }
+    snackbarHostState.ShowSnackbar(errorMessage)
 
     Scaffold(
         topBar = {
