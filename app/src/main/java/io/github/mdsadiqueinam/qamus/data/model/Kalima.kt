@@ -65,5 +65,24 @@ enum class WordType {
                 HARF -> "حرف"
             }
         }
+
+        /**
+         * Returns the string resource ID for the given word type.
+         * This method should be used in UI contexts where localized strings are needed.
+         */
+        fun getStringResourceId(type: WordType): Int {
+            return when (type) {
+                ISM -> io.github.mdsadiqueinam.qamus.R.string.word_type_ism
+                FEEL -> io.github.mdsadiqueinam.qamus.R.string.word_type_feel
+                HARF -> io.github.mdsadiqueinam.qamus.R.string.word_type_harf
+            }
+        }
+
+        /**
+         * Returns the string resource ID for the unknown word type error message.
+         */
+        fun getUnknownWordTypeResourceId(): Int {
+            return io.github.mdsadiqueinam.qamus.R.string.unknown_word_type
+        }
     }
 }

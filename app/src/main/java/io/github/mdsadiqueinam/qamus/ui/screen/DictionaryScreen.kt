@@ -41,10 +41,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.mdsadiqueinam.qamus.R
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -230,8 +232,8 @@ fun SearchBar(
         OutlinedTextField(
             value = query,
             onValueChange = onQueryChange,
-            placeholder = { Text("Search dictionary") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+            placeholder = { Text(stringResource(R.string.search_dictionary)) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search)) },
             modifier = modifier,
         )
     }
@@ -251,13 +253,13 @@ fun FilterByType(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = "Filter by type:",
+            text = stringResource(R.string.filter_by_type),
             fontWeight = FontWeight.Bold,
         )
         Box {
             TextButton(onClick = { expanded = true }) {
                 Text(
-                    text = selectedType?.let { WordType.toArabic(it) } ?: "All",
+                    text = selectedType?.let { stringResource(WordType.getStringResourceId(it)) } ?: stringResource(R.string.all),
                 )
             }
             DropdownMenu(
@@ -267,7 +269,7 @@ fun FilterByType(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = "All",
+                            text = stringResource(R.string.all),
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Right
                         )
@@ -281,7 +283,7 @@ fun FilterByType(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = WordType.toArabic(type),
+                                text = stringResource(WordType.getStringResourceId(type)),
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Right
                             )
@@ -329,7 +331,7 @@ fun DictionaryEntryItem(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Type: ${WordType.toArabic(entry.type)}",
+                text = stringResource(R.string.type_label, stringResource(WordType.getStringResourceId(entry.type))),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.fillMaxWidth()
             )

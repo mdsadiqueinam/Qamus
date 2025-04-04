@@ -201,7 +201,7 @@ fun RootIdDropdown(
         ) {
             // Option to clear selection
             DropdownMenuItem(
-                text = { Text("None") },
+                text = { Text(stringResource(R.string.none)) },
                 onClick = {
                     onEntrySelected(null)
                     expanded = false
@@ -212,7 +212,7 @@ fun RootIdDropdown(
             entries.forEach { entry ->
                 DropdownMenuItem(
                     text = {
-                        Text("${entry.huroof} (${entry.meaning})")
+                        Text(stringResource(R.string.entry_with_meaning, entry.huroof, entry.meaning))
                     },
                     onClick = {
                         onEntrySelected(entry)
@@ -239,10 +239,10 @@ fun WordTypeDropdown(
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = WordType.toArabic(selectedType),
+            value = stringResource(WordType.getStringResourceId(selectedType)),
             onValueChange = {},
             readOnly = true,
-            label = { Text("Word Type") },
+            label = { Text(stringResource(R.string.word_type)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -255,7 +255,7 @@ fun WordTypeDropdown(
         ) {
             WordType.entries.forEach { type ->
                 DropdownMenuItem(
-                    text = { Text(WordType.toArabic(type)) },
+                    text = { Text(stringResource(WordType.getStringResourceId(type))) },
                     onClick = {
                         onTypeSelected(type)
                         expanded = false

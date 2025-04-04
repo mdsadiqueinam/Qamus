@@ -37,10 +37,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaDetailsViewModel
@@ -169,15 +171,15 @@ fun EntryDetails(
 
                     // Word Type
                     DetailItem(
-                        label = "نوع الكلمة (Word Type):",
-                        value = WordType.toArabic(entry.type)
+                        label = stringResource(R.string.word_type_label),
+                        value = stringResource(WordType.getStringResourceId(entry.type))
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     // Meaning
                     DetailItem(
-                        label = "معنى (Meaning):",
+                        label = stringResource(R.string.meaning_label),
                         value = entry.meaning
                     )
 
@@ -185,7 +187,7 @@ fun EntryDetails(
                     if (entry.desc.isNotBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         DetailItem(
-                            label = "وصف (Description):",
+                            label = stringResource(R.string.description_label),
                             value = entry.desc
                         )
                     }
@@ -206,7 +208,7 @@ fun EntryDetails(
                             .padding(16.dp)
                     ) {
                         Text(
-                            text = "الجذر (Root Word)",
+                            text = stringResource(R.string.root_word_title),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.fillMaxWidth()
@@ -228,15 +230,15 @@ fun EntryDetails(
 
                         // Root Word Type
                         DetailItem(
-                            label = "نوع الكلمة (Word Type):",
-                            value = WordType.toArabic(rootEntry.type)
+                            label = stringResource(R.string.word_type_label),
+                            value = stringResource(WordType.getStringResourceId(rootEntry.type))
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
                         // Root Word Meaning
                         DetailItem(
-                            label = "معنى (Meaning):",
+                            label = stringResource(R.string.meaning_label),
                             value = rootEntry.meaning
                         )
 
@@ -244,7 +246,7 @@ fun EntryDetails(
                         if (rootEntry.desc.isNotBlank()) {
                             Spacer(modifier = Modifier.height(8.dp))
                             DetailItem(
-                                label = "وصف (Description):",
+                                label = stringResource(R.string.description_label),
                                 value = rootEntry.desc
                             )
                         }

@@ -98,4 +98,24 @@
     <!-- Google Drive API -->
     <string name="google_drive_client_id">YET to add</string>
     <string name="enabled">Enabled</string>
+
+    <!-- Word Types -->
+    <string name="word_type_ism">اسم</string>
+    <string name="word_type_feel">فعل</string>
+    <string name="word_type_harf">حرف</string>
+    <string name="unknown_word_type">Unknown word type: %s</string>
+    <string name="all">All</string>
+    <string name="type_label">Type: %s</string>
+    <string name="type_label_arabic">نوع: %s</string>
+    <string name="search_dictionary">Search dictionary</string>
+    <string name="search">Search</string>
+    <string name="filter_by_type">Filter by type:</string>
+
+    <!-- KalimaDetailsScreen -->
+    <string name="word_type_label">نوع الكلمة (Word Type):</string>
+    <string name="meaning_label">معنى (Meaning):</string>
+    <string name="description_label">وصف (Description):</string>
+    <string name="root_word_title">الجذر (Root Word)</string>
+    <string name="related_words">الكلمات المتعلقة (Related Words)</string>
+    <string name="id_label">ID: %d</string>
 </resources>
