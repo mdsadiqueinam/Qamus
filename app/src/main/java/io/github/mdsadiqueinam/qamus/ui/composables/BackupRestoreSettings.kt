@@ -38,7 +38,7 @@ fun BackupRestoreContent(
     onUseMobileDataChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isSignedIn = remember(user) { user != null }
+    val isSignedIn by remember(user) { derivedStateOf { user != null } }
 
     Column(modifier = modifier.fillMaxWidth()) {
         if (isSignedIn) {
@@ -78,19 +78,26 @@ fun BackupRestoreContent(
             )
         } else {
             // Show signed-out UI
-            Text(
-                text = stringResource(R.string.sign_in_required),
-                style = MaterialTheme.typography.bodyMedium
-            )
+            SignInPrompt(signIn = signIn)
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(8.dp))
+@Composable
+private fun SignInPrompt(signIn: () -> Unit) {
+    Column {
+        Text(
+            text = stringResource(R.string.sign_in_required),
+            style = MaterialTheme.typography.bodyMedium
+        )
 
-            Button(
-                onClick = signIn,
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text(stringResource(R.string.sign_in))
-            }
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = signIn,
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text(stringResource(R.string.sign_in))
         }
     }
 }
@@ -101,9 +108,11 @@ fun LastBackupInfo(
     lastBackupVersion: Long
 ) {
     if (lastBackupAt != null) {
-        val localDateTime = lastBackupAt.toLocalDateTime(TimeZone.currentSystemDefault())
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        val formattedDate = formatter.format(localDateTime.toJavaLocalDateTime())
+        val formatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm") }
+        val formattedDate = remember(lastBackupAt) {
+            val localDateTime = lastBackupAt.toLocalDateTime(TimeZone.currentSystemDefault())
+            formatter.format(localDateTime.toJavaLocalDateTime())
+        }
 
         Text(
             text = stringResource(R.string.last_backup, formattedDate, lastBackupVersion),
@@ -133,13 +142,20 @@ fun AccountSection(
         )
     }
 
+    val isClickable by remember(backupRestoreState) {
+        derivedStateOf { backupRestoreState !is BackupRestoreState.InProgress }
+    }
+
     Column(
-        modifier = Modifier.fillMaxWidth()
-            .clickable {
-                if (backupRestoreState !is BackupRestoreState.InProgress) {
-                    openEditAccountDialog = true
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (isClickable) {
+                    Modifier.clickable { openEditAccountDialog = true }
+                } else {
+                    Modifier
                 }
-            }
+            )
     ) {
         Text(
             text = stringResource(R.string.google_account),
@@ -193,13 +209,15 @@ fun TransferProgressSection(
     backupRestoreState: BackupRestoreState.InProgress,
     onCancelClicked: () -> Unit
 ) {
+    val isBackup by remember(backupRestoreState) {
+        derivedStateOf { backupRestoreState.transferType == DataTransferState.TransferType.BACKUP }
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
-        val isBackup = backupRestoreState.transferType == DataTransferState.TransferType.BACKUP
-        val progressText = if (isBackup) {
-            stringResource(R.string.backup_in_progress, backupRestoreState.progress)
-        } else {
-            stringResource(R.string.restore_in_progress, backupRestoreState.progress)
-        }
+        val progressText = stringResource(
+            if (isBackup) R.string.backup_in_progress else R.string.restore_in_progress,
+            backupRestoreState.progress
+        )
 
         Text(
             text = progressText,
@@ -256,7 +274,6 @@ fun MobileDataSection(
                 text = stringResource(R.string.enabled),
                 style = MaterialTheme.typography.bodyMedium
             )
-
             Switch(
                 checked = useMobileData,
                 onCheckedChange = onUseMobileDataChanged
