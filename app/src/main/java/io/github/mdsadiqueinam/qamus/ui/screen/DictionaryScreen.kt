@@ -52,6 +52,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
+import io.github.mdsadiqueinam.qamus.extension.ShowSnackbar
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.KalimaatViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,11 +71,8 @@ fun DictionaryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Show error message in snackbar
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
-        }
+    snackbarHostState.ShowSnackbar(errorMessage) {
+        viewModel.clearError()
     }
 
     Scaffold(

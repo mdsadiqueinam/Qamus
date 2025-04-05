@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.github.mdsadiqueinam.qamus.extension.ShowSnackbar
 import io.github.mdsadiqueinam.qamus.ui.viewmodel.DashboardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,11 +55,8 @@ fun DashboardScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Show error message in snackbar
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
-        }
+    snackbarHostState.ShowSnackbar(errorMessage) {
+        viewModel.clearError()
     }
 
     Scaffold(

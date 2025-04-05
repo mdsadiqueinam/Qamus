@@ -3,6 +3,8 @@ package io.github.mdsadiqueinam.qamus.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
+import io.github.mdsadiqueinam.qamus.extension.update
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,14 +32,14 @@ class DashboardViewModel @Inject constructor(
     val uiState: StateFlow<DashboardUIState> = _uiState.asStateFlow()
 
     // State for error messages
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    private val _errorMessage = MutableStateFlow<ErrorMessage>(ErrorMessage.None)
+    val errorMessage: StateFlow<ErrorMessage> = _errorMessage.asStateFlow()
 
     /**
      * Clear error message.
      */
     fun clearError() {
-        _errorMessage.value = null
+        _errorMessage.value = ErrorMessage.None
     }
 
     /**

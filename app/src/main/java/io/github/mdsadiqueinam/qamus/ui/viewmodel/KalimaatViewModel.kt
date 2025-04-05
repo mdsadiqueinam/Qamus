@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
+import io.github.mdsadiqueinam.qamus.extension.update
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -48,28 +50,28 @@ class KalimaatViewModel @Inject constructor(
     val allEntriesList: Flow<List<Kalima>> = repository.getAllEntriesAsList()
 
     // State for error messages
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    private val _errorMessage = MutableStateFlow<ErrorMessage>(ErrorMessage.None)
+    val errorMessage: StateFlow<ErrorMessage> = _errorMessage.asStateFlow()
 
     /**
      * Search for dictionary entries with pagination.
      */
     fun searchEntries(query: String) {
-        _uiState.value = _uiState.value.copy(searchQuery = query)
+        _uiState.update { it.copy(searchQuery = query) }
     }
 
     /**
      * Filter entries by word type with pagination.
      */
     fun filterByType(type: WordType?) {
-        _uiState.value = _uiState.value.copy(selectedType = type)
+        _uiState.update { it.copy(selectedType = type) }
     }
 
     /**
      * Clear error message.
      */
     fun clearError() {
-        _errorMessage.value = null
+        _errorMessage.value = ErrorMessage.None
     }
 
     /**

@@ -14,6 +14,8 @@ import io.github.mdsadiqueinam.qamus.data.model.Settings
 import io.github.mdsadiqueinam.qamus.data.repository.BackupRestoreRepository
 import io.github.mdsadiqueinam.qamus.data.repository.DataTransferState
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
+import io.github.mdsadiqueinam.qamus.extension.launchWithErrorHandling
+import io.github.mdsadiqueinam.qamus.extension.update
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,18 +85,18 @@ class SettingsViewModel @Inject constructor(
      */
     private fun loadSettings() {
         viewModelScope.launch(Dispatchers.IO) {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.update { it.copy(isLoading = true) }
 
             launch {
                 settingsRepository.settings.collectLatest { settings ->
-                    _uiState.value = _uiState.value.copy(settings = settings, isLoading = false)
+                    _uiState.update { it.copy(settings = settings, isLoading = false) }
                 }
             }
 
             launch {
                 // Check if the user is signed in
                 backupRestoreRepository.observeUserState().collectLatest { user ->
-                    _uiState.value = _uiState.value.copy(isSignedIn = user != null, user = user)
+                    _uiState.update { it.copy(isSignedIn = user != null, user = user) }
                 }
             }
         }
@@ -107,12 +109,10 @@ class SettingsViewModel @Inject constructor(
         operation: suspend () -> Unit,
         errorResourceId: Int
     ) {
-        viewModelScope.launch {
-            try {
-                operation()
-            } catch (e: Exception) {
-                _errorMessage.value = ErrorMessage.Resource(errorResourceId, e.message ?: "")
-            }
+        launchWithErrorHandling(
+            errorHandler = { e -> _errorMessage.value = ErrorMessage.Resource(errorResourceId, e.message ?: "") }
+        ) {
+            operation()
         }
     }
 
@@ -161,14 +161,14 @@ class SettingsViewModel @Inject constructor(
      * Show the reset confirmation dialog.
      */
     fun showResetConfirmation() {
-        _uiState.value = _uiState.value.copy(showResetConfirmation = true)
+        _uiState.update { it.copy(showResetConfirmation = true) }
     }
 
     /**
      * Hide the reset confirmation dialog.
      */
     fun hideResetConfirmation() {
-        _uiState.value = _uiState.value.copy(showResetConfirmation = false)
+        _uiState.update { it.copy(showResetConfirmation = false) }
     }
 
     /**
@@ -227,9 +227,9 @@ class SettingsViewModel @Inject constructor(
     ) {
         when (state) {
             is DataTransferState.Success -> {
-                _uiState.value = _uiState.value.copy(
-                    backupRestoreState = BackupRestoreState.Success
-                )
+                _uiState.update { 
+                    it.copy(backupRestoreState = BackupRestoreState.Success)
+                }
 
                 // Update last backup info if this was a backup operation
                 if (isBackup) {
@@ -249,20 +249,22 @@ class SettingsViewModel @Inject constructor(
                     )
                 } else {
                     _errorMessage.value = ErrorMessage.Resource(R.string.error_generic, state.message)
-                    _uiState.value = _uiState.value.copy(
-                        backupRestoreState = BackupRestoreState.Idle
-                    )
+                    _uiState.update {
+                        it.copy(backupRestoreState = BackupRestoreState.Idle)
+                    }
                 }
             }
 
             is DataTransferState.Uploading -> {
-                _uiState.value = _uiState.value.copy(
-                    backupRestoreState = BackupRestoreState.InProgress(
-                        progress = state.progress,
-                        transferType = state.type,
-                        bytesTransferred = state.bytes
+                _uiState.update {
+                    it.copy(
+                        backupRestoreState = BackupRestoreState.InProgress(
+                            progress = state.progress,
+                            transferType = state.type,
+                            bytesTransferred = state.bytes
+                        )
                     )
-                )
+                }
             }
         }
     }
@@ -270,9 +272,9 @@ class SettingsViewModel @Inject constructor(
     fun cancelBackupRestore() {
         backupRestoreJob?.cancel()
         backupRestoreJob = null
-        _uiState.value = _uiState.value.copy(
-            backupRestoreState = BackupRestoreState.Idle
-        )
+        _uiState.update {
+            it.copy(backupRestoreState = BackupRestoreState.Idle)
+        }
     }
 
     /**

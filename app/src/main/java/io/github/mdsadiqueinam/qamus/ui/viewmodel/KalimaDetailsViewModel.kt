@@ -4,9 +4,15 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.mdsadiqueinam.qamus.R
+import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
+import io.github.mdsadiqueinam.qamus.extension.launchWithErrorHandling
+import io.github.mdsadiqueinam.qamus.extension.launchWithLoadingAndErrorHandling
+import io.github.mdsadiqueinam.qamus.extension.update
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,8 +44,8 @@ class KalimaDetailsViewModel @Inject constructor(
     val uiState: StateFlow<KalimaDetailsUIState> = _uiState.asStateFlow()
 
     // State for error messages
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    private val _errorMessage = MutableStateFlow<ErrorMessage>(ErrorMessage.None)
+    val errorMessage: StateFlow<ErrorMessage> = _errorMessage.asStateFlow()
 
     init {
         // Get entryId from SavedStateHandle
@@ -49,52 +55,63 @@ class KalimaDetailsViewModel @Inject constructor(
         if (entryId > 0) {
             loadEntry(entryId)
         } else {
-            _errorMessage.value = "Invalid entry ID"
-            _uiState.value = _uiState.value.copy(isLoading = false)
+            _errorMessage.value = ErrorMessage.Message("Invalid entry ID")
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
     /**
      * Load an entry by ID.
+     * Optimized to use parallel database calls with coroutines.
      */
     private fun loadEntry(id: Long) {
         if (id <= 0) return
 
-        _uiState.value = _uiState.value.copy(isLoading = true)
+        _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             try {
                 val entry = repository.getEntryById(id)
                 if (entry != null) {
-                    // Load root entry if available
-                    val rootEntry = entry.rootId?.let { rootId ->
-                        repository.getEntryById(rootId)
+                    // Use coroutines to parallelize database calls
+                    val rootEntryDeferred = async {
+                        entry.rootId?.let { rootId ->
+                            repository.getEntryById(rootId)
+                        }
                     }
 
-                    // Load related entries (entries with the same rootId)
-                    val relatedEntries = if (entry.rootId != null) {
-                        // Get entries with the same rootId as the current entry
-                        repository.getEntriesByRootId(entry.rootId)
-                            .filter { it.id != entry.id } // Exclude the current entry
-                    } else if (entry.id > 0) {
-                        // If this is a root entry, get entries that have this entry as their root
-                        repository.getEntriesByRootId(entry.id)
-                    } else {
-                        emptyList()
+                    val relatedEntriesDeferred = async {
+                        if (entry.rootId != null) {
+                            // Get entries with the same rootId as the current entry
+                            repository.getEntriesByRootId(entry.rootId)
+                                .filter { it.id != entry.id } // Exclude the current entry
+                        } else if (entry.id > 0) {
+                            // If this is a root entry, get entries that have this entry as their root
+                            repository.getEntriesByRootId(entry.id)
+                        } else {
+                            emptyList()
+                        }
                     }
 
-                    _uiState.value = KalimaDetailsUIState(
-                        entry = entry,
-                        isLoading = false,
-                        rootEntry = rootEntry,
-                        relatedEntries = relatedEntries
-                    )
+                    // Await results from parallel calls
+                    val rootEntry = rootEntryDeferred.await()
+                    val relatedEntries = relatedEntriesDeferred.await()
+
+                    // Update UI state once with all data
+                    _uiState.update {
+                        KalimaDetailsUIState(
+                            entry = entry,
+                            isLoading = false,
+                            rootEntry = rootEntry,
+                            relatedEntries = relatedEntries
+                        )
+                    }
                 } else {
-                    _errorMessage.value = "Entry not found"
-                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    _errorMessage.value = ErrorMessage.Resource(R.string.entry_not_found)
+                    _uiState.update { it.copy(isLoading = false) }
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Error loading entry: ${e.message}"
-                _uiState.value = _uiState.value.copy(isLoading = false)
+                _errorMessage.value = ErrorMessage.Resource(R.string.error_loading_entry, e.message ?: "")
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
@@ -103,7 +120,7 @@ class KalimaDetailsViewModel @Inject constructor(
      * Clear error message.
      */
     fun clearError() {
-        _errorMessage.value = null
+        _errorMessage.value = ErrorMessage.None
     }
 
     /**
@@ -112,13 +129,13 @@ class KalimaDetailsViewModel @Inject constructor(
     fun deleteEntry() {
         val entry = _uiState.value.entry ?: return
 
-        viewModelScope.launch {
-            try {
-                repository.deleteEntry(entry)
-                navigator.navigateBack()
-            } catch (e: Exception) {
-                _errorMessage.value = "Error deleting entry: ${e.message}"
+        launchWithErrorHandling(
+            errorHandler = { e -> 
+                _errorMessage.value = ErrorMessage.Resource(R.string.error_generic, "Error deleting entry: ${e.message ?: ""}")
             }
+        ) {
+            repository.deleteEntry(entry)
+            navigator.navigateBack()
         }
     }
 

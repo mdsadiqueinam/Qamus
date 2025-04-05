@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.mdsadiqueinam.qamus.R
+import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.util.checkAnswer
 
@@ -50,7 +51,7 @@ fun KalimaReminderScreen(
     kalima: Kalima?,
     onClose: () -> Unit,
     isLoading: Boolean = false,
-    error: String? = null
+    error: ErrorMessage = ErrorMessage.None
 ) {
     Scaffold(
         topBar = {
@@ -87,9 +88,14 @@ fun KalimaReminderScreen(
                             )
                         }
 
-                        error != null -> {
+                        error !is ErrorMessage.None -> {
+                            val errorText = when (error) {
+                                is ErrorMessage.Message -> error.message
+                                is ErrorMessage.Resource -> stringResource(error.resId, *error.formatArgs)
+                                is ErrorMessage.None -> ""
+                            }
                             Text(
-                                text = error,
+                                text = errorText,
                                 fontSize = 20.sp,
                                 color = Color.Red,
                                 textAlign = TextAlign.Center,
