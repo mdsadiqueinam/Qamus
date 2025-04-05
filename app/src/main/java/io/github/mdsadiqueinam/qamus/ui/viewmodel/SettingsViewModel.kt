@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
 import io.github.mdsadiqueinam.qamus.data.model.Settings
@@ -18,6 +17,7 @@ import io.github.mdsadiqueinam.qamus.extension.launchWithErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.update
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,6 +39,9 @@ data class SettingsUIState(
     val backupRestoreState: BackupRestoreState = BackupRestoreState.Idle,
 )
 
+/**
+ * Sealed class representing the backup/restore state
+ */
 sealed class BackupRestoreState {
     data object Idle : BackupRestoreState()
     data class InProgress(
@@ -53,6 +56,7 @@ sealed class BackupRestoreState {
 
 /**
  * ViewModel for the settings screen.
+ * Follows Single Responsibility Principle by focusing only on settings management.
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -73,7 +77,7 @@ class SettingsViewModel @Inject constructor(
     val errorMessage = _errorMessage.asStateFlow()
 
     // Job to keep track of backup/restore operations for cancellation
-    private var backupRestoreJob: kotlinx.coroutines.Job? = null
+    private var backupRestoreJob: Job? = null
 
     init {
         // Load settings when ViewModel is created
@@ -184,6 +188,9 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Sign in the user
+     */
     fun signIn(activity: Context) {
         performOperation(
             operation = { backupRestoreRepository.signIn(activity) },
@@ -191,20 +198,32 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Sign out the user
+     */
     fun signOut() {
         viewModelScope.launch {
             backupRestoreRepository.signOut()
         }
     }
 
+    /**
+     * Perform a backup operation
+     */
     fun performBackup(activity: Context) {
         startDataTransferOperation(activity, isBackup = true)
     }
 
+    /**
+     * Perform a restore operation
+     */
     fun performRestore(activity: Context) {
         startDataTransferOperation(activity, isBackup = false)
     }
 
+    /**
+     * Start a data transfer operation (backup or restore)
+     */
     private fun startDataTransferOperation(activity: Context, isBackup: Boolean) {
         // Cancel any existing job
         cancelBackupRestore()
@@ -220,6 +239,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Handle data transfer state updates
+     */
     private fun handleDataTransferState(
         state: DataTransferState,
         activity: Context,
@@ -248,15 +270,14 @@ class SettingsViewModel @Inject constructor(
                         REQUEST_AUTHORIZATION
                     )
                 } else {
-                    _errorMessage.value = ErrorMessage.Resource(R.string.error_generic, state.message)
-                    _uiState.update {
-                        it.copy(backupRestoreState = BackupRestoreState.Idle)
+                    _uiState.update { 
+                        it.copy(backupRestoreState = BackupRestoreState.Error(state.message))
                     }
                 }
             }
 
             is DataTransferState.Uploading -> {
-                _uiState.update {
+                _uiState.update { 
                     it.copy(
                         backupRestoreState = BackupRestoreState.InProgress(
                             progress = state.progress,
@@ -269,12 +290,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Cancel the current backup/restore operation
+     */
     fun cancelBackupRestore() {
         backupRestoreJob?.cancel()
         backupRestoreJob = null
-        _uiState.update {
-            it.copy(backupRestoreState = BackupRestoreState.Idle)
-        }
+        _uiState.update { it.copy(backupRestoreState = BackupRestoreState.Idle) }
     }
 
     /**

@@ -1,6 +1,5 @@
 package io.github.mdsadiqueinam.qamus.data.repository
 
-
 import android.accounts.Account
 import android.content.Context
 import android.util.Log
@@ -22,6 +21,8 @@ import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.database.QamusDatabase
+import io.github.mdsadiqueinam.qamus.data.repository.auth.AuthManager
+import io.github.mdsadiqueinam.qamus.data.repository.drive.DriveManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -36,11 +37,15 @@ import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
+/**
+ * Repository responsible for backup and restore operations.
+ * Follows Single Responsibility Principle by delegating authentication and drive operations.
+ */
 @Singleton
 class BackupRestoreRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val firebaseAuth: FirebaseAuth,
+    private val authManager: AuthManager,
+    private val driveManager: DriveManager,
     private val database: QamusDatabase,
 ) {
 
@@ -63,63 +68,91 @@ class BackupRestoreRepository @Inject constructor(
     // Create the Credential Manager request
     val request = GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build()
 
-    fun observeUserState(): Flow<FirebaseUser?> {
-        return callbackFlow {
-            val authListener = FirebaseAuth.AuthStateListener {
-                val currentUser = it.currentUser
-                trySend(currentUser)
-            }
-            firebaseAuth.addAuthStateListener(authListener)
-            awaitClose {
-                firebaseAuth.removeAuthStateListener(authListener)
-            }
-        }
-    }
+    /**
+     * Observe the current user state
+     */
+    fun observeUserState(): Flow<FirebaseUser?> = authManager.observeUserState()
 
-    suspend fun signIn(activity: Context) {
+    /**
+     * Sign in the user
+     */
+    suspend fun signIn(activity: Context) = authManager.signIn(activity)
+
+    /**
+     * Sign out the user
+     */
+    suspend fun signOut() = authManager.signOut()
+
+    /**
+     * Backup the database to Google Drive
+     */
+    fun backupDatabase(): Flow<DataTransferState> = callbackFlow {
         try {
-            // Launch Credential Manager UI
-            val result = credentialManager.getCredential(
-                context = activity, request = request
+            // Get the database file
+            val databaseFile = context.getDatabasePath(DATABASE_NAME)
+            if (!databaseFile.exists()) {
+                throw IOException("Database file does not exist")
+            }
+
+            // Perform the backup operation
+            driveManager.backupFile(
+                filePath = databaseFile.path,
+                fileName = "qamus_backup.db",
+                onProgress = { progress, bytesTransferred ->
+                    trySend(
+                        DataTransferState.Uploading(
+                            progress, bytesTransferred, DataTransferState.TransferType.BACKUP
+                        )
+                    )
+                }
             )
 
-            // Extract credential from the result returned by Credential Manager
-            handleSignIn(result.credential)
+            trySend(DataTransferState.Success)
         } catch (e: Exception) {
-            // Log the exception with detailed information
-            Log.w(TAG, "Couldn't retrieve user's credentials: ${e.localizedMessage}")
+            Log.w(TAG, "Error backing up database", e)
+            trySend(DataTransferState.Error(e.message ?: "Unknown error occurred on backup", DataTransferState.TransferType.BACKUP, e))
         }
-    }
-
-    private fun handleSignIn(credential: Credential) {
-        // Check if credential is of type Google ID
-        if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-            // Create Google ID Token
-            val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-
-            // Sign in to Firebase with using the token
-            firebaseAuthWithGoogle(googleIdTokenCredential.idToken)
-        } else {
-            Log.w(TAG, "Credential is not of type Google ID!")
+        awaitClose {
+            Log.d(TAG, "Closing backup flow")
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
+    /**
+     * Restore the database from Google Drive
+     */
+    fun restoreDatabase(): Flow<DataTransferState> = callbackFlow {
+        try {
+            // Get the database file path
+            val databaseFile = context.getDatabasePath(DATABASE_NAME)
 
-    private fun firebaseAuthWithGoogle(idToken: String) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        firebaseAuth.signInWithCredential(credential).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                // Sign in success, update UI with the signed-in user's information
-                Log.d(TAG, "signInWithCredential:success")
-            } else {
-                // If sign in fails, display a message to the user
-                Log.w(TAG, "signInWithCredential:failure", task.exception)
-            }
+            // Close the database connection
+            database.close()
+
+            // Perform the restore operation
+            driveManager.restoreFile(
+                fileName = "qamus_backup.db",
+                outputPath = databaseFile.path,
+                onProgress = { progress, bytesTransferred ->
+                    trySend(
+                        DataTransferState.Uploading(
+                            progress, bytesTransferred, DataTransferState.TransferType.RESTORE
+                        )
+                    )
+                }
+            )
+
+            trySend(DataTransferState.Success)
+        } catch (e: Exception) {
+            Log.w(TAG, "Error restoring database", e)
+            trySend(DataTransferState.Error(e.message ?: "Unknown error occurred on restore", DataTransferState.TransferType.RESTORE, e))
         }
-    }
+        awaitClose {
+            Log.d(TAG, "Closing restore flow")
+        }
+    }.flowOn(Dispatchers.IO)
 
     private fun getGoogleDrive(): Drive {
-        val drive = firebaseAuth.currentUser?.email?.let { email ->
+        val drive = authManager.currentUser?.email?.let { email ->
             val credential = GoogleAccountCredential.usingOAuth2(
                 context, listOf(DriveScopes.DRIVE_FILE)
             ).apply {
@@ -133,169 +166,7 @@ class BackupRestoreRepository @Inject constructor(
 
         return drive ?: throw IllegalStateException("Not signed in")
     }
-
-    suspend fun signOut() {
-        try {
-            firebaseAuth.signOut()
-            val clearRequest = ClearCredentialStateRequest()
-            credentialManager.clearCredentialState(clearRequest)
-        } catch (e: Exception) {
-            Log.w(TAG, "Error signing out", e)
-        }
-    }
-
-    fun backupDatabase(): Flow<DataTransferState> = callbackFlow {
-        try {
-            val listener = MediaHttpUploaderProgressListener {
-                val progressPercentage = (it.progress * 100).toInt()
-                Log.d(TAG, "Upload progress: $progressPercentage%")
-                trySend(
-                    DataTransferState.Uploading(
-                        progressPercentage, it.numBytesUploaded, DataTransferState.TransferType.BACKUP
-                    )
-                )
-            }
-
-            // Create backup folder if it doesn't exist
-            val folderId = getOrCreateBackupFolder()
-
-            // Get the database file
-            val databaseFile = context.getDatabasePath(DATABASE_NAME)
-            if (!databaseFile.exists()) {
-                throw IOException("Database file does not exist")
-            }
-
-            val existingBackups = listBackupsInternal()
-
-            // Create backup file metadata
-            val timestamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US).format(Date())
-            val backupFileName = "qamus_backup_$timestamp.db"
-
-            val fileMetadata =
-                File().setName(backupFileName).setParents(listOf(folderId)).setMimeType("application/octet-stream")
-
-            // Upload the file and emit progress
-            val file = java.io.File(databaseFile.path)
-            val mediaContent = InputStreamContent(
-                "application/octet-stream", BufferedInputStream(
-                    FileInputStream(file)
-                )
-            )
-            mediaContent.setLength(file.length())
-
-            val uploadedFile =
-                driveService.files().create(fileMetadata, mediaContent).setFields("id, name, createdTime, size")
-                    .apply {
-                        mediaHttpUploader.setProgressListener(listener)
-                    }.execute()
-
-            Log.d(TAG, "Backup successful: ${uploadedFile.id}")
-
-            // delete existing backup after new backup
-            if (existingBackups != null && existingBackups.isNotEmpty()) {
-                existingBackups.forEach { backup ->
-                    Log.d(TAG, "Deleting previous backup: ${backup.id}")
-                    driveService.files().delete(backup.id).execute()
-                }
-            }
-
-            trySend(DataTransferState.Success)
-        } catch (e: Exception) {
-            Log.w(TAG, "Error backing up database", e)
-            trySend(DataTransferState.Error(e.message ?: "Unknown error occurred on backup", DataTransferState.TransferType.BACKUP, e))
-        }
-        awaitClose {
-            // Clean up resources if needed
-            Log.d(TAG, "Closing backup flow")
-        }
-    }.flowOn(Dispatchers.IO)
-
-    fun restoreDatabase(): Flow<DataTransferState> = callbackFlow {
-        try {
-            val listener = MediaHttpDownloaderProgressListener {
-                val progressPercentage = (it.progress * 100).toInt()
-                Log.d(TAG, "Download progress: $progressPercentage%")
-                trySend(
-                    DataTransferState.Uploading(
-                        progressPercentage, it.numBytesDownloaded, DataTransferState.TransferType.RESTORE,
-                    )
-                )
-            }
-
-            // Find the latest backup
-            val backups = listBackupsInternal()
-            if (backups == null || backups.isEmpty()) {
-                throw IOException("Failed to list backups")
-            }
-
-            // Sort backups by creation time (newest first)
-            val latestBackup = backups.maxByOrNull { it.createdTime }
-
-            if (latestBackup == null) {
-                throw IOException("No valid backup found")
-            }
-
-            // Get the database file path
-            val databaseFile = context.getDatabasePath(DATABASE_NAME)
-
-            // Close the database connection
-            database.close()
-
-            // Download the backup file
-            val outputStream = FileOutputStream(databaseFile)
-            driveService.files().get(latestBackup.id).apply {
-                mediaHttpDownloader.setProgressListener(listener)
-            }.executeMediaAndDownloadTo(outputStream)
-            outputStream.close()
-
-            Log.d(TAG, "Restore successful from backup: ${latestBackup.id}")
-            trySend(DataTransferState.Success)
-        } catch (e: Exception) {
-            Log.w(TAG, "Error restoring database", e)
-            trySend(DataTransferState.Error(e.message ?: "Unknown error occurred on restore", DataTransferState.TransferType.RESTORE, e))
-        }
-        awaitClose {
-            // Clean up resources if needed
-            Log.d(TAG, "Closing restore flow")
-        }
-    }.flowOn(Dispatchers.IO)
-
-    private fun listBackupsInternal(): List<BackupMetadata>? {
-        val folderId = getOrCreateBackupFolder()
-
-        val result = driveService.files().list().setQ("'$folderId' in parents and mimeType='application/octet-stream'")
-            .setFields("files(id, name, createdTime, size)").execute()
-
-        return result?.let {
-            it.files.map { file ->
-                BackupMetadata(
-                    id = file.id, name = file.name, createdTime = file.createdTime.toStringRfc3339(), size = file.size
-                )
-            }
-        }
-    }
-
-
-    private fun getOrCreateBackupFolder(): String? {
-        // Check if backup folder already exists
-        val folderQuery = driveService.files().list()
-            .setQ("mimeType='application/vnd.google-apps.folder' and name='$BACKUP_FOLDER_NAME'").setSpaces("drive")
-            .setFields("files(id)").execute()
-
-        // If folder exists, return its ID
-        if (folderQuery.files.isNotEmpty()) {
-            return folderQuery.files[0].id
-        }
-
-        // Create folder if it doesn't exist
-        val folderMetadata = File().setName(BACKUP_FOLDER_NAME).setMimeType("application/vnd.google-apps.folder")
-
-        val folder = driveService.files().create(folderMetadata).setFields("id").execute()
-
-        return folder.id
-    }
 }
-
 
 /**
  * Data class representing metadata for a backup file.

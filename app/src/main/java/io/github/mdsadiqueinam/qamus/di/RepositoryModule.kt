@@ -13,4 +13,5 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+    // Adding singleton annotation to the class will do work no need to add it to the function
 }

@@ -19,25 +19,5 @@ sealed class ErrorMessage {
     /**
      * Represents an error with a resource ID and format arguments.
      */
-    data class Resource(@StringRes val resId: Int, val formatArgs: Array<out Any> = emptyArray()) : ErrorMessage() {
-        constructor(resId: Int, vararg args: Any) : this(resId, args)
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as Resource
-
-            if (resId != other.resId) return false
-            if (!formatArgs.contentEquals(other.formatArgs)) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = resId
-            result = 31 * result + formatArgs.contentHashCode()
-            return result
-        }
-    }
+    class Resource(@StringRes val resId: Int, vararg val formatArgs: Any) : ErrorMessage()
 }
