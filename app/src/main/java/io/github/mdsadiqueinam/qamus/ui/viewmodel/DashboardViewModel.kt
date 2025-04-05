@@ -14,6 +14,8 @@ import javax.inject.Inject
 
 /**
  * Data class representing the UI state for the dashboard screen.
+ * 
+ * @property isLoading Whether data is currently being loaded
  */
 data class DashboardUIState(
     val isLoading: Boolean = false
@@ -21,11 +23,16 @@ data class DashboardUIState(
 
 /**
  * ViewModel for the dashboard screen.
+ * Follows Single Responsibility Principle by focusing only on dashboard navigation and state management.
  */
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val navigator: QamusNavigator
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "DashboardViewModel"
+    }
 
     // UI state for the dashboard
     private val _uiState = MutableStateFlow(DashboardUIState())
@@ -43,7 +50,8 @@ class DashboardViewModel @Inject constructor(
     }
 
     /**
-     * Navigate to dictionary screen
+     * Navigate to dictionary screen.
+     * Handles navigation to the dictionary feature.
      */
     fun navigateToDictionary() {
         viewModelScope.launch {
@@ -52,7 +60,8 @@ class DashboardViewModel @Inject constructor(
     }
 
     /**
-     * Navigate to add entry screen
+     * Navigate to add entry screen.
+     * Handles navigation to the add entry feature.
      */
     fun navigateToAddEntry() {
         viewModelScope.launch {
@@ -61,7 +70,8 @@ class DashboardViewModel @Inject constructor(
     }
 
     /**
-     * Navigate to settings screen
+     * Navigate to settings screen.
+     * Handles navigation to the settings feature.
      */
     fun navigateToSettings() {
         viewModelScope.launch {

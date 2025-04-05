@@ -12,20 +12,25 @@ import javax.inject.Singleton
 
 /**
  * Repository for accessing dictionary data.
+ * Follows Single Responsibility Principle by focusing only on dictionary data operations.
  */
 @Singleton
 class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDao) {
 
-    // Default page size for pagination
-    private val defaultPageSize = 20
+    companion object {
+        // Default page size for pagination
+        private const val DEFAULT_PAGE_SIZE = 20
+    }
 
     /**
      * Get all dictionary entries with pagination.
+     * 
+     * @return A Flow of PagingData containing dictionary entries
      */
     fun getEntries(): Flow<PagingData<Kalima>> {
         return Pager(
             config = PagingConfig(
-                pageSize = defaultPageSize,
+                pageSize = DEFAULT_PAGE_SIZE,
                 enablePlaceholders = true
             ),
             pagingSourceFactory = { kalimaatDao.getEntries() }
@@ -34,6 +39,9 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Get a specific dictionary entry by ID.
+     * 
+     * @param id The ID of the entry to retrieve
+     * @return The entry with the specified ID, or null if not found
      */
     suspend fun getEntryById(id: Long): Kalima? {
         return kalimaatDao.getEntryById(id)
@@ -41,18 +49,25 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Get multiple dictionary entries by IDs.
+     * 
+     * @param ids List of entry IDs to retrieve
+     * @return List of entries with the specified IDs
      */
     suspend fun getEntriesByIds(ids: List<Long>): List<Kalima> {
         return kalimaatDao.getEntriesByIds(ids)
     }
 
     /**
-     * Search for dictionary entries by huroof or type
+     * Search for dictionary entries by huroof or type with pagination.
+     * 
+     * @param searchQuery The search query to filter entries
+     * @param type Optional word type to filter entries
+     * @return A Flow of PagingData containing filtered dictionary entries
      */
     fun searchEntries(searchQuery: String, type: WordType?): Flow<PagingData<Kalima>> {
         return Pager(
             config = PagingConfig(
-                pageSize = defaultPageSize,
+                pageSize = DEFAULT_PAGE_SIZE,
                 enablePlaceholders = true
             ),
             pagingSourceFactory = { kalimaatDao.searchEntries(searchQuery, type) }
@@ -61,6 +76,9 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Insert a new dictionary entry.
+     * 
+     * @param entry The entry to insert
+     * @return The ID of the newly inserted entry
      */
     suspend fun insertEntry(entry: Kalima): Long {
         return kalimaatDao.insertEntry(entry)
@@ -68,6 +86,9 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Insert multiple dictionary entries.
+     * 
+     * @param entries List of entries to insert
+     * @return List of IDs for the newly inserted entries
      */
     suspend fun insertEntries(entries: List<Kalima>): List<Long> {
         return kalimaatDao.insertEntries(entries)
@@ -75,6 +96,8 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Update an existing dictionary entry.
+     * 
+     * @param entry The entry to update
      */
     suspend fun updateEntry(entry: Kalima) {
         kalimaatDao.updateEntry(entry)
@@ -82,6 +105,8 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Delete a dictionary entry.
+     * 
+     * @param entry The entry to delete
      */
     suspend fun deleteEntry(entry: Kalima) {
         kalimaatDao.deleteEntry(entry)
@@ -89,6 +114,8 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Delete a dictionary entry by ID.
+     * 
+     * @param id The ID of the entry to delete
      */
     suspend fun deleteEntryById(id: Long) {
         kalimaatDao.deleteEntryById(id)
@@ -96,6 +123,8 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Get all dictionary entries as a Flow of List.
+     * 
+     * @return A Flow of List containing all dictionary entries
      */
     fun getAllEntriesAsList(): Flow<List<Kalima>> {
         return kalimaatDao.getAllEntriesAsList()
@@ -103,6 +132,9 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Get entries by rootId.
+     * 
+     * @param rootId The root ID to filter entries
+     * @return List of entries with the specified root ID
      */
     suspend fun getEntriesByRootId(rootId: Long): List<Kalima> {
         return kalimaatDao.getEntriesByRootId(rootId)
@@ -110,6 +142,8 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Get a random entry from the kalimaat table.
+     * 
+     * @return A random entry, or null if the table is empty
      */
     suspend fun getRandomEntry(): Kalima? {
         return kalimaatDao.getRandomEntry()

@@ -16,23 +16,34 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
+ * Data class representing the UI state for the reminder screen.
+ * 
+ * @property kalima The current Kalima being displayed
+ * @property isLoading Whether data is currently being loaded
+ * @property error The current error message, if any
+ */
+data class ReminderUIState(
+    val kalima: Kalima? = null,
+    val isLoading: Boolean = true,
+    val error: ErrorMessage = ErrorMessage.None
+)
+
+/**
  * ViewModel for the Kalima reminder screen.
- * Responsible for retrieving and managing Kalima data for display.
+ * Follows Single Responsibility Principle by focusing only on reminder functionality.
  */
 @HiltViewModel
 class ReminderViewModel @Inject constructor(
     private val kalimaatRepository: KalimaatRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "ReminderViewModel"
+    }
+
     // UI state for the reminder screen
-    private val _kalima = MutableStateFlow<Kalima?>(null)
-    val kalima: StateFlow<Kalima?> = _kalima.asStateFlow()
-
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _error = MutableStateFlow<ErrorMessage>(ErrorMessage.None)
-    val error: StateFlow<ErrorMessage> = _error.asStateFlow()
+    private val _uiState = MutableStateFlow(ReminderUIState())
+    val uiState: StateFlow<ReminderUIState> = _uiState.asStateFlow()
 
     init {
         loadRandomKalima()
@@ -43,18 +54,41 @@ class ReminderViewModel @Inject constructor(
      */
     fun loadRandomKalima() {
         launchWithLoadingAndErrorHandling(
-            loadingState = _isLoading,
-            updateLoading = { state, isLoading -> isLoading },
-            errorHandler = { e -> _error.value = ErrorMessage.Message("Error loading Kalima: ${e.message ?: ""}") }
+            loadingState = _uiState,
+            updateLoading = { state, isLoading -> state.copy(isLoading = isLoading) },
+            errorHandler = { e -> 
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Message("Error loading Kalima: ${e.message ?: ""}"),
+                        isLoading = false
+                    )
+                }
+            }
         ) {
-            _error.value = ErrorMessage.None
-
             val randomKalima = kalimaatRepository.getRandomEntry()
             if (randomKalima != null) {
-                _kalima.update { randomKalima }
+                _uiState.update { 
+                    it.copy(
+                        kalima = randomKalima,
+                        isLoading = false,
+                        error = ErrorMessage.None
+                    )
+                }
             } else {
-                _error.value = ErrorMessage.Message("No Kalima entries found")
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Message("No Kalima entries found"),
+                        isLoading = false
+                    )
+                }
             }
         }
+    }
+
+    /**
+     * Clear error message.
+     */
+    fun clearError() {
+        _uiState.update { it.copy(error = ErrorMessage.None) }
     }
 }

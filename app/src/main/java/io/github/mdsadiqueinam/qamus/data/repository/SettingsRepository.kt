@@ -25,11 +25,16 @@ private val Context.settingsDataStore: DataStore<Preferences> by preferencesData
 
 /**
  * Repository for accessing and modifying application settings.
+ * Follows Single Responsibility Principle by focusing only on settings management.
  */
 @Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
+    companion object {
+        private const val TAG = "SettingsRepository"
+    }
+
     // Define keys for preferences
     private object PreferencesKeys {
         val REMINDER_INTERVAL = intPreferencesKey("reminder_interval")
@@ -42,6 +47,8 @@ class SettingsRepository @Inject constructor(
 
     /**
      * Get the settings as a Flow.
+     * 
+     * @return A Flow of Settings containing the current application settings
      */
     val settings: Flow<Settings> = context.settingsDataStore.data.map { preferences ->
         Settings(
@@ -58,6 +65,8 @@ class SettingsRepository @Inject constructor(
 
     /**
      * Update the reminder interval.
+     * 
+     * @param interval The new reminder interval in minutes
      */
     suspend fun updateReminderInterval(interval: Int) {
         context.settingsDataStore.edit { preferences ->
@@ -67,6 +76,9 @@ class SettingsRepository @Inject constructor(
 
     /**
      * Update the last backup information.
+     * 
+     * @param timestamp The timestamp of the last backup
+     * @param version The version number of the last backup
      */
     suspend fun updateLastBackup(timestamp: Instant, version: Long) {
         context.settingsDataStore.edit { preferences ->
@@ -86,6 +98,8 @@ class SettingsRepository @Inject constructor(
 
     /**
      * Enable or disable the reminder.
+     * 
+     * @param isEnabled Whether the reminder should be enabled
      */
     suspend fun setReminderEnabled(isEnabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
@@ -95,6 +109,8 @@ class SettingsRepository @Inject constructor(
 
     /**
      * Update the automatic backup frequency.
+     * 
+     * @param frequency The new automatic backup frequency
      */
     suspend fun updateAutomaticBackupFrequency(frequency: Settings.AutomaticBackupFrequency) {
         context.settingsDataStore.edit { preferences ->
@@ -104,6 +120,8 @@ class SettingsRepository @Inject constructor(
 
     /**
      * Enable or disable using mobile data for automatic backup.
+     * 
+     * @param isEnabled Whether mobile data should be used for automatic backup
      */
     suspend fun setUseMobileData(isEnabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
@@ -115,6 +133,8 @@ class SettingsRepository @Inject constructor(
      * Check if automatic backup can be performed based on network connectivity.
      * Returns true if the device is connected to WiFi or if it's connected to mobile data
      * and useMobileData setting is enabled.
+     * 
+     * @return true if automatic backup can be performed, false otherwise
      */
     suspend fun canPerformAutomaticBackup(): Boolean {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

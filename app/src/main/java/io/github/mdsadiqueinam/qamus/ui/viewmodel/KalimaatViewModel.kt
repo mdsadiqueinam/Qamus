@@ -22,6 +22,9 @@ import javax.inject.Inject
 
 /**
  * Data class representing the UI state for the dictionary screen.
+ * 
+ * @property searchQuery The current search query
+ * @property selectedType The currently selected word type filter
  */
 data class KalimaatUIState(
     val searchQuery: String = "",
@@ -30,6 +33,7 @@ data class KalimaatUIState(
 
 /**
  * ViewModel for the dictionary screen.
+ * Follows Single Responsibility Principle by focusing only on dictionary data management.
  */
 @HiltViewModel
 class KalimaatViewModel @Inject constructor(
@@ -37,16 +41,26 @@ class KalimaatViewModel @Inject constructor(
     private val navigator: QamusNavigator
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "KalimaatViewModel"
+    }
+
     // Combined UI state for search and filter
     private val _uiState = MutableStateFlow(KalimaatUIState())
     val uiState: StateFlow<KalimaatUIState> = _uiState.asStateFlow()
 
+    /**
+     * Flow of dictionary entries with pagination.
+     * Automatically updates when search query or filter changes.
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
     val entries: Flow<PagingData<Kalima>> = _uiState.flatMapLatest { state ->
         repository.searchEntries(state.searchQuery, state.selectedType)
     }.cachedIn(viewModelScope)
 
-    // Flow of all entries as a list for dropdowns
+    /**
+     * Flow of all entries as a list for dropdowns.
+     */
     val allEntriesList: Flow<List<Kalima>> = repository.getAllEntriesAsList()
 
     // State for error messages
@@ -55,6 +69,8 @@ class KalimaatViewModel @Inject constructor(
 
     /**
      * Search for dictionary entries with pagination.
+     * 
+     * @param query The search query to filter entries
      */
     fun searchEntries(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
@@ -62,6 +78,8 @@ class KalimaatViewModel @Inject constructor(
 
     /**
      * Filter entries by word type with pagination.
+     * 
+     * @param type The word type to filter entries, or null to show all types
      */
     fun filterByType(type: WordType?) {
         _uiState.update { it.copy(selectedType = type) }
@@ -75,7 +93,7 @@ class KalimaatViewModel @Inject constructor(
     }
 
     /**
-     * Navigate to add entry screen
+     * Navigate to add entry screen.
      */
     fun navigateToAddEntry() {
         viewModelScope.launch {
@@ -84,7 +102,8 @@ class KalimaatViewModel @Inject constructor(
     }
 
     /**
-     * Navigate to kalima details screen
+     * Navigate to kalima details screen.
+     * 
      * @param entryId The ID of the entry to view
      */
     fun navigateToKalimaDetails(entryId: Long) {
@@ -94,7 +113,7 @@ class KalimaatViewModel @Inject constructor(
     }
 
     /**
-     * Navigate back to the previous screen
+     * Navigate back to the previous screen.
      */
     fun navigateBack() {
         viewModelScope.launch {

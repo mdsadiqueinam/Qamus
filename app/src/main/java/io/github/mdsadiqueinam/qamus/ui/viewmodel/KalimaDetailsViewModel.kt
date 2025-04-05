@@ -21,6 +21,11 @@ import javax.inject.Inject
 
 /**
  * Data class representing the UI state for the kalima details screen.
+ * 
+ * @property entry The current dictionary entry being displayed
+ * @property isLoading Whether data is currently being loaded
+ * @property rootEntry The root entry if the current entry is derived from a root
+ * @property relatedEntries List of entries related to the current entry
  */
 data class KalimaDetailsUIState(
     val entry: Kalima? = null,
@@ -31,6 +36,7 @@ data class KalimaDetailsUIState(
 
 /**
  * ViewModel for the kalima details screen.
+ * Follows Single Responsibility Principle by focusing only on entry details management.
  */
 @HiltViewModel
 class KalimaDetailsViewModel @Inject constructor(
@@ -38,6 +44,10 @@ class KalimaDetailsViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val navigator: QamusNavigator
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "KalimaDetailsViewModel"
+    }
 
     // UI state for the details screen
     private val _uiState = MutableStateFlow(KalimaDetailsUIState(isLoading = true))
@@ -63,6 +73,8 @@ class KalimaDetailsViewModel @Inject constructor(
     /**
      * Load an entry by ID.
      * Optimized to use parallel database calls with coroutines.
+     * 
+     * @param id The ID of the entry to load
      */
     private fun loadEntry(id: Long) {
         if (id <= 0) return
@@ -140,7 +152,7 @@ class KalimaDetailsViewModel @Inject constructor(
     }
 
     /**
-     * Navigate back to the previous screen
+     * Navigate back to the previous screen.
      */
     fun navigateBack() {
         viewModelScope.launch {
@@ -149,7 +161,8 @@ class KalimaDetailsViewModel @Inject constructor(
     }
 
     /**
-     * Navigate to edit entry screen
+     * Navigate to edit entry screen.
+     * 
      * @param entryId The ID of the entry to edit
      */
     fun navigateToEditEntry(entryId: Long) {
@@ -159,7 +172,8 @@ class KalimaDetailsViewModel @Inject constructor(
     }
 
     /**
-     * Navigate to kalima details screen
+     * Navigate to kalima details screen.
+     * 
      * @param entryId The ID of the entry to view
      */
     fun navigateToKalimaDetails(entryId: Long) {

@@ -22,6 +22,15 @@ import javax.inject.Inject
 
 /**
  * Data class representing the UI state for the add/edit entry screen.
+ * 
+ * @property id The ID of the entry (0 for new entries)
+ * @property huroof The Arabic text of the entry
+ * @property meaning The meaning of the entry
+ * @property desc Additional description of the entry
+ * @property type The word type of the entry
+ * @property rootId The ID of the root entry, if this is a derived form
+ * @property isLoading Whether data is currently being loaded
+ * @property isEditMode Whether the screen is in edit mode
  */
 data class AddEntryUIState(
     val id: Long = 0,
@@ -36,6 +45,7 @@ data class AddEntryUIState(
 
 /**
  * ViewModel for the add/edit entry screen.
+ * Follows Single Responsibility Principle by focusing only on entry creation and editing.
  */
 @HiltViewModel
 class AddEntryViewModel @Inject constructor(
@@ -43,6 +53,10 @@ class AddEntryViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val navigator: QamusNavigator,
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "AddEntryViewModel"
+    }
 
     // UI state for the form
     private val _uiState = MutableStateFlow(AddEntryUIState())
@@ -67,6 +81,8 @@ class AddEntryViewModel @Inject constructor(
 
     /**
      * Load an existing entry by ID.
+     * 
+     * @param id The ID of the entry to load
      */
     private fun loadEntry(id: Long) {
         if (id <= 0) return
@@ -96,29 +112,54 @@ class AddEntryViewModel @Inject constructor(
 
     /**
      * Update UI state when form fields change.
+     * 
+     * @param huroof The new huroof value
      */
     fun updateHuroof(huroof: String) {
         _uiState.update { it.copy(huroof = huroof) }
     }
 
+    /**
+     * Update UI state when form fields change.
+     * 
+     * @param meaning The new meaning value
+     */
     fun updateMeaning(meaning: String) {
         _uiState.update { it.copy(meaning = meaning) }
     }
 
+    /**
+     * Update UI state when form fields change.
+     * 
+     * @param desc The new description value
+     */
     fun updateDesc(desc: String) {
         _uiState.update { it.copy(desc = desc) }
     }
 
+    /**
+     * Update UI state when form fields change.
+     * 
+     * @param type The new word type value
+     */
     fun updateType(type: WordType) {
         _uiState.update { it.copy(type = type) }
     }
 
+    /**
+     * Update UI state when form fields change.
+     * 
+     * @param rootId The new root ID value
+     */
     fun updateRootId(rootId: Long?) {
         _uiState.update { it.copy(rootId = rootId) }
     }
 
     /**
      * Creates a Kalima object from the current UI state.
+     * 
+     * @param state The current UI state
+     * @return A Kalima object with the values from the UI state
      */
     private fun createKalimaFromState(state: AddEntryUIState): Kalima {
         return Kalima(
@@ -133,6 +174,7 @@ class AddEntryViewModel @Inject constructor(
 
     /**
      * Save the entry (add new or update existing).
+     * Validates the entry before saving.
      *
      * @return true if validation passed and save operation was attempted, false otherwise
      */
@@ -166,7 +208,7 @@ class AddEntryViewModel @Inject constructor(
     }
 
     /**
-     * Navigate back to the previous screen
+     * Navigate back to the previous screen.
      */
     fun navigateBack() {
         viewModelScope.launch {
