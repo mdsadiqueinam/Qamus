@@ -18,7 +18,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedTextField
+import io.github.mdsadiqueinam.qamus.ui.composables.common.DirectionalInputField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -99,7 +99,7 @@ fun AddEntryScreen(
                     )
                 } else {
                     // Arabic Word
-                    OutlinedTextField(
+                    DirectionalInputField(
                         value = uiState.huroof,
                         onValueChange = { viewModel.updateHuroof(it) },
                         label = { Text(stringResource(R.string.arabic_word)) },
@@ -110,7 +110,7 @@ fun AddEntryScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Meaning
-                    OutlinedTextField(
+                    DirectionalInputField(
                         value = uiState.meaning,
                         onValueChange = { viewModel.updateMeaning(it) },
                         label = { Text(stringResource(R.string.meaning)) },
@@ -121,7 +121,7 @@ fun AddEntryScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Description
-                    OutlinedTextField(
+                    DirectionalInputField(
                         value = uiState.desc,
                         onValueChange = { viewModel.updateDesc(it) },
                         label = { Text(stringResource(R.string.description)) },
@@ -182,7 +182,7 @@ fun RootIdDropdown(
         onExpandedChange = { expanded = it },
         modifier = modifier
     ) {
-        OutlinedTextField(
+        DirectionalInputField(
             value = selectedEntry?.huroof ?: "",
             onValueChange = {},
             readOnly = true,
@@ -237,7 +237,7 @@ fun WordTypeDropdown(
         onExpandedChange = { expanded = it },
         modifier = modifier
     ) {
-        OutlinedTextField(
+        DirectionalInputField(
             value = stringResource(WordType.getStringResourceId(selectedType)),
             onValueChange = {},
             readOnly = true,

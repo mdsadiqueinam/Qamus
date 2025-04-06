@@ -107,6 +107,7 @@ fun DirectionalInputField(
     minLines: Int = 1,
     shape: Shape = OutlinedTextFieldDefaults.shape,
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
+    readOnly: Boolean = false,
 ) {
 
     DirectionalInputFieldWrapper(value) { textDirection, applyDirectionChange, wrapperTrailingIcon ->
@@ -137,6 +138,7 @@ fun DirectionalInputField(
             minLines = minLines,
             shape = shape,
             colors = colors,
+            readOnly = readOnly,
         )
     }
 }

@@ -16,7 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import io.github.mdsadiqueinam.qamus.ui.composables.common.DirectionalInputField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -182,7 +182,7 @@ private fun KalimaContent(kalima: Kalima, onClose: () -> Unit) {
         )
     } else {
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-            OutlinedTextField(
+            DirectionalInputField(
                 value = answer,
                 onValueChange = { answer = it },
                 label = { Text(stringResource(R.string.meaning)) },

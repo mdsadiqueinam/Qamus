@@ -23,7 +23,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import io.github.mdsadiqueinam.qamus.ui.composables.common.DirectionalInputField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -226,7 +226,7 @@ fun SearchBar(
     modifier: Modifier = Modifier
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        OutlinedTextField(
+        DirectionalInputField(
             value = query,
             onValueChange = onQueryChange,
             placeholder = { Text(stringResource(R.string.search_dictionary)) },
