@@ -1,4 +1,4 @@
-package io.github.mdsadiqueinam.qamus.service
+package io.github.mdsadiqueinam.qamus.worker
 
 import android.util.Log
 import androidx.work.ExistingPeriodicWorkPolicy

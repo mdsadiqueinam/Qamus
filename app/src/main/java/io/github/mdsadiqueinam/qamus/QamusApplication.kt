@@ -4,7 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
-import io.github.mdsadiqueinam.qamus.service.QamusWorkerFactory
+import io.github.mdsadiqueinam.qamus.worker.QamusWorkerFactory
 import javax.inject.Inject
 
 /**

@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.mdsadiqueinam.qamus.service.AutomaticBackupScheduler
-import io.github.mdsadiqueinam.qamus.service.KalimaReminderScheduler
+import io.github.mdsadiqueinam.qamus.worker.AutomaticBackupScheduler
+import io.github.mdsadiqueinam.qamus.worker.KalimaReminderScheduler
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavHost
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
 import javax.inject.Inject

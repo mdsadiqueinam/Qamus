@@ -1,4 +1,4 @@
-package io.github.mdsadiqueinam.qamus.service
+package io.github.mdsadiqueinam.qamus.worker
 
 import android.content.Context
 import androidx.work.ListenableWorker

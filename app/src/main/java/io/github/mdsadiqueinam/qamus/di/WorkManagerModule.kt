@@ -8,7 +8,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import io.github.mdsadiqueinam.qamus.service.QamusWorkerFactory
+import io.github.mdsadiqueinam.qamus.worker.QamusWorkerFactory
 import javax.inject.Singleton
 
 /**
