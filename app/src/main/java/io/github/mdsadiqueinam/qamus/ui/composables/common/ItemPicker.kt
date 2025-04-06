@@ -1,5 +1,6 @@
 package io.github.mdsadiqueinam.qamus.ui.composables.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,10 +13,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -27,10 +30,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Internal composable for standard dialog action buttons (Dismiss, Ok).
@@ -65,9 +78,7 @@ internal fun DialogActionButtons(
  */
 @Composable
 internal fun PickerItem(
-    selected: Boolean,
-    onClick: () -> Unit,
-    itemContent: @Composable () -> Unit
+    selected: Boolean, onClick: () -> Unit, itemContent: @Composable () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -95,18 +106,26 @@ internal fun PickerDialogContent(
     searchSection: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
-    Column(Modifier.fillMaxWidth()) {
+    Box(Modifier.fillMaxWidth()) {
         searchSection?.invoke()
 
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .semantics { isTraversalGroup = true }
+            .wrapContentHeight()) {
             content()
+
+            Spacer(modifier = Modifier.padding(bottom = 40.dp))
         }
 
-        DialogActionButtons(
-            showOkButton = showOkButton,
-            onDismiss = onDismiss,
-            onOk = onOk
-        )
+        Box(
+            contentAlignment = Alignment.BottomEnd,
+            modifier = Modifier.align(Alignment.BottomEnd).fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHighest)
+        ) {
+            DialogActionButtons(
+                showOkButton = showOkButton, onDismiss = onDismiss, onOk = onOk
+            )
+        }
     }
 }
 
@@ -123,16 +142,12 @@ fun BaseItemPicker(
 ) {
     var showDialog by remember { mutableStateOf(true) }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled) { showDialog = true }
-            .padding(vertical = 8.dp, horizontal = 12.dp)
-    ) {
+    Column(modifier = modifier
+        .fillMaxWidth()
+        .clickable(enabled = enabled) { showDialog = true }
+        .padding(vertical = 8.dp, horizontal = 12.dp)) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 1
+            text = label, style = MaterialTheme.typography.titleMedium, maxLines = 1
         )
         Spacer(modifier = Modifier.height(4.dp))
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -180,18 +195,15 @@ fun <T> ItemPicker(
             onDismiss = dismissDialog,
         ) {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(items, key = { itemKey(it) }) { item ->
                     val isSelected = selectedItem == item
                     PickerItem(
-                        selected = isSelected,
-                        onClick = {
+                        selected = isSelected, onClick = {
                             onItemSelected(item)
                             dismissDialog()
-                        }
-                    ) {
+                        }) {
                         itemContent(item, isSelected)
                     }
                 }
@@ -232,21 +244,18 @@ fun <T : Any> MultipleItemPicker(
             },
         ) {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(items, key = { itemKey(it) }) { item ->
                     val isSelected = tempSelectedItems.contains(item)
                     PickerItem(
-                        selected = isSelected,
-                        onClick = {
+                        selected = isSelected, onClick = {
                             tempSelectedItems = if (isSelected) {
                                 tempSelectedItems - item
                             } else {
                                 tempSelectedItems + item
                             }
-                        }
-                    ) {
+                        }) {
                         itemContent(item, isSelected)
                     }
                 }
@@ -255,14 +264,84 @@ fun <T : Any> MultipleItemPicker(
     }
 }
 
+
+/**
+ * An item picker for selecting a single item from a paginated list.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T : Any> ItemPicker(
+    modifier: Modifier = Modifier,
+    label: String,
+    enabled: Boolean = true,
+    lazyPagingItems: LazyPagingItems<T>,
+    onItemSelected: (T) -> Unit,
+    selectedItem: T,
+    itemKey: (T) -> Any = { it.hashCode() },
+    onSearch: (String) -> Unit,
+    selectedItemContent: @Composable (T) -> Unit,
+    itemContent: @Composable (T) -> Unit,
+) {
+    BaseItemPicker(modifier = modifier, label = label, enabled = enabled, selectedItemContent = {
+        selectedItemContent(selectedItem)
+    }, content = { dismissDialog ->
+        PickerDialogContent(
+            showOkButton = false,
+            onDismiss = dismissDialog,
+            searchSection = {
+                SimpleSearchBar(onSearch = onSearch)
+            },
+        ) {
+            // Handle fullscreen loading/error states
+            PagingStateHandlingFullscreen(
+                loadState = lazyPagingItems.loadState,
+                itemCount = lazyPagingItems.itemCount,
+                onRetry = { lazyPagingItems.retry() })
+
+            // Determine if the list should be shown
+            val showList =
+                (lazyPagingItems.loadState.refresh !is LoadState.Loading && lazyPagingItems.loadState.refresh !is LoadState.Error) || lazyPagingItems.itemCount > 0
+
+            if (showList) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(
+                        count = lazyPagingItems.itemCount,
+                        key = lazyPagingItems.itemKey(itemKey)
+                    ) { index ->
+                        val item = lazyPagingItems[index]
+                        val isSelected = selectedItem == item
+
+                        if (item != null) {
+                            PickerItem(
+                                selected = isSelected, onClick = {
+                                    onItemSelected(item)
+                                    dismissDialog()
+                                }) {
+                                itemContent(item)
+                            }
+                        }
+                    }
+
+                    pagingStateHandlingFooter(
+                        loadState = lazyPagingItems.loadState,
+                        onRetry = { lazyPagingItems.retry() })
+                }
+            }
+        }
+    })
+}
+
+
 // Preview list item picker
 @Preview(showBackground = true)
 @Composable
 fun ListItemPickerPreview() {
     QamusTheme {
         Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center
+            modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center
         ) {
             ItemPicker(
                 label = "Select Item",
@@ -288,8 +367,7 @@ fun ListItemPickerPreview() {
 fun MultipleItemPickerPreview() {
     QamusTheme {
         Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center
+            modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center
         ) {
             MultipleItemPicker(
                 label = "Select Items",
@@ -303,6 +381,41 @@ fun MultipleItemPickerPreview() {
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (isSelected) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
+}
+
+
+// Preview Paging Item Picker
+@Preview(showBackground = true)
+@Composable
+fun PagingItemPickerPreview() {
+    QamusTheme {
+        Column(
+            modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center
+        ) {
+            val previewItems = List(500) { "Preview Item ${it + 1}" }
+            val previewData = PagingData.from(
+                previewItems, LoadStates(
+                    refresh = LoadState.NotLoading(false),
+                    append = LoadState.NotLoading(false),
+                    prepend = LoadState.NotLoading(false),
+                )
+            )
+            val lazyPagingItems: LazyPagingItems<String> =
+                MutableStateFlow(previewData).collectAsLazyPagingItems()
+
+            ItemPicker(
+                label = "Select Item",
+                lazyPagingItems = lazyPagingItems,
+                selectedItem = "Preview Item 2",
+                onItemSelected = {},
+                onSearch = {},
+                selectedItemContent = { Text(it) }) { item ->
+                Text(
+                    text = item, style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
