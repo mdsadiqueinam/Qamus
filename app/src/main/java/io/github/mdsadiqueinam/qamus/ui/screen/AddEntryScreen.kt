@@ -50,7 +50,6 @@ fun AddEntryScreen(
     viewModel: AddEntryViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val entries by viewModel.allEntriesList.collectAsState(initial = emptyList())
 
@@ -62,7 +61,7 @@ fun AddEntryScreen(
     }
 
     // Show error message in snackbar
-    snackbarHostState.ShowSnackbar(errorMessage)
+    snackbarHostState.ShowSnackbar(uiState.error)
 
     Scaffold(
         topBar = {
@@ -153,7 +152,7 @@ fun AddEntryScreen(
 
                     // Save Button
                     Button(
-                        onClick = { viewModel.saveEntryAndNavigateBack() },
+                        onClick = { viewModel.saveAndNavigateBack() },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
