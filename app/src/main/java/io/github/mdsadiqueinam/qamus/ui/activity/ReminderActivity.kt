@@ -58,15 +58,13 @@ class ReminderActivity : ComponentActivity() {
 
         setContent {
             QamusTheme {
-                val kalima by viewModel.kalima.collectAsState()
-                val isLoading by viewModel.isLoading.collectAsState()
-                val error by viewModel.error.collectAsState()
+                val uiState by viewModel.uiState.collectAsState()
 
                 KalimaReminderScreen(
-                    kalima = kalima,
+                    kalima = uiState.kalima,
                     onClose = { finish() },
-                    isLoading = isLoading,
-                    error = error
+                    isLoading = uiState.isLoading,
+                    error = uiState.error
                 )
             }
         }
