@@ -4,7 +4,7 @@ import android.icu.text.Bidi
 import androidx.compose.ui.text.style.TextDirection
 
 val String.isLtr get(): Boolean {
-    val bidi = Bidi(this, Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT)
+    val bidi = Bidi(this, Bidi.DIRECTION_DEFAULT_RIGHT_TO_LEFT)
     return bidi.baseIsLeftToRight()
 }
 

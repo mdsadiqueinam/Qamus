@@ -10,17 +10,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,12 +26,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
+import androidx.paging.LoadStates
+import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Internal composable for standard dialog action buttons (Dismiss, Ok).
@@ -65,95 +66,27 @@ internal fun DialogActionButtons(
     }
 }
 
-/**
- * Internal composable to display appropriate UI based on Paging's loading states.
- */
-@Composable
-internal fun PagingStateHandlingFullscreen(
-    modifier: Modifier = Modifier,
-    loadState: CombinedLoadStates,
-    itemCount: Int,
-    onRetry: () -> Unit
-) {
-    val refreshState = loadState.refresh
-
-    if (refreshState is LoadState.Loading && itemCount == 0) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-    } else if (refreshState is LoadState.Error && itemCount == 0) {
-        val error = refreshState.error
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Error loading data: ${error.localizedMessage ?: "Unknown error"}",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Button(onClick = onRetry) {
-                Text("Retry")
-            }
-        }
-    }
-}
-
-/**
- * Internal extension for LazyListScope to add footer items for pagination.
- */
-internal fun LazyListScope.pagingStateHandlingFooter(
-    loadState: CombinedLoadStates, onRetry: () -> Unit
-) {
-    val appendState = loadState.append
-
-    if (appendState is LoadState.Loading) {
-        item("paging_append_loading") {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                CircularProgressIndicator(strokeWidth = 3.dp, modifier = Modifier.height(24.dp))
-            }
-        }
-    }
-
-    if (appendState is LoadState.Error) {
-        val error = appendState.error
-        item("paging_append_error") {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Error loading more: ${error.localizedMessage ?: "Unknown error"}",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Button(onClick = onRetry) {
-                    Text("Retry")
-                }
-            }
-        }
-    }
-}
 
 /**
  * Internal composable for a standard checkbox with associated spacing.
  */
 @Composable
-internal fun PickerCheckbox(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Checkbox(checked = checked, onCheckedChange = onCheckedChange)
-    Spacer(modifier = Modifier.width(16.dp))
+internal fun PickerItem(
+    selected: Boolean, onClick: () -> Unit, itemContent: @Composable () -> Unit
+) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .clickable {
+            onClick()
+        }
+        .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        RadioButton(selected = selected, onClick = onClick)
+        Spacer(modifier = Modifier.width(16.dp))
+        Box(modifier = Modifier.weight(1f)) {
+            itemContent()
+        }
+    }
 }
 
 /**
@@ -167,15 +100,15 @@ internal fun PickerDialogContent(
     searchSection: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxWidth()) {
         // Optional search section
         searchSection?.invoke()
 
         // Main content
         Box(
             modifier = Modifier
-                .fillMaxWidth()
                 .weight(1f)
+                .fillMaxSize()
         ) {
             content()
         }
@@ -200,17 +133,17 @@ fun BaseItemPicker(
     selectedItemContent: @Composable () -> Unit,
     content: @Composable (dismissDialog: () -> Unit) -> Unit,
 ) {
-    var showDialog by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(true) }
 
     Column(modifier = modifier
         .fillMaxWidth()
         .clickable(enabled = enabled) { showDialog = true }
-        .padding(vertical = 8.dp, horizontal = 4.dp)) {
+        .padding(vertical = 8.dp, horizontal = 12.dp)) {
         Text(
-            text = label, style = MaterialTheme.typography.labelLarge, maxLines = 1
+            text = label, style = MaterialTheme.typography.titleMedium, maxLines = 1
         )
         Spacer(modifier = Modifier.height(4.dp))
-        Box(modifier = Modifier.padding(start = 4.dp)) {
+        Box(modifier = Modifier.fillMaxWidth()) {
             selectedItemContent()
         }
     }
@@ -220,7 +153,6 @@ fun BaseItemPicker(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 600.dp)
                     .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
@@ -265,22 +197,12 @@ fun <T> ItemPicker(
                         val item = items[index]
                         val isSelected = selectedItem == item
 
-                        Row(modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
+                        PickerItem(
+                            selected = isSelected, onClick = {
                                 onItemSelected(item)
                                 dismissDialog()
-                            }
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            PickerCheckbox(
-                                checked = isSelected, onCheckedChange = {
-                                    onItemSelected(item)
-                                    dismissDialog()
-                                })
-                            Box(modifier = Modifier.weight(1f)) {
-                                itemContent(item, isSelected)
-                            }
+                            }) {
+                            itemContent(item, isSelected)
                         }
                     }
                 }
@@ -327,28 +249,15 @@ fun <T : Any> MultipleItemPicker(
                         val item = items[index]
                         val isSelected = tempSelectedItems.contains(item)
 
-                        Row(modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
+                        PickerItem(
+                            selected = isSelected, onClick = {
                                 tempSelectedItems = if (isSelected) {
                                     tempSelectedItems - item
                                 } else {
                                     tempSelectedItems + item
                                 }
-                            }
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            PickerCheckbox(
-                                checked = isSelected, onCheckedChange = { checked ->
-                                    tempSelectedItems = if (checked) {
-                                        tempSelectedItems + item
-                                    } else {
-                                        tempSelectedItems - item
-                                    }
-                                })
-                            Box(modifier = Modifier.weight(1f)) {
-                                itemContent(item, isSelected)
-                            }
+                            }) {
+                            itemContent(item, isSelected)
                         }
                     }
                 }
@@ -365,13 +274,14 @@ fun <T : Any> ItemPicker(
     label: String,
     enabled: Boolean = true,
     lazyPagingItems: LazyPagingItems<T>,
-    selectedItemContent: @Composable () -> Unit,
     onItemSelected: (T) -> Unit,
-    itemContent: @Composable (T) -> Unit,
+    selectedItem: T,
     itemKey: (T) -> Any = { it.hashCode() },
     search: (String) -> Unit,
     searchDebounceMs: Long = 350,
-    searchPlaceholder: @Composable () -> Unit
+    searchPlaceholder: @Composable () -> Unit,
+    selectedItemContent: @Composable () -> Unit,
+    itemContent: @Composable (T) -> Unit,
 ) {
     BaseItemPicker(
         modifier = modifier,
@@ -402,7 +312,7 @@ fun <T : Any> ItemPicker(
 
                 if (showList) {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxWidth(),
                         contentPadding = PaddingValues(vertical = 8.dp)
                     ) {
                         items(
@@ -410,14 +320,14 @@ fun <T : Any> ItemPicker(
                             key = lazyPagingItems.itemKey(itemKey)
                         ) { index ->
                             val item = lazyPagingItems[index]
+                            val isSelected = selectedItem == item
+
                             if (item != null) {
-                                Box(modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
+                                PickerItem(
+                                    selected = isSelected, onClick = {
                                         onItemSelected(item)
                                         dismissDialog()
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)) {
+                                    }) {
                                     itemContent(item)
                                 }
                             }
@@ -443,12 +353,12 @@ fun <T : Any> MultipleItemPicker(
     lazyPagingItems: LazyPagingItems<T>,
     selectedItems: Set<T>,
     onItemsSelected: (Set<T>) -> Unit,
-    itemContent: @Composable (item: T, isSelected: Boolean) -> Unit,
     itemKey: (T) -> Any = { it.hashCode() },
     search: (String) -> Unit,
     searchDebounceMs: Long = 350,
     searchPlaceholder: @Composable () -> Unit,
     selectedItemsContent: @Composable () -> Unit,
+    itemContent: @Composable (item: T, isSelected: Boolean) -> Unit,
 ) {
     var tempSelectedItems by remember(selectedItems) { mutableStateOf(selectedItems) }
 
@@ -496,28 +406,15 @@ fun <T : Any> MultipleItemPicker(
                             if (item != null) {
                                 val isSelected = tempSelectedItems.contains(item)
 
-                                Row(modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
+                                PickerItem(
+                                    selected = isSelected, onClick = {
                                         tempSelectedItems = if (isSelected) {
                                             tempSelectedItems - item
                                         } else {
                                             tempSelectedItems + item
                                         }
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically) {
-                                    PickerCheckbox(
-                                        checked = isSelected, onCheckedChange = { checked ->
-                                            tempSelectedItems = if (checked) {
-                                                tempSelectedItems + item
-                                            } else {
-                                                tempSelectedItems - item
-                                            }
-                                        })
-                                    Box(modifier = Modifier.weight(1f)) {
-                                        itemContent(item, isSelected)
-                                    }
+                                    }) {
+                                    itemContent(item, isSelected)
                                 }
                             }
                         }
@@ -529,4 +426,128 @@ fun <T : Any> MultipleItemPicker(
                 }
             }
         })
+}
+
+// Preview list item picker
+@Preview(showBackground = true)
+@Composable
+fun ListItemPickerPreview() {
+    QamusTheme {
+        Column(
+            modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center
+        ) {
+            ItemPicker(
+                label = "Select Item",
+                items = (1..5).toList().map { "Item $it" },
+                selectedItem = "Item 1",
+                onItemSelected = {},
+                selectedItemContent = { Text("Selected Item") },
+            ) { item, isSelected ->
+                Text(
+                    text = item,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
+}
+
+// Preview Multiple Selected list item
+@Preview(showBackground = true)
+@Composable
+fun MultipleItemPickerPreview() {
+    QamusTheme {
+        Column(
+            modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center
+        ) {
+            MultipleItemPicker(
+                label = "Select Items",
+                items = (1..5).toList().map { "Item $it" },
+                selectedItems = setOf("Item 1", "Item 3"),
+                onItemsSelected = {},
+                selectedItemsContent = { Text("Selected Items") },
+            ) { item, isSelected ->
+                Text(
+                    text = item,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
+}
+
+// Preview Paging Item Picker
+@Preview(showBackground = true)
+@Composable
+fun PagingItemPickerPreview() {
+    QamusTheme {
+        Column(
+            modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center
+        ) {
+            val previewItems = List(500) { "Preview Item ${it + 1}" }
+            val previewData = PagingData.from(
+                previewItems, LoadStates(
+                    refresh = LoadState.NotLoading(false),
+                    append = LoadState.NotLoading(false),
+                    prepend = LoadState.NotLoading(false),
+                )
+            )
+            val lazyPagingItems: LazyPagingItems<String> =
+                MutableStateFlow(previewData).collectAsLazyPagingItems()
+
+            ItemPicker(
+                label = "Select Item",
+                lazyPagingItems = lazyPagingItems,
+                selectedItemContent = { Text("Selected Item") },
+                selectedItem = "Preview Item 2",
+                onItemSelected = {},
+                itemContent = { item ->
+                    Text(
+                        text = item, style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                search = {},
+                searchPlaceholder = { Text("Search...") })
+        }
+    }
+}
+
+// Preview Paging Multiple Item Picker
+@Preview(showBackground = true)
+@Composable
+fun PagingMultipleItemPickerPreview() {
+    QamusTheme {
+        Column(
+            modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center
+        ) {
+            val previewItems = List(500) { "Preview Item ${it + 1}" }
+            val previewData = PagingData.from(
+                previewItems, LoadStates(
+                    refresh = LoadState.NotLoading(false),
+                    append = LoadState.NotLoading(false),
+                    prepend = LoadState.NotLoading(false),
+                )
+            )
+            val lazyPagingItems: LazyPagingItems<String> =
+                MutableStateFlow(previewData).collectAsLazyPagingItems()
+
+            MultipleItemPicker(
+                label = "Select Items",
+                lazyPagingItems = lazyPagingItems,
+                selectedItems = setOf("Preview Item 2", "Preview Item 4"),
+                onItemsSelected = {},
+                selectedItemsContent = { Text("Selected Items") },
+                itemContent = { item, isSelected ->
+                    Text(
+                        text = item,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                search = {},
+                searchPlaceholder = { Text("Search...") })
+        }
+    }
 }
