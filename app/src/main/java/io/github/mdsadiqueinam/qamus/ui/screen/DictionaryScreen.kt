@@ -63,7 +63,6 @@ fun DictionaryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery = uiState.searchQuery
     val selectedType = uiState.selectedType
-    val errorMessage by viewModel.errorMessage.collectAsState()
 
     // Collect entries flow from ViewModel as LazyPagingItems
     val entries = viewModel.entries.collectAsLazyPagingItems()
@@ -71,7 +70,7 @@ fun DictionaryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Show error message in snackbar
-    snackbarHostState.ShowSnackbar(errorMessage) {
+    snackbarHostState.ShowSnackbar(uiState.error) {
         viewModel.clearError()
     }
 

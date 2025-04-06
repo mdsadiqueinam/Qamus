@@ -134,7 +134,7 @@ fun DirectionalInputField(
 @Preview(showBackground = true)
 @Composable
 fun PreviewDirectionalInputField() {
-    var text by remember { mutableStateOf("Hello") }
+    var text by remember { mutableStateOf("Hello صادق") }
     QamusTheme {
         DirectionalInputField(
             value = text,

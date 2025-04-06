@@ -51,11 +51,11 @@ import io.github.mdsadiqueinam.qamus.ui.viewmodel.DashboardViewModel
 fun DashboardScreen(
     viewModel: DashboardViewModel
 ) {
-    val errorMessage by viewModel.errorMessage.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Show error message in snackbar
-    snackbarHostState.ShowSnackbar(errorMessage) {
+    snackbarHostState.ShowSnackbar(uiState.error) {
         viewModel.clearError()
     }
 

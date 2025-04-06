@@ -54,11 +54,10 @@ fun KalimaDetailsScreen(
     viewModel: KalimaDetailsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Show error message in snackbar
-    snackbarHostState.ShowSnackbar(errorMessage) {
+    snackbarHostState.ShowSnackbar(uiState.error) {
         viewModel.clearError()
     }
 

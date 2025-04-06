@@ -16,11 +16,10 @@ fun SettingsScreen(
     viewModel: SettingsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val localContext = LocalContext.current
 
-    snackbarHostState.ShowSnackbar(errorMessage) {
+    snackbarHostState.ShowSnackbar(uiState.error) {
         viewModel.clearError()
     }
 
