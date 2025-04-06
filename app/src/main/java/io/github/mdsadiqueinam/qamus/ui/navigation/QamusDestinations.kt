@@ -2,67 +2,53 @@ package io.github.mdsadiqueinam.qamus.ui.navigation
 
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import kotlinx.serialization.Serializable
 
 /**
  * Sealed class representing all navigation destinations in the app
  */
-sealed class QamusDestinations(val route: String) {
+@Serializable
+sealed class QamusDestinations() {
 
     /**
      * Main navigation graph - contains screens without bottom bar
      */
-    object Main : QamusDestinations("main")
+    @Serializable
+    data object Main : QamusDestinations()
 
     /**
      * Home navigation graph - contains screens with bottom bar
      */
-    object Home : QamusDestinations("home")
+    @Serializable
+    data object Home : QamusDestinations()
 
     /**
      * Dashboard screen - main/home page of the app
      */
-    object Dashboard : QamusDestinations("dashboard")
+    @Serializable
+    data object Dashboard : QamusDestinations()
 
     /**
      * Dictionary screen - screen showing the list of entries
      */
-    object Dictionary : QamusDestinations("dictionary")
+    @Serializable
+    data object Dictionary : QamusDestinations()
 
     /**
      * Settings screen - screen for managing app settings
      */
-    object Settings : QamusDestinations("settings")
+    @Serializable
+    data object Settings : QamusDestinations()
 
     /**
      * Add/Edit Entry screen with entryId parameter
      */
-    object AddEntry : QamusDestinations("add_entry") {
-        const val entryIdArg = "entryId"
-        val routeWithArgs = "$route/{$entryIdArg}"
-
-        val arguments = listOf(
-            navArgument(entryIdArg) {
-                type = NavType.LongType
-                defaultValue = -1L
-            }
-        )
-
-        fun createRoute(entryId: Long = -1L) = "$route/$entryId"
-    }
+    @Serializable
+    data class AddEntry(val id: Int = -1) : QamusDestinations()
 
     /**
      * Kalima Details screen with entryId parameter
      */
-    object KalimaDetails : QamusDestinations("kalima_details") {
-        const val entryIdArg = "entryId"
-        val routeWithArgs = "$route/{$entryIdArg}"
-
-        val arguments = listOf(
-            navArgument(entryIdArg) {
-                type = NavType.LongType
-            }
-        )
-
-        fun createRoute(entryId: Long) = "$route/$entryId"
-    }
+    @Serializable
+    data class KalimaDetails(val id: Int) : QamusDestinations()
 }
