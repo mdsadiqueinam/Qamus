@@ -13,11 +13,13 @@ import io.github.mdsadiqueinam.qamus.extension.launchWithErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.launchWithLoadingAndErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.update
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
 
 /**
@@ -31,6 +33,7 @@ import javax.inject.Inject
  * @property rootId The ID of the root entry, if this is a derived form
  * @property isLoading Whether data is currently being loaded
  * @property isEditMode Whether the screen is in edit mode
+ * @property error The current error message, if any
  */
 data class AddEntryUIState(
     val id: Long = 0,
@@ -40,7 +43,8 @@ data class AddEntryUIState(
     val type: WordType = WordType.ISM,
     val rootId: Long? = null,
     val isLoading: Boolean = false,
-    val isEditMode: Boolean = false
+    val isEditMode: Boolean = false,
+    val error: ErrorMessage = ErrorMessage.None
 )
 
 /**
@@ -64,10 +68,10 @@ class AddEntryViewModel @Inject constructor(
 
     // Flow of all entries as a list for dropdowns
     val allEntriesList: Flow<List<Kalima>> = repository.getAllEntriesAsList()
-
-    // State for error messages
-    private val _errorMessage = MutableStateFlow<ErrorMessage>(ErrorMessage.None)
-    val errorMessage: StateFlow<ErrorMessage> = _errorMessage.asStateFlow()
+        .catch { e -> 
+            _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Error loading entries list")) }
+        }
+        .distinctUntilChanged()
 
     init {
         // Get entryId from SavedStateHandle
@@ -90,22 +94,35 @@ class AddEntryViewModel @Inject constructor(
         launchWithLoadingAndErrorHandling(
             loadingState = _uiState,
             updateLoading = { state, isLoading -> state.copy(isLoading = isLoading) },
-            errorHandler = { e -> _errorMessage.value = ErrorMessage.Resource(R.string.error_loading_entry, e.message ?: "") }
+            errorHandler = { e -> 
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Resource(R.string.error_loading_entry, e.message ?: ""),
+                        isLoading = false
+                    )
+                }
+            }
         ) {
             val entry = repository.getEntryById(id)
             if (entry != null) {
-                _uiState.value = AddEntryUIState(
-                    id = entry.id,
-                    huroof = entry.huroof,
-                    meaning = entry.meaning,
-                    desc = entry.desc,
-                    type = entry.type,
-                    rootId = entry.rootId,
-                    isLoading = false,
-                    isEditMode = true
-                )
+                _uiState.update { 
+                    it.copy(
+                        id = entry.id,
+                        huroof = entry.huroof,
+                        meaning = entry.meaning,
+                        desc = entry.desc,
+                        type = entry.type,
+                        rootId = entry.rootId,
+                        isEditMode = true,
+                        error = ErrorMessage.None
+                    )
+                }
             } else {
-                _errorMessage.value = ErrorMessage.Resource(R.string.entry_not_found)
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Resource(R.string.entry_not_found)
+                    )
+                }
             }
         }
     }
@@ -182,12 +199,21 @@ class AddEntryViewModel @Inject constructor(
         val state = _uiState.value
 
         if (state.huroof.isBlank() || state.meaning.isBlank()) {
-            _errorMessage.value = ErrorMessage.Resource(R.string.word_meaning_required)
+            _uiState.update { it.copy(error = ErrorMessage.Resource(R.string.word_meaning_required)) }
             return false
         }
 
-        launchWithErrorHandling(
-            errorHandler = { e -> _errorMessage.value = ErrorMessage.Resource(R.string.error_saving_entry, e.message ?: "") }
+        launchWithLoadingAndErrorHandling(
+            loadingState = _uiState,
+            updateLoading = { state, isLoading -> state.copy(isLoading = isLoading) },
+            errorHandler = { e -> 
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Resource(R.string.error_saving_entry, e.message ?: ""),
+                        isLoading = false
+                    )
+                }
+            }
         ) {
             val entry = createKalimaFromState(state)
             if (state.isEditMode) {
@@ -195,6 +221,7 @@ class AddEntryViewModel @Inject constructor(
             } else {
                 repository.insertEntry(entry)
             }
+            _uiState.update { it.copy(error = ErrorMessage.None) }
         }
 
         return true
@@ -204,14 +231,16 @@ class AddEntryViewModel @Inject constructor(
      * Clear error message.
      */
     fun clearError() {
-        _errorMessage.value = ErrorMessage.None
+        _uiState.update { it.copy(error = ErrorMessage.None) }
     }
 
     /**
      * Navigate back to the previous screen.
      */
     fun navigateBack() {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateBack()
         }
     }
@@ -220,16 +249,16 @@ class AddEntryViewModel @Inject constructor(
      * Save the entry and navigate back if successful.
      * This ensures navigation only happens after the save operation completes.
      */
-    fun saveEntryAndNavigateBack() {
+    fun saveAndNavigateBack() {
         val validationPassed = saveEntry()
         if (!validationPassed) return
 
-        // Use a separate coroutine to wait for the save operation to complete
-        // before navigating back
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             // Wait a short time to allow the save operation to complete
-            kotlinx.coroutines.delay(100)
-            if (_errorMessage.value is ErrorMessage.None) {
+            delay(100)
+            if (_uiState.value.error is ErrorMessage.None) {
                 navigator.navigateBack()
             }
         }

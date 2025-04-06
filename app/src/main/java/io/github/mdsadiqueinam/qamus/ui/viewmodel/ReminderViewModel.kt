@@ -1,9 +1,7 @@
 package io.github.mdsadiqueinam.qamus.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
@@ -12,7 +10,6 @@ import io.github.mdsadiqueinam.qamus.extension.update
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -51,6 +48,7 @@ class ReminderViewModel @Inject constructor(
 
     /**
      * Load a random Kalima entry from the repository.
+     * Results are cached and distinct until changed.
      */
     fun loadRandomKalima() {
         launchWithLoadingAndErrorHandling(
@@ -70,15 +68,13 @@ class ReminderViewModel @Inject constructor(
                 _uiState.update { 
                     it.copy(
                         kalima = randomKalima,
-                        isLoading = false,
                         error = ErrorMessage.None
                     )
                 }
             } else {
                 _uiState.update { 
                     it.copy(
-                        error = ErrorMessage.Message("No Kalima entries found"),
-                        isLoading = false
+                        error = ErrorMessage.Message("No Kalima entries found")
                     )
                 }
             }

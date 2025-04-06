@@ -9,6 +9,7 @@ import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
+import io.github.mdsadiqueinam.qamus.extension.launchWithErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.update
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,8 +17,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -25,10 +27,12 @@ import javax.inject.Inject
  * 
  * @property searchQuery The current search query
  * @property selectedType The currently selected word type filter
+ * @property error The current error message, if any
  */
 data class KalimaatUIState(
     val searchQuery: String = "",
-    val selectedType: WordType? = null
+    val selectedType: WordType? = null,
+    val error: ErrorMessage = ErrorMessage.None
 )
 
 /**
@@ -52,20 +56,17 @@ class KalimaatViewModel @Inject constructor(
     /**
      * Flow of dictionary entries with pagination.
      * Automatically updates when search query or filter changes.
+     * Results are cached and distinct until changed.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val entries: Flow<PagingData<Kalima>> = _uiState.flatMapLatest { state ->
-        repository.searchEntries(state.searchQuery, state.selectedType)
-    }.cachedIn(viewModelScope)
-
-    /**
-     * Flow of all entries as a list for dropdowns.
-     */
-    val allEntriesList: Flow<List<Kalima>> = repository.getAllEntriesAsList()
-
-    // State for error messages
-    private val _errorMessage = MutableStateFlow<ErrorMessage>(ErrorMessage.None)
-    val errorMessage: StateFlow<ErrorMessage> = _errorMessage.asStateFlow()
+    val entries: Flow<PagingData<Kalima>> = _uiState
+        .flatMapLatest { state ->
+            repository.searchEntries(state.searchQuery, state.selectedType)
+        }
+        .catch { e -> 
+            _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Error loading entries")) }
+        }
+        .cachedIn(viewModelScope)
 
     /**
      * Search for dictionary entries with pagination.
@@ -89,14 +90,16 @@ class KalimaatViewModel @Inject constructor(
      * Clear error message.
      */
     fun clearError() {
-        _errorMessage.value = ErrorMessage.None
+        _uiState.update { it.copy(error = ErrorMessage.None) }
     }
 
     /**
      * Navigate to add entry screen.
      */
     fun navigateToAddEntry() {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateToAddEntry()
         }
     }
@@ -107,7 +110,9 @@ class KalimaatViewModel @Inject constructor(
      * @param entryId The ID of the entry to view
      */
     fun navigateToKalimaDetails(entryId: Long) {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateToKalimaDetails(entryId)
         }
     }
@@ -116,7 +121,9 @@ class KalimaatViewModel @Inject constructor(
      * Navigate back to the previous screen.
      */
     fun navigateBack() {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateBack()
         }
     }

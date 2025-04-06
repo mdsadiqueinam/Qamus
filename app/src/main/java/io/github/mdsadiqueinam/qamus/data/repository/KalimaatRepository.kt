@@ -7,6 +7,8 @@ import io.github.mdsadiqueinam.qamus.data.dao.KalimaatDao
 import io.github.mdsadiqueinam.qamus.data.model.Kalima
 import io.github.mdsadiqueinam.qamus.data.model.WordType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.cache
+import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,6 +22,8 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
     companion object {
         // Default page size for pagination
         private const val DEFAULT_PAGE_SIZE = 20
+        // Cache size for entries list
+        private const val CACHE_SIZE = 100
     }
 
     /**
@@ -31,7 +35,8 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
         return Pager(
             config = PagingConfig(
                 pageSize = DEFAULT_PAGE_SIZE,
-                enablePlaceholders = true
+                enablePlaceholders = true,
+                prefetchDistance = 2
             ),
             pagingSourceFactory = { kalimaatDao.getEntries() }
         ).flow
@@ -68,7 +73,8 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
         return Pager(
             config = PagingConfig(
                 pageSize = DEFAULT_PAGE_SIZE,
-                enablePlaceholders = true
+                enablePlaceholders = true,
+                prefetchDistance = 2
             ),
             pagingSourceFactory = { kalimaatDao.searchEntries(searchQuery, type) }
         ).flow
@@ -123,11 +129,13 @@ class KalimaatRepository @Inject constructor(private val kalimaatDao: KalimaatDa
 
     /**
      * Get all dictionary entries as a Flow of List.
+     * Results are cached and distinct until changed.
      * 
      * @return A Flow of List containing all dictionary entries
      */
     fun getAllEntriesAsList(): Flow<List<Kalima>> {
         return kalimaatDao.getAllEntriesAsList()
+            .distinctUntilChanged()
     }
 
     /**

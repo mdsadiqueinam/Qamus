@@ -16,7 +16,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -26,12 +25,14 @@ import javax.inject.Inject
  * @property isLoading Whether data is currently being loaded
  * @property rootEntry The root entry if the current entry is derived from a root
  * @property relatedEntries List of entries related to the current entry
+ * @property error The current error message, if any
  */
 data class KalimaDetailsUIState(
     val entry: Kalima? = null,
     val isLoading: Boolean = false,
     val rootEntry: Kalima? = null,
-    val relatedEntries: List<Kalima> = emptyList()
+    val relatedEntries: List<Kalima> = emptyList(),
+    val error: ErrorMessage = ErrorMessage.None
 )
 
 /**
@@ -53,10 +54,6 @@ class KalimaDetailsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(KalimaDetailsUIState(isLoading = true))
     val uiState: StateFlow<KalimaDetailsUIState> = _uiState.asStateFlow()
 
-    // State for error messages
-    private val _errorMessage = MutableStateFlow<ErrorMessage>(ErrorMessage.None)
-    val errorMessage: StateFlow<ErrorMessage> = _errorMessage.asStateFlow()
-
     init {
         // Get entryId from SavedStateHandle
         val entryId = savedStateHandle.get<Long>("entryId") ?: -1L
@@ -65,8 +62,12 @@ class KalimaDetailsViewModel @Inject constructor(
         if (entryId > 0) {
             loadEntry(entryId)
         } else {
-            _errorMessage.value = ErrorMessage.Message("Invalid entry ID")
-            _uiState.update { it.copy(isLoading = false) }
+            _uiState.update { 
+                it.copy(
+                    error = ErrorMessage.Message("Invalid entry ID"),
+                    isLoading = false
+                )
+            }
         }
     }
 
@@ -79,51 +80,61 @@ class KalimaDetailsViewModel @Inject constructor(
     private fun loadEntry(id: Long) {
         if (id <= 0) return
 
-        _uiState.update { it.copy(isLoading = true) }
-        viewModelScope.launch {
-            try {
-                val entry = repository.getEntryById(id)
-                if (entry != null) {
-                    // Use coroutines to parallelize database calls
-                    val rootEntryDeferred = async {
-                        entry.rootId?.let { rootId ->
-                            repository.getEntryById(rootId)
-                        }
-                    }
-
-                    val relatedEntriesDeferred = async {
-                        if (entry.rootId != null) {
-                            // Get entries with the same rootId as the current entry
-                            repository.getEntriesByRootId(entry.rootId)
-                                .filter { it.id != entry.id } // Exclude the current entry
-                        } else if (entry.id > 0) {
-                            // If this is a root entry, get entries that have this entry as their root
-                            repository.getEntriesByRootId(entry.id)
-                        } else {
-                            emptyList()
-                        }
-                    }
-
-                    // Await results from parallel calls
-                    val rootEntry = rootEntryDeferred.await()
-                    val relatedEntries = relatedEntriesDeferred.await()
-
-                    // Update UI state once with all data
-                    _uiState.update {
-                        KalimaDetailsUIState(
-                            entry = entry,
-                            isLoading = false,
-                            rootEntry = rootEntry,
-                            relatedEntries = relatedEntries
-                        )
-                    }
-                } else {
-                    _errorMessage.value = ErrorMessage.Resource(R.string.entry_not_found)
-                    _uiState.update { it.copy(isLoading = false) }
+        launchWithLoadingAndErrorHandling(
+            loadingState = _uiState,
+            updateLoading = { state, isLoading -> state.copy(isLoading = isLoading) },
+            errorHandler = { e -> 
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Resource(R.string.error_loading_entry, e.message ?: ""),
+                        isLoading = false
+                    )
                 }
-            } catch (e: Exception) {
-                _errorMessage.value = ErrorMessage.Resource(R.string.error_loading_entry, e.message ?: "")
-                _uiState.update { it.copy(isLoading = false) }
+            }
+        ) {
+            val entry = repository.getEntryById(id)
+            if (entry != null) {
+                // Use coroutines to parallelize database calls
+                val rootEntryDeferred = viewModelScope.async {
+                    entry.rootId?.let { rootId ->
+                        repository.getEntryById(rootId)
+                    }
+                }
+
+                val relatedEntriesDeferred = viewModelScope.async {
+                    if (entry.rootId != null) {
+                        // Get entries with the same rootId as the current entry
+                        repository.getEntriesByRootId(entry.rootId)
+                            .filter { it.id != entry.id } // Exclude the current entry
+                    } else if (entry.id > 0) {
+                        // If this is a root entry, get entries that have this entry as their root
+                        repository.getEntriesByRootId(entry.id)
+                    } else {
+                        emptyList()
+                    }
+                }
+
+                // Await results from parallel calls
+                val rootEntry = rootEntryDeferred.await()
+                val relatedEntries = relatedEntriesDeferred.await()
+
+                // Update UI state once with all data
+                _uiState.update {
+                    KalimaDetailsUIState(
+                        entry = entry,
+                        isLoading = false,
+                        rootEntry = rootEntry,
+                        relatedEntries = relatedEntries,
+                        error = ErrorMessage.None
+                    )
+                }
+            } else {
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Resource(R.string.entry_not_found),
+                        isLoading = false
+                    )
+                }
             }
         }
     }
@@ -132,7 +143,7 @@ class KalimaDetailsViewModel @Inject constructor(
      * Clear error message.
      */
     fun clearError() {
-        _errorMessage.value = ErrorMessage.None
+        _uiState.update { it.copy(error = ErrorMessage.None) }
     }
 
     /**
@@ -143,7 +154,11 @@ class KalimaDetailsViewModel @Inject constructor(
 
         launchWithErrorHandling(
             errorHandler = { e -> 
-                _errorMessage.value = ErrorMessage.Resource(R.string.error_generic, "Error deleting entry: ${e.message ?: ""}")
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Resource(R.string.error_generic, "Error deleting entry: ${e.message ?: ""}")
+                    )
+                }
             }
         ) {
             repository.deleteEntry(entry)
@@ -155,7 +170,9 @@ class KalimaDetailsViewModel @Inject constructor(
      * Navigate back to the previous screen.
      */
     fun navigateBack() {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateBack()
         }
     }
@@ -166,7 +183,9 @@ class KalimaDetailsViewModel @Inject constructor(
      * @param entryId The ID of the entry to edit
      */
     fun navigateToEditEntry(entryId: Long) {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateToAddEntry(entryId)
         }
     }
@@ -177,7 +196,9 @@ class KalimaDetailsViewModel @Inject constructor(
      * @param entryId The ID of the entry to view
      */
     fun navigateToKalimaDetails(entryId: Long) {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateToKalimaDetails(entryId)
         }
     }

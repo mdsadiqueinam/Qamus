@@ -56,13 +56,17 @@ class AutomaticBackupScheduler @Inject constructor(
                 .distinctUntilChanged() // Only react to changes in frequency
                 .catch { e -> Log.e(TAG, "Error collecting settings", e) }
                 .collect { frequency ->
-                    if (frequency == Settings.AutomaticBackupFrequency.OFF) {
-                        Log.d(TAG, "Automatic backup disabled")
-                        stopScheduling()
-                    } else {
-                        val intervalHours = FREQUENCY_INTERVALS[frequency] ?: return@collect
-                        Log.d(TAG, "Scheduling backup: $frequency (every $intervalHours hours)")
-                        scheduleWorker(intervalHours)
+                    try {
+                        if (frequency == Settings.AutomaticBackupFrequency.OFF) {
+                            Log.d(TAG, "Automatic backup disabled")
+                            stopScheduling()
+                        } else {
+                            val intervalHours = FREQUENCY_INTERVALS[frequency] ?: return@collect
+                            Log.d(TAG, "Scheduling backup: $frequency (every $intervalHours hours)")
+                            scheduleWorker(intervalHours)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error handling backup frequency change", e)
                     }
                 }
         }
@@ -72,38 +76,47 @@ class AutomaticBackupScheduler @Inject constructor(
      * Schedule the worker to run at the specified interval.
      */
     private fun scheduleWorker(intervalHours: Long) {
-        val workerInfo = workManager.getWorkInfosForUniqueWork(WORK_NAME).get() ?: emptyList()
+        try {
+            val workerInfo = workManager.getWorkInfosForUniqueWork(WORK_NAME).get() ?: emptyList()
 
-        // Check if the worker is already scheduled with the same interval
-        val intervalMillis = TimeUnit.HOURS.toMillis(intervalHours)
-        if (workerInfo.any { it.periodicityInfo?.repeatIntervalMillis == intervalMillis &&
-                    it.state == androidx.work.WorkInfo.State.ENQUEUED }) {
-            Log.d(TAG, "Worker already scheduled with interval: $intervalHours hours, ignoring")
-            return
+            // Check if the worker is already scheduled with the same interval
+            val intervalMillis = TimeUnit.HOURS.toMillis(intervalHours)
+            if (workerInfo.any { it.periodicityInfo?.repeatIntervalMillis == intervalMillis &&
+                        it.state == androidx.work.WorkInfo.State.ENQUEUED }) {
+                Log.d(TAG, "Worker already scheduled with interval: $intervalHours hours, ignoring")
+                return
+            }
+
+            Log.d(TAG, "Scheduling backup worker with interval: $intervalHours hours")
+
+            // Create the work request with constraints
+            val workRequest = PeriodicWorkRequestBuilder<AutomaticBackupWorker>(
+                intervalHours,
+                TimeUnit.HOURS
+            ).build()
+
+            // Schedule the work
+            workManager.enqueueUniquePeriodicWork(
+                WORK_NAME,
+                ExistingPeriodicWorkPolicy.UPDATE,
+                workRequest
+            )
+
+            Log.d(TAG, "Automatic backup worker scheduled successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error scheduling backup worker", e)
         }
-
-        Log.d(TAG, "Scheduling backup worker with interval: $intervalHours hours")
-
-        // Create the work request
-        val workRequest = PeriodicWorkRequestBuilder<AutomaticBackupWorker>(
-            intervalHours,
-            TimeUnit.HOURS
-        ).build()
-
-        // Schedule the work
-        workManager.enqueueUniquePeriodicWork(
-            WORK_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE,
-            workRequest
-        )
-
-        Log.d(TAG, "Automatic backup worker scheduled successfully")
     }
 
     /**
      * Stop scheduling the worker.
      */
     fun stopScheduling() {
-        workManager.cancelUniqueWork(WORK_NAME)
+        try {
+            workManager.cancelUniqueWork(WORK_NAME)
+            Log.d(TAG, "Backup worker scheduling stopped")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error stopping backup worker scheduling", e)
+        }
     }
 }

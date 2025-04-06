@@ -14,6 +14,7 @@ import io.github.mdsadiqueinam.qamus.data.repository.BackupRestoreRepository
 import io.github.mdsadiqueinam.qamus.data.repository.DataTransferState
 import io.github.mdsadiqueinam.qamus.data.repository.SettingsRepository
 import io.github.mdsadiqueinam.qamus.extension.launchWithErrorHandling
+import io.github.mdsadiqueinam.qamus.extension.launchWithLoadingAndErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.update
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +22,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import javax.inject.Inject
@@ -37,6 +40,7 @@ data class SettingsUIState(
     val isSignedIn: Boolean = false,
     val user: FirebaseUser? = null,
     val backupRestoreState: BackupRestoreState = BackupRestoreState.Idle,
+    val error: ErrorMessage = ErrorMessage.None
 )
 
 /**
@@ -72,10 +76,6 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SettingsUIState())
     val uiState: StateFlow<SettingsUIState> = _uiState.asStateFlow()
 
-    // State for error messages
-    private val _errorMessage = MutableStateFlow<ErrorMessage>(ErrorMessage.None)
-    val errorMessage = _errorMessage.asStateFlow()
-
     // Job to keep track of backup/restore operations for cancellation
     private var backupRestoreJob: Job? = null
 
@@ -86,22 +86,43 @@ class SettingsViewModel @Inject constructor(
 
     /**
      * Load settings from the repository.
+     * Results are cached and distinct until changed.
      */
     private fun loadSettings() {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
 
             launch {
-                settingsRepository.settings.collectLatest { settings ->
-                    _uiState.update { it.copy(settings = settings, isLoading = false) }
-                }
+                settingsRepository.settings
+                    .distinctUntilChanged()
+                    .catch { e -> 
+                        _uiState.update { 
+                            it.copy(
+                                error = ErrorMessage.Message(e.message ?: "Error loading settings"),
+                                isLoading = false
+                            )
+                        }
+                    }
+                    .collectLatest { settings ->
+                        _uiState.update { it.copy(settings = settings, isLoading = false) }
+                    }
             }
 
             launch {
                 // Check if the user is signed in
-                backupRestoreRepository.observeUserState().collectLatest { user ->
-                    _uiState.update { it.copy(isSignedIn = user != null, user = user) }
-                }
+                backupRestoreRepository.observeUserState()
+                    .distinctUntilChanged()
+                    .catch { e -> 
+                        _uiState.update { 
+                            it.copy(
+                                error = ErrorMessage.Message(e.message ?: "Error checking user state"),
+                                isLoading = false
+                            )
+                        }
+                    }
+                    .collectLatest { user ->
+                        _uiState.update { it.copy(isSignedIn = user != null, user = user) }
+                    }
             }
         }
     }
@@ -114,7 +135,14 @@ class SettingsViewModel @Inject constructor(
         errorResourceId: Int
     ) {
         launchWithErrorHandling(
-            errorHandler = { e -> _errorMessage.value = ErrorMessage.Resource(errorResourceId, e.message ?: "") }
+            errorHandler = { e -> 
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Resource(errorResourceId, e.message ?: ""),
+                        isLoading = false
+                    )
+                }
+            }
         ) {
             operation()
         }
@@ -202,7 +230,16 @@ class SettingsViewModel @Inject constructor(
      * Sign out the user
      */
     fun signOut() {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> 
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Message(e.message ?: "Error signing out"),
+                        isLoading = false
+                    )
+                }
+            }
+        ) {
             backupRestoreRepository.signOut()
         }
     }
@@ -230,11 +267,20 @@ class SettingsViewModel @Inject constructor(
 
         // Start new backup/restore job
         backupRestoreJob = viewModelScope.launch {
-            val flow = if (isBackup) backupRestoreRepository.backupDatabase()
-            else backupRestoreRepository.restoreDatabase()
+            try {
+                val flow = if (isBackup) backupRestoreRepository.backupDatabase()
+                else backupRestoreRepository.restoreDatabase()
 
-            flow.collectLatest { state ->
-                handleDataTransferState(state, activity, isBackup)
+                flow.collectLatest { state ->
+                    handleDataTransferState(state, activity, isBackup)
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(
+                        error = ErrorMessage.Message(e.message ?: "Error during data transfer"),
+                        isLoading = false
+                    )
+                }
             }
         }
     }
@@ -255,7 +301,16 @@ class SettingsViewModel @Inject constructor(
 
                 // Update last backup info if this was a backup operation
                 if (isBackup) {
-                    viewModelScope.launch {
+                    launchWithErrorHandling(
+                        errorHandler = { e -> 
+                            _uiState.update { 
+                                it.copy(
+                                    error = ErrorMessage.Message(e.message ?: "Error updating backup info"),
+                                    isLoading = false
+                                )
+                            }
+                        }
+                    ) {
                         val currentTime = Clock.System.now()
                         val currentVersion = uiState.value.settings.lastBackupVersion + 1
                         settingsRepository.updateLastBackup(currentTime, currentVersion)
@@ -303,14 +358,16 @@ class SettingsViewModel @Inject constructor(
      * Clear error message.
      */
     fun clearError() {
-        _errorMessage.value = ErrorMessage.None
+        _uiState.update { it.copy(error = ErrorMessage.None) }
     }
 
     /**
      * Navigate back to the previous screen.
      */
     fun navigateBack() {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateBack()
         }
     }

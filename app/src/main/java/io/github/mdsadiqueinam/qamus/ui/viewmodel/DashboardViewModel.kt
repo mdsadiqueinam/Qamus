@@ -4,21 +4,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
+import io.github.mdsadiqueinam.qamus.extension.launchWithErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.update
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
  * Data class representing the UI state for the dashboard screen.
  * 
  * @property isLoading Whether data is currently being loaded
+ * @property error The current error message, if any
  */
 data class DashboardUIState(
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val error: ErrorMessage = ErrorMessage.None
 )
 
 /**
@@ -38,15 +40,11 @@ class DashboardViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(DashboardUIState())
     val uiState: StateFlow<DashboardUIState> = _uiState.asStateFlow()
 
-    // State for error messages
-    private val _errorMessage = MutableStateFlow<ErrorMessage>(ErrorMessage.None)
-    val errorMessage: StateFlow<ErrorMessage> = _errorMessage.asStateFlow()
-
     /**
      * Clear error message.
      */
     fun clearError() {
-        _errorMessage.value = ErrorMessage.None
+        _uiState.update { it.copy(error = ErrorMessage.None) }
     }
 
     /**
@@ -54,7 +52,9 @@ class DashboardViewModel @Inject constructor(
      * Handles navigation to the dictionary feature.
      */
     fun navigateToDictionary() {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateToDictionary()
         }
     }
@@ -64,7 +64,9 @@ class DashboardViewModel @Inject constructor(
      * Handles navigation to the add entry feature.
      */
     fun navigateToAddEntry() {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateToAddEntry()
         }
     }
@@ -74,7 +76,9 @@ class DashboardViewModel @Inject constructor(
      * Handles navigation to the settings feature.
      */
     fun navigateToSettings() {
-        viewModelScope.launch {
+        launchWithErrorHandling(
+            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
+        ) {
             navigator.navigateToSettings()
         }
     }
