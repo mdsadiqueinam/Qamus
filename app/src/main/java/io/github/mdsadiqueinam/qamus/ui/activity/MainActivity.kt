@@ -11,11 +11,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.mdsadiqueinam.qamus.worker.AutomaticBackupScheduler
 import io.github.mdsadiqueinam.qamus.worker.KalimaReminderScheduler
-import io.github.mdsadiqueinam.qamus.ui.navigation.QamusBottomNavBar
+import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavHost
 import io.github.mdsadiqueinam.qamus.ui.theme.QamusTheme
 import javax.inject.Inject
 
@@ -87,5 +86,5 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun QamusApp() {
-    QamusBottomNavBar()
+    QamusNavHost()
 }

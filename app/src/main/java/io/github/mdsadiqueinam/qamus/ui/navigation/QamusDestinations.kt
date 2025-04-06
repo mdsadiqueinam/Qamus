@@ -9,6 +9,16 @@ import androidx.navigation.navArgument
 sealed class QamusDestinations(val route: String) {
 
     /**
+     * Main navigation graph - contains screens without bottom bar
+     */
+    object Main : QamusDestinations("main")
+
+    /**
+     * Home navigation graph - contains screens with bottom bar
+     */
+    object Home : QamusDestinations("home")
+
+    /**
      * Dashboard screen - main/home page of the app
      */
     object Dashboard : QamusDestinations("dashboard")
