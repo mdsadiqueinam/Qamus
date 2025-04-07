@@ -1,25 +1,21 @@
 package io.github.mdsadiqueinam.qamus.ui.navigation
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import io.github.mdsadiqueinam.qamus.R
@@ -49,7 +45,7 @@ fun QamusNavHost(
 
         // Home screen with BottomAppBar
         composable<QamusDestinations.Main> {
-            HomeScreen(navController = navController)
+            HomeScreen(parentNavController = navController)
         }
 
         // Screens without BottomAppBar
@@ -67,7 +63,15 @@ fun QamusNavHost(
 }
 
 @Composable
-fun NavGraphBuilder.HomeScreen(navController: NavHostController) {
+fun HomeScreen(parentNavController: NavHostController) {
+
+    // Create a new NavController for the nested navigation
+    // This ensures that the ViewModelStore is properly set
+    val navController = rememberNavController()
+
+    // Set the ViewModelStore from the parent NavController's BackStackEntry
+    val parentEntry = remember { parentNavController.getBackStackEntry(QamusDestinations.Main) }
+    navController.setViewModelStore(parentEntry.viewModelStore)
 
     // Get current back stack entry to determine current route
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -104,13 +108,21 @@ fun NavGraphBuilder.HomeScreen(navController: NavHostController) {
                         }
                     })
                 }
+            }, floatingActionButton = {
+                // FAB to open AddEntryScreen
+                FloatingActionButton(
+                    onClick = {
+                        parentNavController.navigate(QamusDestinations.AddEntry())
+                    }, elevation = FloatingActionButtonDefaults.elevation()
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add Entry")
+                }
             })
         }) { innerPadding ->
         // Content area with padding for the bottom bar
         NavHost(
             navController = navController,
             startDestination = QamusDestinations.Dashboard,
-            modifier = Modifier.padding(innerPadding)
         ) {
             composable<QamusDestinations.Dashboard> {
                 val dashboardViewModel = hiltViewModel<DashboardViewModel>()

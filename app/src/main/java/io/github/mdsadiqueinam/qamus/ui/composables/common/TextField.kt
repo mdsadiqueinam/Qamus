@@ -5,19 +5,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
@@ -37,11 +27,10 @@ enum class TextDirectionMode {
 
 @Composable
 fun DirectionalInputFieldWrapper(
-    text: String,
-    content: @Composable (textDirection: TextDirection, onValueChange: (String) -> Unit, trailingIcon: @Composable () -> Unit) -> Unit
+    text: String, content: @Composable (textDirection: TextDirection, trailingIcon: @Composable () -> Unit) -> Unit
 ) {
     var textDirectionMode by remember { mutableStateOf(TextDirectionMode.AUTO) }
-    val currentTextDirection by remember(textDirectionMode) {
+    val currentTextDirection by remember(textDirectionMode, text) {
         derivedStateOf {
             when (textDirectionMode) {
                 TextDirectionMode.AUTO -> text.textDirection
@@ -52,15 +41,8 @@ fun DirectionalInputFieldWrapper(
     }
 
     content(
-        currentTextDirection, {
-            if (textDirectionMode == TextDirectionMode.AUTO) {
-                textDirectionMode = if (it.textDirection == TextDirection.Rtl) {
-                    TextDirectionMode.RTL
-                } else {
-                    TextDirectionMode.LTR
-                }
-            }
-        }) {
+        currentTextDirection
+    ) {
         IconButton(onClick = {
             textDirectionMode =
                 if (text.textDirection == TextDirection.Rtl || textDirectionMode == TextDirectionMode.RTL) {
@@ -72,7 +54,7 @@ fun DirectionalInputFieldWrapper(
             Icon(
                 painter = when (textDirectionMode) {
                     TextDirectionMode.AUTO -> {
-                        if (text.textDirection == TextDirection.Rtl) {
+                        if (currentTextDirection == TextDirection.Rtl) {
                             painterResource(R.drawable.format_textdirection_r_to_l_24px)
                         } else {
                             painterResource(R.drawable.format_textdirection_l_to_r_24px)
@@ -81,9 +63,7 @@ fun DirectionalInputFieldWrapper(
 
                     TextDirectionMode.RTL -> painterResource(R.drawable.format_textdirection_r_to_l_24px)
                     TextDirectionMode.LTR -> painterResource(R.drawable.format_textdirection_l_to_r_24px)
-                },
-                contentDescription = stringResource(R.string.toggle_text_direction),
-                modifier = Modifier.size(24.dp)
+                }, contentDescription = stringResource(R.string.toggle_text_direction), modifier = Modifier.size(24.dp)
             )
         }
     }
@@ -110,12 +90,11 @@ fun DirectionalInputField(
     readOnly: Boolean = false,
 ) {
 
-    DirectionalInputFieldWrapper(value) { textDirection, applyDirectionChange, wrapperTrailingIcon ->
+    DirectionalInputFieldWrapper(value) { textDirection, wrapperTrailingIcon ->
         OutlinedTextField(
             value = value,
             onValueChange = {
                 onValueChange(it)
-                applyDirectionChange(it)
             },
             modifier = modifier,
             label = label,
@@ -123,7 +102,9 @@ fun DirectionalInputField(
             textStyle = textStyle.copy(textDirection = textDirection),
             leadingIcon = leadingIcon,
             trailingIcon = {
-                Row {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     if (trailingIcon != null) {
                         trailingIcon()
                     }
