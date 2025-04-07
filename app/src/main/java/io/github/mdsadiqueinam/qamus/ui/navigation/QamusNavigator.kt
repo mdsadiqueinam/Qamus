@@ -12,7 +12,7 @@ import javax.inject.Singleton
  */
 sealed class NavigationAction {
     object NavigateBack : NavigationAction()
-    data class NavigateTo(val destination: QamusDestinations, val route: String) : NavigationAction()
+    data class NavigateTo(val destination: QamusDestinations) : NavigationAction()
 }
 
 /**
@@ -26,64 +26,11 @@ class QamusNavigator @Inject constructor() {
     val navigationActions: SharedFlow<NavigationAction> = _navigationActions.asSharedFlow()
 
     /**
-     * Navigate to the dashboard screen
-     */
-    suspend fun navigateToDashboard() {
-        _navigationActions.emit(
-            NavigationAction.NavigateTo(
-                QamusDestinations.Dashboard,
-                QamusDestinations.Dashboard.route
-            )
-        )
-    }
-
-    /**
      * Navigate to the dictionary screen
      */
-    suspend fun navigateToDictionary() {
+    suspend fun navigate(destination: QamusDestinations) {
         _navigationActions.emit(
-            NavigationAction.NavigateTo(
-                QamusDestinations.Dictionary,
-                QamusDestinations.Dictionary.route
-            )
-        )
-    }
-
-    /**
-     * Navigate to the settings screen
-     */
-    suspend fun navigateToSettings() {
-        _navigationActions.emit(
-            NavigationAction.NavigateTo(
-                QamusDestinations.Settings,
-                QamusDestinations.Settings.route
-            )
-        )
-    }
-
-    /**
-     * Navigate to the add entry screen
-     * @param entryId The ID of the entry to edit, or -1 to add a new entry
-     */
-    suspend fun navigateToAddEntry(entryId: Long = -1L) {
-        _navigationActions.emit(
-            NavigationAction.NavigateTo(
-                QamusDestinations.AddEntry,
-                QamusDestinations.AddEntry.createRoute(entryId)
-            )
-        )
-    }
-
-    /**
-     * Navigate to the kalima details screen
-     * @param entryId The ID of the entry to view
-     */
-    suspend fun navigateToKalimaDetails(entryId: Long) {
-        _navigationActions.emit(
-            NavigationAction.NavigateTo(
-                QamusDestinations.KalimaDetails,
-                QamusDestinations.KalimaDetails.createRoute(entryId)
-            )
+            NavigationAction.NavigateTo(destination)
         )
     }
 
@@ -100,10 +47,10 @@ class QamusNavigator @Inject constructor() {
      * @param navController The NavController to use for navigation
      * @param actions The flow of navigation actions to handle
      */
-    suspend fun handleNavigationAction(action: NavigationAction, navController: NavController) {
+    fun handleNavigationAction(action: NavigationAction, navController: NavController) {
         when (action) {
             is NavigationAction.NavigateBack -> navController.popBackStack()
-            is NavigationAction.NavigateTo -> navController.navigate(action.route)
+            is NavigationAction.NavigateTo -> navController.navigate(action.destination)
         }
     }
 }

@@ -91,11 +91,6 @@ fun DictionaryScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { viewModel.navigateToAddEntry() }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Entry")
-            }
-        }
     ) { paddingValues ->
         Column(
             modifier = Modifier

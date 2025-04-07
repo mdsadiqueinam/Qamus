@@ -1,7 +1,12 @@
 package io.github.mdsadiqueinam.qamus.ui.navigation
 
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
+import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.ui.graphics.vector.ImageVector
+import io.github.mdsadiqueinam.qamus.R
 import kotlinx.serialization.Serializable
 
 /**
@@ -44,11 +49,13 @@ sealed class QamusDestinations() {
      * Add/Edit Entry screen with entryId parameter
      */
     @Serializable
-    data class AddEntry(val id: Int = -1) : QamusDestinations()
+    data class AddEntry(val id: Long = -1) : QamusDestinations()
 
     /**
      * Kalima Details screen with entryId parameter
      */
     @Serializable
-    data class KalimaDetails(val id: Int) : QamusDestinations()
+    data class KalimaDetails(val id: Long) : QamusDestinations()
 }
+
+data class TopLevelRoute<T : Any>(@StringRes val label: Int, val route: T, val icon: ImageVector)

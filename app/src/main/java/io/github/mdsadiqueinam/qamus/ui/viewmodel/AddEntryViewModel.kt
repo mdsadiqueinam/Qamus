@@ -3,6 +3,7 @@ package io.github.mdsadiqueinam.qamus.ui.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
@@ -12,6 +13,7 @@ import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
 import io.github.mdsadiqueinam.qamus.extension.launchWithErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.launchWithLoadingAndErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.update
+import io.github.mdsadiqueinam.qamus.ui.navigation.QamusDestinations
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -73,22 +75,14 @@ class AddEntryViewModel @Inject constructor(
         }
         .distinctUntilChanged()
 
-    init {
-        // Get entryId from SavedStateHandle
-        val entryId = savedStateHandle.get<Long>("entryId") ?: -1L
-
-        // Load entry if ID is provided
-        if (entryId > 0) {
-            loadEntry(entryId)
-        }
-    }
+    private val id = savedStateHandle.toRoute<QamusDestinations.AddEntry>().id
 
     /**
      * Load an existing entry by ID.
      * 
      * @param id The ID of the entry to load
      */
-    private fun loadEntry(id: Long) {
+    private fun loadEntry() {
         if (id <= 0) return
 
         launchWithLoadingAndErrorHandling(

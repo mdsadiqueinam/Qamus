@@ -46,40 +46,4 @@ class DashboardViewModel @Inject constructor(
     fun clearError() {
         _uiState.update { it.copy(error = ErrorMessage.None) }
     }
-
-    /**
-     * Navigate to dictionary screen.
-     * Handles navigation to the dictionary feature.
-     */
-    fun navigateToDictionary() {
-        launchWithErrorHandling(
-            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
-        ) {
-            navigator.navigateToDictionary()
-        }
-    }
-
-    /**
-     * Navigate to add entry screen.
-     * Handles navigation to the add entry feature.
-     */
-    fun navigateToAddEntry() {
-        launchWithErrorHandling(
-            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
-        ) {
-            navigator.navigateToAddEntry()
-        }
-    }
-
-    /**
-     * Navigate to settings screen.
-     * Handles navigation to the settings feature.
-     */
-    fun navigateToSettings() {
-        launchWithErrorHandling(
-            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
-        ) {
-            navigator.navigateToSettings()
-        }
-    }
 }

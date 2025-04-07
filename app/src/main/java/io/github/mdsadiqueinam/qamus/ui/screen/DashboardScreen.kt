@@ -68,20 +68,9 @@ fun DashboardScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                 },
-                actions = {
-                    IconButton(onClick = { viewModel.navigateToDictionary() }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search Dictionary")
-                    }
-                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            ExpandableFab(
-                onAddClick = { viewModel.navigateToAddEntry() },
-                onSettingsClick = { viewModel.navigateToSettings() }
-            )
-        }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -111,118 +100,7 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Feature cards
-                FeatureCard(
-                    title = "Dictionary",
-                    description = "Browse and search through Arabic words",
-                    onClick = { viewModel.navigateToDictionary() }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                FeatureCard(
-                    title = "Add New Words",
-                    description = "Expand your dictionary with new entries",
-                    onClick = { viewModel.navigateToAddEntry() }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                FeatureCard(
-                    title = "Settings",
-                    description = "Configure app settings and backup options",
-                    onClick = { viewModel.navigateToSettings() }
-                )
             }
-        }
-    }
-}
-
-@Composable
-fun ExpandableFab(
-    onAddClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val rotation by animateFloatAsState(targetValue = if (expanded) 45f else 0f, label = "FAB rotation")
-
-    Column(
-        horizontalAlignment = Alignment.End,
-        modifier = modifier
-    ) {
-        // Mini FABs (only visible when expanded)
-        AnimatedVisibility(
-            visible = expanded,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            Column(horizontalAlignment = Alignment.End) {
-                // Settings FAB
-                SmallFloatingActionButton(
-                    onClick = {
-                        expanded = false
-                        onSettingsClick()
-                    },
-                    modifier = Modifier.padding(bottom = 16.dp)
-                ) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings")
-                }
-
-                // Add FAB
-                SmallFloatingActionButton(
-                    onClick = {
-                        expanded = false
-                        onAddClick()
-                    },
-                    modifier = Modifier.padding(bottom = 16.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Entry")
-                }
-            }
-        }
-
-        // Main FAB
-        FloatingActionButton(
-            onClick = { expanded = !expanded }
-        ) {
-            Icon(
-                if (expanded) Icons.Default.Add else Icons.Default.Menu,
-                contentDescription = "Expandable Menu",
-                modifier = Modifier.rotate(rotation)
-            )
-        }
-    }
-}
-
-@Composable
-fun FeatureCard(
-    title: String,
-    description: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyLarge
-            )
         }
     }
 }

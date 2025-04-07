@@ -3,6 +3,7 @@ package io.github.mdsadiqueinam.qamus.ui.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.mdsadiqueinam.qamus.R
 import io.github.mdsadiqueinam.qamus.data.model.ErrorMessage
@@ -11,6 +12,7 @@ import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
 import io.github.mdsadiqueinam.qamus.extension.launchWithErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.launchWithLoadingAndErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.update
+import io.github.mdsadiqueinam.qamus.ui.navigation.QamusDestinations
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,15 +58,15 @@ class KalimaDetailsViewModel @Inject constructor(
 
     init {
         // Get entryId from SavedStateHandle
-        val entryId = savedStateHandle.get<Long>("entryId") ?: -1L
+        val id = savedStateHandle.toRoute<QamusDestinations.KalimaDetails>().id
 
         // Load entry if ID is provided
-        if (entryId > 0) {
-            loadEntry(entryId)
+        if (id > 0) {
+            loadEntry(id)
         } else {
             _uiState.update { 
                 it.copy(
-                    error = ErrorMessage.Message("Invalid entry ID"),
+                    error = ErrorMessage.Message("Invalid kalima ID"),
                     isLoading = false
                 )
             }
@@ -186,7 +188,7 @@ class KalimaDetailsViewModel @Inject constructor(
         launchWithErrorHandling(
             errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
         ) {
-            navigator.navigateToAddEntry(entryId)
+            navigator.navigate(QamusDestinations.AddEntry(entryId))
         }
     }
 
@@ -199,7 +201,7 @@ class KalimaDetailsViewModel @Inject constructor(
         launchWithErrorHandling(
             errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
         ) {
-            navigator.navigateToKalimaDetails(entryId)
+            navigator.navigate(QamusDestinations.KalimaDetails(entryId))
         }
     }
 }

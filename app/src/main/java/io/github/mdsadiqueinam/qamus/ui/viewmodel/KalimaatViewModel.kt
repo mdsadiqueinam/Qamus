@@ -11,6 +11,7 @@ import io.github.mdsadiqueinam.qamus.data.model.WordType
 import io.github.mdsadiqueinam.qamus.data.repository.KalimaatRepository
 import io.github.mdsadiqueinam.qamus.extension.launchWithErrorHandling
 import io.github.mdsadiqueinam.qamus.extension.update
+import io.github.mdsadiqueinam.qamus.ui.navigation.QamusDestinations
 import io.github.mdsadiqueinam.qamus.ui.navigation.QamusNavigator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -94,17 +95,6 @@ class KalimaatViewModel @Inject constructor(
     }
 
     /**
-     * Navigate to add entry screen.
-     */
-    fun navigateToAddEntry() {
-        launchWithErrorHandling(
-            errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
-        ) {
-            navigator.navigateToAddEntry()
-        }
-    }
-
-    /**
      * Navigate to kalima details screen.
      * 
      * @param entryId The ID of the entry to view
@@ -113,7 +103,7 @@ class KalimaatViewModel @Inject constructor(
         launchWithErrorHandling(
             errorHandler = { e -> _uiState.update { it.copy(error = ErrorMessage.Message(e.message ?: "Navigation failed")) } }
         ) {
-            navigator.navigateToKalimaDetails(entryId)
+            navigator.navigate(QamusDestinations.AddEntry(entryId))
         }
     }
 

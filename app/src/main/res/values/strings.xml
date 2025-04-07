@@ -119,4 +119,7 @@
     <string name="related_words">الكلمات المتعلقة (Related Words)</string>
     <string name="id_label">ID: %d</string>
     <string name="toggle_text_direction">Toggle Text Direction</string>
+    <string name="home">Home</string>
+    <string name="dictionary">Dictionary</string>
+    <string name="settings">Settings</string>
 </resources>
