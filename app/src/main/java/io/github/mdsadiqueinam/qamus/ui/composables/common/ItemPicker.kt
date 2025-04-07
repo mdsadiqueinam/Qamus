@@ -113,6 +113,11 @@ internal fun PickerDialogContent(
             .fillMaxWidth()
             .semantics { isTraversalGroup = true }
             .wrapContentHeight()) {
+
+            if (searchSection != null) {
+                Spacer(modifier = Modifier.padding(bottom = 55.dp))
+            }
+
             content()
 
             Spacer(modifier = Modifier.padding(bottom = 40.dp))
